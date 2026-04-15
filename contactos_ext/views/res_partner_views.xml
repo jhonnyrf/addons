@@ -101,6 +101,20 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
+            <!-- Ocultar dirección -->
+            <xpath expr="//field[@name='street']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='street2']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='city']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//group[.//field[@name='street']]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
             <!-- Quitar C.P. / Provincia / País -->
             <xpath expr="//field[@name='state_id']" position="replace"/>
             <xpath expr="//field[@name='zip']" position="replace"/>
@@ -112,7 +126,12 @@
                 <group col="2">
                     <field name="celular" string="Celular" placeholder="Celular" invisible="company_type == 'company'"/>
                     <field name="ci" string="CI" placeholder="CI" invisible="company_type != 'person'"/>
-                    <field name="is_employee" string="Es empleado de Wigo" invisible="company_type != 'person'"/>
+                </group>
+                <group string="Dirección" col="2" invisible="company_type == 'company'">
+                    <field name="zona_id" string="Zona?" placeholder="Seleccionar o crear zona" context="{'form_view_ref': 'wigo_crm.view_wigo_zone_form'}"/>
+                    <field name="direccion" string="Dirección?" placeholder="Dirección exacta"/>
+                    <field name="ubicacion" string="Ubicación?" widget="url" placeholder="Pegar enlace de Google Maps aquí"/>
+                    <field name="coordenadas" string="Coordenadas?" placeholder="Ej. -17.783327, -63.182140"/>
                 </group>
             </xpath>
 

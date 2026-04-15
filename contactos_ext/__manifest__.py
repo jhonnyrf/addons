@@ -15,7 +15,7 @@
     'category': 'Contacts',
     'version': '19.0.1.0.0',
     'license': 'LGPL-3',
-    'depends': ['base', 'contacts', 'crm', 'wigo_planes'],
+    'depends': ['base', 'contacts', 'crm', 'wigo_planes', 'wigo_crm'],
     'data': [
         'security/ir.model.access.csv',
         'views/res_partner_views.xml',

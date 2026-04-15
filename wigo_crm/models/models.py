@@ -169,6 +169,8 @@ class WigoZone(models.Model):
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
 
+    _WIGO_INSTALLATION_FIELDS = ('zona', 'direccion', 'ubicacion', 'coordenadas')
+
     zona = fields.Char(string="Zona")
 
     zona_id = fields.Many2one(
@@ -272,6 +274,44 @@ class CrmLead(models.Model):
     def _inverse_zona_id(self):
         for lead in self:
             lead.zona = lead.zona_id.name if lead.zona_id else False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        leads = super().create(vals_list)
+        if not self.env.context.get('skip_lead_to_partner_sync'):
+            leads._sync_wigo_installation_to_partner()
+        return leads
+
+    def write(self, vals):
+        res = super().write(vals)
+        if self.env.context.get('skip_lead_to_partner_sync'):
+            return res
+
+        if any(field in vals for field in self._WIGO_INSTALLATION_FIELDS) or 'partner_id' in vals:
+            self._sync_wigo_installation_to_partner()
+        return res
+
+    def _sync_wigo_installation_to_partner(self):
+        Lead = self.env['crm.lead']
+        for lead in self:
+            if not lead.partner_id:
+                continue
+
+            vals = {
+                'zona': lead.zona or False,
+                'direccion': lead.direccion or False,
+                'ubicacion': lead.ubicacion or False,
+                'coordenadas': lead.coordenadas or False,
+            }
+
+            lead.partner_id.with_context(skip_partner_to_lead_sync=True).write(vals)
+
+            sibling_leads = Lead.search([
+                ('partner_id', '=', lead.partner_id.id),
+                ('id', '!=', lead.id),
+            ])
+            if sibling_leads:
+                sibling_leads.with_context(skip_lead_to_partner_sync=True).write(vals)
 
     @api.constrains('codigo_cliente')
     def _check_codigo_cliente(self):
