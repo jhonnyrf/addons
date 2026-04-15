@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_ticket_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <div class="row mb-4">
+                            <div class="col-8">
+                                <h2 class="text-primary">
+                                    Ticket de Soporte
+                                    <span class="text-muted fs-5 ms-2">
+                                        <t t-esc="o.name"/>
+                                    </span>
+                                </h2>
+                                <h4>
+                                    <t t-esc="o.title"/>
+                                </h4>
+                            </div>
+                            <div class="col-4 text-end">
+                                <t t-if="o.priority == '3'">
+                                    <span class="badge bg-danger fs-6">CRITICO</span>
+                                </t>
+                                <t t-elif="o.priority == '2'">
+                                    <span class="badge bg-warning text-dark fs-6">ALTA</span>
+                                </t>
+                                <t t-elif="o.priority == '1'">
+                                    <span class="badge bg-info text-dark fs-6">MEDIA</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge bg-secondary fs-6">BAJA</span>
+                                </t>
+                                <br/>
+                                <t t-if="o.sla_exceeded">
+                                    <span class="badge bg-danger mt-1">SLA EXCEDIDO</span>
+                                </t>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-1">Datos del Cliente</h5>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-bold" style="width:40%">Codigo:</td>
+                                        <td>
+                                            <t t-esc="o.customer_code or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Nombre:</td>
+                                        <td>
+                                            <t t-esc="o.customer_name or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">C.I.:</td>
+                                        <td>
+                                            <t t-esc="o.customer_ci or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Celular:</td>
+                                        <td>
+                                            <t t-esc="o.customer_phone or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Alt.:</td>
+                                        <td>
+                                            <t t-esc="o.customer_phone_alt or '—'"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-bold" style="width:40%">Direccion:</td>
+                                        <td>
+                                            <t t-esc="o.customer_address or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Zona:</td>
+                                        <td>
+                                            <t t-esc="o.customer_zone or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Plan:</td>
+                                        <td>
+                                            <t t-esc="o.customer_plan_id.name if o.customer_plan_id else '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">ONU S/N:</td>
+                                        <td>
+                                            <t t-esc="o.onu_serial or '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Caja:</td>
+                                        <td>
+                                            <t t-esc="o.customer_box or '—'"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-1">Clasificacion</h5>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-bold" style="width:40%">Categoria:</td>
+                                        <td>
+                                            <t t-esc="o.category_id.name if o.category_id else '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Sintoma:</td>
+                                        <td>
+                                            <t t-esc="o.incident_type_id.name if o.incident_type_id else '—'"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Canal:</td>
+                                        <td>
+                                            <t t-esc="dict(o._fields['channel'].selection).get(o.channel, '—')"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-bold" style="width:40%">Área:</td>
+                                        <td>
+                                            <t t-esc="o.area_id.name if o.area_id else (o.team_id.name if o.team_id else '—')"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Asignado a:</td>
+                                        <td>
+                                            <t t-esc="o.employee_id.name if o.employee_id else (o.user_id.name if o.user_id else '—')"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Etapa:</td>
+                                        <td>
+                                            <t t-esc="o.stage_id.name if o.stage_id else '—'"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-1">Tiempos y SLA</h5>
+                            </div>
+                            <div class="col-12">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Apertura</th>
+                                            <th>Limite SLA</th>
+                                            <th>Cierre</th>
+                                            <th>Horas de resolucion</th>
+                                            <th>SLA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <t t-esc="o.create_date.strftime('%d/%m/%Y %H:%M') if o.create_date else '—'"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="o.sla_deadline.strftime('%d/%m/%Y %H:%M') if o.sla_deadline else '—'"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="o.date_closed.strftime('%d/%m/%Y %H:%M') if o.date_closed else 'Abierto'"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'%.1f h' % o.resolution_hours if o.resolution_hours else '—'"/>
+                                            </td>
+                                            <td>
+                                                <t t-if="o.sla_exceeded">
+                                                    <span style="color:red;font-weight:bold">EXCEDIDO</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color:green">OK</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <t t-if="o.description">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-1">Descripcion del Problema</h5>
+                                    <div class="border rounded p-2 bg-light">
+                                        <t t-out="o.description"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="o.resolution_notes">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-1">Resolucion</h5>
+                                    <div class="border rounded p-2 bg-light">
+                                        <t t-out="o.resolution_notes"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="o.requires_visit">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-1">Visita Tecnica</h5>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="fw-bold">Fecha programada:</td>
+                                            <td>
+                                                <t t-esc="o.visit_date.strftime('%d/%m/%Y %H:%M') if o.visit_date else '—'"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Tecnico:</td>
+                                            <td>
+                                                <t t-esc="o.technician_id.name if o.technician_id else '—'"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Estado de visita:</td>
+                                            <td>
+                                                <t t-esc="dict(o._fields['visit_result'].selection).get(o.visit_result, '—')"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="fw-bold">Diagnostico:</td>
+                                            <td>
+                                                <t t-esc="o.visit_diagnosis_id.name if o.visit_diagnosis_id else (o.visit_diagnosis or '—')"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Solucion:</td>
+                                            <td>
+                                                <t t-esc="o.visit_solution_id.name if o.visit_solution_id else (o.visit_solution or '—')"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-12">
+                                    <div class="fw-bold">Detalle Solucion:</div>
+                                    <div class="border rounded p-2 bg-light">
+                                        <t t-out="o.visit_solution_detail or '—'"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+
+                        <t t-if="o.postventa_done">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-1">Seguimiento Postventa</h5>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="fw-bold">Fecha llamada:</td>
+                                            <td>
+                                                <t t-esc="o.postventa_date or '—'"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Satisfaccion:</td>
+                                            <td>
+                                                <t t-esc="dict(o._fields['satisfaction'].selection).get(o.satisfaction, '—') if o.satisfaction else '—'"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <t t-if="o.postventa_notes">
+                                    <div class="col-12">
+                                        <p class="text-muted">
+                                            <t t-esc="o.postventa_notes"/>
+                                        </p>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+
+                        <hr/>
+                        <div class="row">
+                            <div class="col-6 text-muted small">Generado por: <t t-esc="user.name"/>
+                            </div>
+                            <div class="col-6 text-end text-muted small">WigoFast Helpdesk - <t t-esc="o.name"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

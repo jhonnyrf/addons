@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+        <!-- =========================
+             WIZARD: GENERATE PORTS
+        ========================== -->
+        <record id="view_generate_ports_wizard_form" model="ir.ui.view">
+            <field name="name">generate.ports.wizard.form</field>
+            <field name="model">wigo.ftth.generate.ports.wizard</field>
+            <field name="arch" type="xml">
+
+                <form string="Generar Puertos">
+
+                    <!-- =========================
+                        CONFIGURACIÓN
+                    ========================== -->
+                    <group >
+                        <field name="technology_id"/>
+                        <field name="prefix" placeholder="Ej: gpon-olt"/>
+                        <field name="chassis"/>
+                        <field name="slot"/>
+                        <field name="quantity"/>
+                    </group>
+
+                    <!-- =========================
+                         FOOTER
+                    ========================== -->
+                    <footer>
+                        <button name="action_generate" type="object" string="Generar" class="btn-primary"/>
+                        <button string="Cancelar" special="cancel"/>
+                    </footer>
+
+                </form>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

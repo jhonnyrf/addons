@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Técnicas -->
+        <record id="inc_no_signal" model="helpdesk.incident.type">
+            <field name="name">Sin señal / Sin internet</field>
+            <field name="code">no_signal</field>
+            <field name="sequence">1</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">3</field>
+            <field name="color">1</field>
+        </record>
+        <record id="inc_slow_speed" model="helpdesk.incident.type">
+            <field name="name">Velocidad baja</field>
+            <field name="code">slow_speed</field>
+            <field name="sequence">2</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="priority_suggestion">2</field>
+            <field name="color">2</field>
+        </record>
+        <record id="inc_intermittent" model="helpdesk.incident.type">
+            <field name="name">Conexión intermitente</field>
+            <field name="code">intermittent</field>
+            <field name="sequence">3</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="priority_suggestion">2</field>
+            <field name="color">2</field>
+        </record>
+        <record id="inc_fiber_cut" model="helpdesk.incident.type">
+            <field name="name">Corte de fibra</field>
+            <field name="code">fiber_cut</field>
+            <field name="sequence">4</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">3</field>
+            <field name="color">1</field>
+        </record>
+        <record id="inc_onu_offline" model="helpdesk.incident.type">
+            <field name="name">ONU offline</field>
+            <field name="code">onu_offline</field>
+            <field name="sequence">5</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">3</field>
+            <field name="color">1</field>
+        </record>
+        <record id="inc_wifi" model="helpdesk.incident.type">
+            <field name="name">Problemas con WiFi</field>
+            <field name="code">wifi_issue</field>
+            <field name="sequence">6</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">3</field>
+        </record>
+        <record id="inc_hardware" model="helpdesk.incident.type">
+            <field name="name">Fallo de equipo</field>
+            <field name="code">hardware_failure</field>
+            <field name="sequence">7</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">2</field>
+            <field name="color">2</field>
+        </record>
+        <record id="inc_installation" model="helpdesk.incident.type">
+            <field name="name">Solicitud de instalación</field>
+            <field name="code">installation</field>
+            <field name="sequence">8</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">10</field>
+            <field name="active">False</field>
+        </record>
+        <record id="inc_deinstallation" model="helpdesk.incident.type">
+            <field name="name">Retiro de equipo / Baja</field>
+            <field name="code">deinstallation</field>
+            <field name="sequence">9</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">4</field>
+            <field name="active">False</field>
+        </record>
+        <record id="inc_relocation" model="helpdesk.incident.type">
+            <field name="name">Cambio de domicilio</field>
+            <field name="code">relocation</field>
+            <field name="sequence">10</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">technical</field>
+            <field name="requires_visit">True</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">6</field>
+            <field name="active">False</field>
+        </record>
+        <record id="inc_config" model="helpdesk.incident.type">
+            <field name="name">Cambio de configuración</field>
+            <field name="code">config_change</field>
+            <field name="sequence">11</field>
+            <field name="ticket_type_scope">incident</field>
+            <field name="area">technical</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">3</field>
+        </record>
+        <!-- Comerciales -->
+        <record id="inc_billing" model="helpdesk.incident.type">
+            <field name="name">Consulta de factura</field>
+            <field name="code">billing_query</field>
+            <field name="sequence">20</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">3</field>
+        </record>
+        <record id="inc_payment" model="helpdesk.incident.type">
+            <field name="name">Problema de pago</field>
+            <field name="code">payment_issue</field>
+            <field name="sequence">21</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">2</field>
+            <field name="color">2</field>
+        </record>
+        <record id="inc_plan_up" model="helpdesk.incident.type">
+            <field name="name">Cambio / Mejora de plan</field>
+            <field name="code">plan_upgrade</field>
+            <field name="sequence">22</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">10</field>
+        </record>
+        <record id="inc_plan_down" model="helpdesk.incident.type">
+            <field name="name">Reducción de plan</field>
+            <field name="code">plan_downgrade</field>
+            <field name="sequence">23</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">4</field>
+        </record>
+        <record id="inc_contract" model="helpdesk.incident.type">
+            <field name="name">Consulta de contrato</field>
+            <field name="code">contract_query</field>
+            <field name="sequence">24</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">3</field>
+        </record>
+        <record id="inc_complaint" model="helpdesk.incident.type">
+            <field name="name">Queja / Reclamo</field>
+            <field name="code">complaint</field>
+            <field name="sequence">25</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">2</field>
+            <field name="color">1</field>
+        </record>
+        <record id="inc_postventa" model="helpdesk.incident.type">
+            <field name="name">Seguimiento postventa</field>
+            <field name="code">postventa</field>
+            <field name="sequence">26</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">10</field>
+        </record>
+        <record id="inc_coverage" model="helpdesk.incident.type">
+            <field name="name">Consulta de cobertura</field>
+            <field name="code">coverage_query</field>
+            <field name="sequence">27</field>
+            <field name="ticket_type_scope">request</field>
+            <field name="area">commercial</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">3</field>
+        </record>
+        <record id="inc_other" model="helpdesk.incident.type">
+            <field name="name">Otro</field>
+            <field name="code">other</field>
+            <field name="sequence">99</field>
+            <field name="ticket_type_scope">both</field>
+            <field name="area">both</field>
+            <field name="priority_suggestion">1</field>
+            <field name="color">0</field>
+        </record>
+    </data>
+</odoo>

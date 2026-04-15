@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MENÚ RAÍZ - Wigo Planes
+    ══════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_wigo_planes_root"
+              name="Wigo Planes"
+              sequence="50"
+              web_icon="wigo_planes,static/description/icon.png"
+              action="action_internet_plans"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECCIÓN 1: PLANES DE INTERNET (submenu explícito)
+    ══════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_wigo_planes_planes"
+              name="Planes de Internet"
+              parent="menu_wigo_planes_root"
+              action="action_internet_plans"
+              sequence="10"/>
+
+    <menuitem id="menu_wigo_planes_instalacion"
+              name="Costos de Instalación"
+              parent="menu_wigo_planes_root"
+              action="action_installation_cost"
+              sequence="20"/>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SECCIÓN 2: PROMOCIONES (submenú agrupado)
+    ══════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_wigo_planes_promos_root"
+              name="Promociones"
+              parent="menu_wigo_planes_root"
+              sequence="30"/>
+
+    <menuitem id="menu_wigo_planes_promos"
+              name="Promociones"
+              parent="menu_wigo_planes_promos_root"
+              action="wigo_promo_action"
+              sequence="10"/>
+
+    <menuitem id="menu_wigo_planes_referidos"
+              name="Referidos"
+              parent="menu_wigo_planes_promos_root"
+              action="wigo_promo_referral_action"
+              sequence="20"/>
+
+    <menuitem id="menu_wigo_planes_listos_recompensa"
+              name="Listos para Recompensa"
+              parent="menu_wigo_planes_promos_root"
+              action="wigo_promo_referral_action_ready"
+              sequence="30"/>
+
+    <menuitem id="menu_wigo_planes_recompensas"
+              name="Recompensas Entregadas"
+              parent="menu_wigo_planes_promos_root"
+              action="wigo_promo_reward_action"
+              sequence="40"/>
+
+</odoo>

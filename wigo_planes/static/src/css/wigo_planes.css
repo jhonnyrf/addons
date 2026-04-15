@@ -1,0 +1,132 @@
+/* ================================================================
+   Wigo Planes - Estilos personalizados
+   ================================================================ */
+
+/* ── Tarjetas Kanban de Planes ──────────────────────────────── */
+
+.wigo_plan_card {
+    border-radius: 12px !important;
+    padding: 16px !important;
+    border-left: 5px solid #dee2e6 !important;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.wigo_plan_card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+    transform: translateY(-2px);
+}
+
+/* Colores de borde según tipo */
+.wigo_card_fiber {
+    border-left-color: #198754 !important; /* verde - fibra */
+}
+
+.wigo_card_wireless {
+    border-left-color: #0dcaf0 !important; /* cyan - inalámbrico */
+}
+
+.wigo_card_cable {
+    border-left-color: #fd7e14 !important; /* naranja - cable */
+}
+
+/* ── Badges de tipo ─────────────────────────────────────────── */
+
+.wigo_badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.wigo_badge_fiber {
+    background: #d1e7dd;
+    color: #0a3622;
+}
+
+.wigo_badge_wireless {
+    background: #cff4fc;
+    color: #055160;
+}
+
+.wigo_badge_cable {
+    background: #ffe5d0;
+    color: #6e2d00;
+}
+
+/* ── Identidad del plan ───────────────────────────────────── */
+
+.wigo_plan_identity {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wigo_plan_name {
+    font-size: 1.35rem;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #111827;
+}
+
+.wigo_plan_identifier {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.wigo_plan_identifier .o_field_widget {
+    white-space: nowrap;
+}
+
+/* ── Especificaciones del plan ────────────────────────────── */
+
+.wigo_plan_specs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+/* ── Stat boxes (velocidad / precio) ───────────────────────── */
+
+.wigo_stat_box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px 8px;
+    border: 1px solid #e9ecef;
+}
+
+.wigo_stat_value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+}
+
+.wigo_stat_label {
+    font-size: 10px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.wigo_stat_price .wigo_stat_value {
+    color: #0f766e;
+}
+
+/* ── Ajuste columnas kanban ────────────────────────────────── */
+.o_kanban_view .o_kanban_record .wigo_plan_card {
+    min-height: 170px;
+}

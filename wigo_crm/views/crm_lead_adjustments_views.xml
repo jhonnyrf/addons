@@ -1,0 +1,54 @@
+<odoo>
+
+    <!-- Oculta bloques de empresa/contacto en la pestaña lead del formulario CRM. -->
+    <record id="crm_lead_form_inherit_wigo_hide_groups" model="ir.ui.view">
+        <field name="name">crm.lead.form.wigo.hide.groups</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Oculta el grupo donde se muestra partner_name. -->
+            <xpath expr="//page[@name='lead']//field[@name='partner_name']/ancestor::group[1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Oculta el grupo donde se muestra contact_name. -->
+            <xpath expr="//page[@name='lead']//field[@name='contact_name']/ancestor::group[1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Mueve el campo Etiquetas original junto a Vendedor para evitar duplicados. -->
+            <xpath expr="(//field[@name='user_id'])[1]" position="after">
+                <xpath expr="(//field[@name='tag_ids'])[1]" position="move"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Renombra la pestaña lead para reflejar el uso en Wigo. -->
+    <record id="crm_lead_form_inherit_wigo_rename_tab" model="ir.ui.view">
+        <field name="name">crm.lead.form.wigo.rename.tab</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//page[@name='lead']" position="attributes">
+                <attribute name="string">Información Adicional</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Ajuste de kanban: desactiva quick create para abrir formulario completo. -->
+    <record id="crm_case_kanban_view_leads_wigo" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.wigo</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="quick_create_view"></attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

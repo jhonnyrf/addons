@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_helpdesk_visit_diagnosis_type_list" model="ir.ui.view">
+        <field name="name">helpdesk.visit.diagnosis.type.list</field>
+        <field name="model">helpdesk.visit.diagnosis.type</field>
+        <field name="arch" type="xml">
+            <list string="Diagnosticos de Visita" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_visit_diagnosis_type_form" model="ir.ui.view">
+        <field name="name">helpdesk.visit.diagnosis.type.form</field>
+        <field name="model">helpdesk.visit.diagnosis.type</field>
+        <field name="arch" type="xml">
+            <form string="Diagnostico de Visita">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_visit_solution_type_list" model="ir.ui.view">
+        <field name="name">helpdesk.visit.solution.type.list</field>
+        <field name="model">helpdesk.visit.solution.type</field>
+        <field name="arch" type="xml">
+            <list string="Soluciones de Visita" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_visit_solution_type_form" model="ir.ui.view">
+        <field name="name">helpdesk.visit.solution.type.form</field>
+        <field name="model">helpdesk.visit.solution.type</field>
+        <field name="arch" type="xml">
+            <form string="Solucion de Visita">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_helpdesk_visit_diagnosis_type" model="ir.actions.act_window">
+        <field name="name">Diagnosticos de Visita</field>
+        <field name="res_model">helpdesk.visit.diagnosis.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_helpdesk_visit_solution_type" model="ir.actions.act_window">
+        <field name="name">Soluciones de Visita</field>
+        <field name="res_model">helpdesk.visit.solution.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

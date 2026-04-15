@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_customer_contract_form_map" model="ir.ui.view">
+        <field name="name">customer.contract.form.map</field>
+        <field name="model">customer.contract</field>
+        <field name="inherit_id" ref="customer_contract.view_customer_contract_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[field[@name='coordinates']]" position="replace">
+                <group string="Instalación y Ubicación">
+                    <field name="installation_date"/>                      
+                    <field name="location_link"/>
+                    <field name="coordinates" widget="google_map"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

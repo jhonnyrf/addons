@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ONU — Inventario
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_ftth_onu_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.onu.list</field>
+        <field name="model">wigo.ftth.onu</field>
+        <field name="arch" type="xml">
+            <list string="Inventario ONUs"
+                  decoration-success="state == 'available'"
+                  decoration-info="state == 'in_field'"
+                  decoration-primary="state == 'assigned'"
+                  decoration-muted="state in ['retired','damaged']">
+                <field name="serial_number"/>
+                <field name="rotulo"/>
+                <field name="marca_id"/>
+                <field name="modelo_id"/>
+                <field name="perfil_olt"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'available'"
+                       decoration-info="state == 'in_field'"
+                       decoration-primary="state == 'assigned'"
+                       decoration-warning="state == 'damaged'"
+                       decoration-muted="state == 'retired'"/>
+                <field name="client_service_id" string="Cliente"/>
+                <field name="installer_id" string="Instalador"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_onu_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.onu.form</field>
+        <field name="model">wigo.ftth.onu</field>
+        <field name="arch" type="xml">
+            <form string="ONU / ONT">
+                <header>
+                    <button name="action_retire" type="object" string="Retirar del inventario"
+                            class="btn-secondary" invisible="state == 'retired'"
+                            confirm="¿Retirar esta ONU del inventario?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="available,in_field,assigned,retired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="serial_number" string="Número de serie"/>
+                        <h1><field name="serial_number" placeholder="N/S del equipo..."/></h1>
+                    </div>
+                    <group col="2">
+                        <group string="Equipo">
+                            <field name="rotulo"/>
+                            <field name="marca_id"/>
+                            <field name="modelo_id"/>
+                            <field name="perfil_olt"/>
+                        </group>
+                        <group string="Asignación">
+                            <field name="client_service_id" readonly="1"/>
+                            <field name="subinterface_id" readonly="1"/>
+                            <field name="installer_id"/>
+                            <field name="batch_id"/>
+                            <field name="fecha_asignacion" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Identificadores PON" name="pon"
+                              groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group col="2">
+                                <group>
+                                    <field name="pon_sn"/>
+                                    <field name="tcont"/>
+                                    <field name="gemport"/>
+                                    <field name="vport"/>
+                                </group>
+                                <group>
+                                    <field name="user_mgmt"/>
+                                    <field name="password_mgmt"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="WiFi" name="wifi" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group>
+                                <field name="wifi_ssid"/>
+                                <field name="wifi_password"/>
+                                <field name="eth_ports"/>
+                            </group>
+                        </page>
+                        <page string="Notas"><field name="notes" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_onu_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.onu.search</field>
+        <field name="model">wigo.ftth.onu</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="serial_number"/>
+                <field name="marca"/>
+                <field name="modelo"/>
+                <separator/>
+                <filter string="Disponibles" name="available" domain="[('state','=','available')]"/>
+                <filter string="Asignadas"   name="assigned"  domain="[('state','=','assigned')]"/>
+                <filter string="En campo"    name="in_field"  domain="[('state','=','in_field')]"/>
+                <filter string="Retiradas"   name="retired"   domain="[('state','=','retired')]"/>
+                <separator/>
+                <filter string="Agrupar por marca" name="by_marca" context="{'group_by':'marca'}"/>
+                <filter string="Agrupar por estado" name="by_state" context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_onu" model="ir.actions.act_window">
+        <field name="name">Inventario ONUs</field>
+        <field name="res_model">wigo.ftth.onu</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_onu_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Registra el primer equipo ONU</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         LOTES DE ENTREGA
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_ftth_onu_batch_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.onu.batch.list</field>
+        <field name="model">wigo.ftth.onu.batch</field>
+        <field name="arch" type="xml">
+            <list string="Lotes de entrega">
+                <field name="name"/>
+                <field name="fecha_entrega"/>
+                <field name="installer_id"/>
+                <field name="total_onus" string="Total ONUs"/>
+                <field name="onus_instaladas" string="Instaladas"/>
+                <field name="onus_pendientes" string="En campo"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_onu_batch_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.onu.batch.form</field>
+        <field name="model">wigo.ftth.onu.batch</field>
+        <field name="arch" type="xml">
+            <form string="Lote de Entrega ONUs">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Referencia del lote..."/></h1>
+                    </div>
+                    <group col="2">
+                        <group>
+                            <field name="fecha_entrega"/>
+                            <field name="installer_id"/>
+                        </group>
+                        <group>
+                            <field name="total_onus" readonly="1"/>
+                            <field name="onus_instaladas" readonly="1"/>
+                            <field name="onus_pendientes" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Accesorios incluidos" col="2">
+                        <group>
+                            <field name="cable_drop_m"/>
+                            <field name="conectores"/>
+                            <field name="tensores"/>
+                            <field name="grapas"/>
+                            <field name="roseta_acoplador"/>
+                        </group>
+                        <group>
+                            <field name="patch_cord"/>
+                            <field name="dispersion_m"/>
+                            <field name="cinta"/>
+                            <field name="precintos"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="ONUs del lote">
+                            <field name="onu_ids">
+                                <list>
+                                    <field name="serial_number"/>
+                                    <field name="marca_id"/>
+                                    <field name="modelo"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="client_service_id" string="Cliente"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas"><field name="notes" nolabel="1"/></page>
+                    </notebook>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ftth_onu_batch" model="ir.actions.act_window">
+        <field name="name">Lotes de Entrega</field>
+        <field name="res_model">wigo.ftth.onu.batch</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

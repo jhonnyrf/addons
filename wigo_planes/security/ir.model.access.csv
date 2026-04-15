@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_internet_plan_user,internet.plan user,model_internet_plan,base.group_user,1,1,1,1
+access_internet_plan_settings_user,internet.plan.settings user,model_internet_plan_settings,base.group_user,1,1,1,1
+access_wigo_promo,wigo.promo user,model_wigo_promo,base.group_user,1,1,1,1
+access_wigo_promo_referral,wigo.promo.referral user,model_wigo_promo_referral,base.group_user,1,1,1,1
+access_wigo_promo_reward,wigo.promo.reward user,model_wigo_promo_reward,base.group_user,1,1,1,1

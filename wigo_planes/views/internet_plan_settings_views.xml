@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CONFIGURACIÓN - Lista
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_internet_setting_list" model="ir.ui.view">
+        <field name="name">internet.plan.settings.list</field>
+        <field name="model">internet.plan.settings</field>
+        <field name="arch" type="xml">
+            <list string="Costos de Instalación"
+                  decoration-muted="not active">
+                <field name="name_installation_cost"/>
+                <field name="installation_cost" widget="monetary"
+                       options="{'currency_field': false}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CONFIGURACIÓN - Formulario
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_internet_installation_form" model="ir.ui.view">
+        <field name="name">internet.plan.settings.form</field>
+        <field name="model">internet.plan.settings</field>
+        <field name="arch" type="xml">
+            <form string="Costo de Instalación">
+                <header>
+                    <button name="action_save_installation_cost"
+                            type="object"
+                            string="Guardar"
+                            class="btn-primary"
+                            icon="fa-save"/>
+                    <field name="active"
+                           widget="boolean_button"
+                           options="{'terminology': 'archive'}"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado"
+                            bg_color="text-bg-danger" invisible="active"/>
+
+                    <div class="oe_title">
+                        <label for="name_installation_cost"/>
+                        <h1>
+                            <field name="name_installation_cost"
+                                   placeholder="Ej: Instalación estándar..."
+                                   class="oe_inline"/>
+                        </h1>
+                    </div>
+
+                    <group string="Costo">
+                        <label for="installation_cost"/>
+                        <div class="o_row">
+                            <field name="installation_cost"
+                                   decoration-danger="installation_cost and installation_cost &lt;= 0"/>
+                            <span class="oe_inline ms-1 text-muted">Bs</span>
+                        </div>
+                    </group>
+
+                    <notebook>
+                        <page string="Descripción" name="description">
+                            <field name="description"
+                                   placeholder="Notas adicionales sobre este costo..."
+                                   nolabel="1"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         CONFIGURACIÓN - Action
+    ══════════════════════════════════════════════════════════ -->
+    <record id="action_installation_cost" model="ir.actions.act_window">
+        <field name="name">Costos de Instalación</field>
+        <field name="res_model">internet.plan.settings</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define los costos de instalación
+            </p>
+        </field>
+    </record>
+
+</odoo>

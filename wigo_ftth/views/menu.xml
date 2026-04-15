@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_wigo_ftth_root" name="Wigo FTTH" sequence="60" groups="base.group_user" web_icon="wigo_ftth,static/description/icon.png"/>
+
+    <!-- 1. ORDENES DE TRABAJO -->
+    <menuitem id="menu_ftth_wo_root" name="Ordenes de Trabajo" parent="menu_wigo_ftth_root" sequence="10"/>
+    <menuitem id="menu_ftth_wo_all" name="Todas las OTs" parent="menu_ftth_wo_root" action="action_ftth_work_order" sequence="20"/>
+
+    <!-- 3. INVENTARIO ONUs -->
+    <menuitem id="menu_ftth_onu_root" name="Inventario ONUs" parent="menu_wigo_ftth_root" action="action_ftth_onu" sequence="30" groups="base.group_user,base.group_system"/>
+    <menuitem id="menu_ftth_onu" name="Equipos ONU" parent="menu_ftth_onu_root" action="action_ftth_onu" sequence="10" groups="base.group_user,base.group_system"/>
+    <menuitem id="menu_ftth_onu_batch" name="Lotes de Entrega" parent="menu_ftth_onu_root" action="action_ftth_onu_batch" sequence="20" groups="base.group_user,base.group_system"/>
+
+    <!-- 4. REPORTES Y GRAFICAS -->
+    <menuitem id="menu_ftth_reports_root" name="Reportes" parent="menu_wigo_ftth_root" sequence="40"/>
+    <menuitem id="menu_ftth_report_estados" name="Clientes por estado" parent="menu_ftth_reports_root" action="action_ftth_report_estados" sequence="10"/>
+    <menuitem id="menu_ftth_report_planes" name="Clientes por plan" parent="menu_ftth_reports_root" action="action_ftth_report_planes" sequence="20"/>
+    <menuitem id="menu_ftth_report_instalaciones" name="Instalaciones por mes" parent="menu_ftth_reports_root" action="action_ftth_report_instalaciones" sequence="30"/>
+    <menuitem id="menu_ftth_report_instalador" name="Por instalador" parent="menu_ftth_reports_root" action="action_ftth_report_instalador" sequence="40"/>
+    <menuitem id="menu_ftth_report_nodo" name="Por nodo / OLT" parent="menu_ftth_reports_root" action="action_ftth_report_nodo" sequence="50" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
+    <menuitem id="menu_ftth_capacity" name="Ocupacion de Puertos" parent="menu_ftth_reports_root" action="action_ftth_capacity" sequence="60"/>
+
+    <!-- 5. CONFIGURACION -->
+    <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
+    <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_root" action="action_ftth_regional" sequence="10"/>
+    <menuitem id="menu_ftth_config_nodo" name="Nodos" parent="menu_ftth_config_root" action="action_ftth_nodo" sequence="20"/>
+    <menuitem id="menu_ftth_config_technology" name="Tecnologías" parent="menu_ftth_config_root" action="action_ftth_technology" sequence="25"/>
+    <menuitem id="menu_ftth_config_olt" name="OLTs" parent="menu_ftth_config_root" action="action_ftth_olt" sequence="30"/>
+    <menuitem id="menu_ftth_config_olt_port" name="Puertos PON" parent="menu_ftth_config_root" action="action_ftth_olt_port" sequence="40"/>
+    <menuitem id="menu_ftth_config_odn" name="ODN" parent="menu_ftth_config_root" action="action_ftth_odn" sequence="50"/>
+    <menuitem id="menu_ftth_config_box_group" name="Grupos de Cajas / Zonas" parent="menu_ftth_config_root" action="action_ftth_box_group" sequence="60"/>
+    <menuitem id="menu_ftth_config_box" name="Cajas NAP" parent="menu_ftth_config_root" action="action_ftth_box" sequence="70"/>
+    <menuitem id="menu_ftth_config_box_port" name="Puertos de Caja" parent="menu_ftth_config_root" action="action_ftth_box_port" sequence="80"/>
+    <menuitem id="menu_ftth_config_subinterface" name="Subinterfaces OLT" parent="menu_ftth_config_root" action="action_ftth_subinterface" sequence="90"/>
+    <menuitem id="menu_ftth_config_installer" name="Instaladores / Tecnicos" parent="menu_ftth_config_root" action="action_ftth_installer" sequence="100"/>
+
+</odoo>

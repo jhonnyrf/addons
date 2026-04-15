@@ -1,0 +1,14 @@
+/*
+ * Wigo CRM - Ocultar botón "Generar leads" / "Generate Leads"
+ * El botón es inyectado por el módulo crm_iap_mine en el control panel
+ * del kanban de oportunidades. Lo ocultamos con CSS ya que no podemos
+ * modificar ese módulo.
+ * Selectores cubriendo las clases conocidas en Odoo 17/18/19:
+ */
+.o_button_generate_leads,
+.o_generate_leads,
+[name="action_crm_iap_mine"],
+button[name="action_crm_iap_mine"],
+.o_cp_buttons button.o_button_generate_leads {
+    display: none !important;
+}

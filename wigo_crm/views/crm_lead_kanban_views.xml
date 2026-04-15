@@ -1,0 +1,49 @@
+<odoo>
+
+    <!-- Ajuste del kanban de CRM: quita el monto esperado del encabezado y muestra datos clave del lead. -->
+    <record id="crm_case_kanban_view_leads_wigo_metrics" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.wigo.metrics</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+
+            <!-- Elimina el monto esperado del progressbar para dejar solo el contador de leads por columna. -->
+            <xpath expr="//progressbar[@sum_field='expected_revenue']" position="replace">
+                <progressbar field="activity_state" colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
+            </xpath>
+
+            <!-- Asegura que los campos necesarios esten cargados en el kanban. -->
+            <xpath expr="//kanban" position="inside">
+                <field name="zona"/>
+                <field name="codigo_cliente"/>
+                <field name="plan_id"/>
+                <field name="contract_id"/>
+                <field name="contract_name"/>
+                <field name="contract_plan_id"/>
+            </xpath>
+
+            <!-- Muestra zona, codigo de cliente y plan en la tarjeta del lead. -->
+            <xpath expr="//templates/t[@t-name='card']" position="inside">
+                <div class="mt-2 small text-muted w-100">
+                    <div>
+                        <strong>Zona:</strong>
+                        <field name="zona"/>
+                    </div>
+
+                    <t t-if="record.contract_id.raw_value">
+                        <div>
+                            <strong>Contrato:</strong>
+                            <field name="contract_name"/>
+                        </div>
+                        <div>
+                            <strong>Plan contrato:</strong>
+                            <field name="contract_plan_id"/>
+                        </div>
+                    </t>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

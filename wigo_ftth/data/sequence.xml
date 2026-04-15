@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <data >
+
+        <record id="seq_ftth_olt" model="ir.sequence">
+            <field name="name">OLT Sequence</field>
+            <field name="code">wigo.ftth.olt</field>
+            <field name="padding">2</field>
+        </record>
+        <record id="seq_ftth_nodo" model="ir.sequence">
+            <field name="name">Nodo Sequence</field>
+            <field name="code">wigo.ftth.nodo</field>
+            <field name="padding">2</field>
+        </record>
+        <record id="seq_ot" model="ir.sequence">
+            <field name="name">OT Sequence</field>
+            <field name="code">wigo.ftth.work.order</field>
+            <field name="prefix">OT-</field>
+            <field name="padding">5</field>
+            <field name="number_increment">1</field>
+            <field name="number_next">1</field>
+            <field name="implementation">no_gap</field>
+        </record>
+    </data>
+
+</odoo>

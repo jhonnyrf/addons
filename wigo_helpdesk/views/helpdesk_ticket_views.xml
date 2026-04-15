@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =====================================================================
+         VISTA FORMULARIO — con íconos, semáforo SLA y auto-llenado de cliente
+    ====================================================================== -->
+    <record id="view_helpdesk_ticket_form" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.form</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <form string="Ticket">
+                <header>
+                    <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
+                    <button name="action_assign_to_me" string="Asignarme" type="object" invisible="user_id == uid" class="btn-secondary" icon="fa-user-plus"/>
+                    <button name="action_resolve" string="Marcar Resuelto" type="object" invisible="is_closed" class="btn-secondary" icon="fa-check"/>
+                    <button name="action_escalate" string="Escalar" type="object" invisible="is_closed or is_escalated" class="btn-warning" icon="fa-arrow-up"/>
+                    <button name="action_mark_postventa" string="Postventa" type="object" class="btn-secondary" icon="fa-phone"/>
+                    <button name="action_close" string="Cerrar Ticket" type="object" class="btn-primary" invisible="is_closed" icon="fa-check-circle"/>
+                    <button name="action_open" string="Reabrir" type="object" invisible="not is_closed" class="btn-secondary" icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <!-- ── ALERTAS ── -->
+                    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert" invisible="not is_escalated">
+                        <i class="fa fa-arrow-up fa-lg" title="Escalado"/>
+                        <strong>Ticket Escalado</strong>
+                    </div>
+
+                    <!-- ── TÍTULO ── -->
+                    <div class="oe_title">
+                        <label for="title" string="Ticket"/>
+                        <h1>
+                            <field name="title" placeholder="Descripción breve del problema..."/>
+                        </h1>
+                        <div class="d-flex gap-3 align-items-center">
+                            <field name="name" readonly="1" class="text-muted"/>
+                            <field name="priority" widget="priority" class="wigo_priority_big"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Clasificación">
+                            <field name="ticket_type" widget="radio" options="{'horizontal': True}"/>
+                            <field name="incident_type_id" string="Síntoma" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_incident_type_form'}" domain="[('active', '=', True), '|', ('ticket_type_scope', '=', 'both'), ('ticket_type_scope', '=', ticket_type)]"/>
+                            <field name="symptom_priority" readonly="1"/>
+                            <field name="channel"/>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
+                        <group string="Asignación">
+                            <field name="area_id"/>
+                            <field name="employee_id"/>
+                            <field name="escalated_team_id" string="Área escalada" invisible="not is_escalated" readonly="1"/>
+                            <field name="escalated_to_id" invisible="not is_escalated" readonly="1" widget="many2one_avatar_user"/>
+                            <field name="escalation_reason" invisible="not is_escalated" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="CONTRATO DEL CLIENTE" class="oe_title">
+                        <group>
+                            <field name="contract_id" string="Selecciona cliente" options="{'no_create': True}" help="Selecciona contrato + cliente (solo firmados o activos)."/>
+                            <field name="customer_plan_id" options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <!-- ── FECHAS SLA ── -->
+                    <group string="⏱ Fechas y SLA" class="wigo_sla_block">
+                        <div class="wigo_sla_summary d-flex flex-column gap-2">
+                            <div class="wigo_sla_top_row d-flex align-items-center gap-2 flex-wrap">
+                                <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
+                                <button name="action_open_sla_advanced_wizard" type="object" string="⚙ Configurar SLA" class="btn btn-sm btn-secondary"/>
+                            </div>
+
+                            <div class="wigo_sla_data_row d-flex align-items-center gap-3 flex-wrap">
+                                <span invisible="not sla_deadline">
+                                    <strong>Límite:</strong>
+                                    <field name="sla_deadline" nolabel="1" readonly="1"/>
+                                </span>
+                                <span invisible="is_closed or not sla_deadline">
+                                    <strong>Horas restantes:</strong>
+                                    <field name="sla_hours_remaining_display" nolabel="1" readonly="1"/>
+                                </span>
+                            </div>
+                        </div>
+                    </group>
+
+                    <notebook>
+                        <!-- ── PESTAÑA CLIENTE ── -->
+                        <page string="👤 Cliente WigoFast" name="customer">
+                            <group>
+                                <group string="📋 Identificación">
+                                    <field name="customer_code" placeholder="CF-001"/>
+                                    <field name="customer_name"/>
+                                    <field name="customer_ci"/>
+                                </group>
+                                <group string="📞 Contacto">
+                                    <field name="customer_phone" widget="phone"/>
+                                    <field name="customer_phone_alt" widget="phone"/>
+                                    <field name="customer_address"/>
+                                    <field name="customer_zone"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── PESTAÑA TÉCNICA ── -->
+                        <page string="📡 Datos Técnicos" name="technical">
+                            <group col="2">
+                                <group string="Origen FTTH">
+                                    <field name="ftth_service_id" options="{'no_create': True}"/>
+                                    <field name="ruta_ftth" readonly="1"/>
+                                </group>
+                                <group string="Topología FTTH">
+                                    <field name="nodo_id" readonly="1"/>
+                                    <field name="olt_id" readonly="1"/>
+                                    <field name="olt_port_id" readonly="1"/>
+                                    <field name="subinterface_id" readonly="1"/>
+                                    <field name="odn_id" readonly="1"/>
+                                    <field name="box_group_id" readonly="1"/>
+                                    <field name="box_id" readonly="1"/>
+                                    <field name="box_port_id" readonly="1"/>
+                                </group>
+                            </group>
+                            <group col="2">
+                                <group string="ONU / ONT">
+                                    <field name="onu_id" readonly="1"/>
+                                    <field name="onu_serial"/>
+                                    <field name="onu_marca" readonly="1"/>
+                                    <field name="onu_modelo" readonly="1"/>
+                                    <field name="pon_sn" readonly="1"/>
+                                </group>
+                                <group string="Datos legados">
+                                    <field name="olt_interface" help="Se autocompleta desde la subinterfaz FTTH si existe."/>
+                                    <field name="customer_box" help="Se autocompleta desde la NAP FTTH si existe."/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── PESTAÑA DESCRIPCIÓN ── -->
+                        <page string="Descripción" name="description">
+                            <field name="description" nolabel="1" placeholder="Describe el problema en detalle..."/>
+                        </page>
+
+                        <!-- ── PESTAÑA RESOLUCIÓN ── -->
+                        <page string="✅ Resolución" name="resolution">
+                            <group col="2">
+                                <group string="🔍 Diagnóstico">
+                                    <field name="resolution_diagnosis_id" string="Diagnóstico" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_diagnosis_type_form'}"/>
+                                    <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Detalle del diagnóstico técnico..." class="wigo_resolution_text"/>
+                                </group>
+                                <group string="🔧 Solución Aplicada">
+                                    <field name="resolution_solution_id" string="Solución" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_solution_type_form'}"/>
+                                    <field name="resolution_solution_detail" nolabel="1" placeholder="Detalle de la solución aplicada..." class="wigo_resolution_text"/>
+                                </group>
+                            </group>
+
+                            <group col="2">
+                                <group string="Conocimiento">
+                                    <field name="knowledge_id" string="Artículo KB relacionado"/>
+                                </group>
+                                <group string="Tiempo">
+                                    <field name="resolution_hours" readonly="1" string="Horas de Resolución" invisible="not is_closed"/>
+                                    <div class="text-muted small" invisible="is_closed">
+                                        Se calcula automáticamente al cerrar el ticket.
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── PESTAÑA VISITA TÉCNICA ── -->
+                        <page string="Visita Técnica" name="visit">
+                            <group>
+                                <group string="Programación de visita">
+                                    <field name="requires_visit"/>
+                                    <field name="technician_id" widget="many2one_avatar_user" invisible="not requires_visit" required="requires_visit" string="Asignar a" help="Asigna el tecnico responsable para que reciba la actividad en su bitacora."/>
+                                    <field name="visit_date" invisible="not requires_visit" required="requires_visit" string="Fecha programada"/>
+                                    <field name="visit_result" invisible="not requires_visit" string="Estado de visita"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ── PESTAÑA POSTVENTA ── -->
+                        <page string="Postventa" name="postventa">
+                            <group string="Llamada de Seguimiento">
+                                <field name="postventa_done" string="✅ Llamada realizada"/>
+                                <field name="postventa_date" invisible="not postventa_done" string="📅 Fecha"/>
+                                <field name="postventa_user_id" widget="many2one_avatar_user" invisible="not postventa_done" string="👤 Realizado por"/>
+                                <field name="satisfaction" invisible="not postventa_done" string="⭐ Satisfacción"/>
+                                <field name="postventa_notes" invisible="not postventa_done" placeholder="Observaciones de la llamada postventa..."/>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         VISTA LISTA — con semáforo de colores por SLA
+    ====================================================================== -->
+    <record id="view_helpdesk_ticket_list" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.list</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <list string="Tickets" decoration-danger="sla_status == 'danger' and not is_closed" decoration-warning="sla_status == 'warning' and not is_closed" decoration-success="is_closed" decoration-muted="is_closed">
+                <field name="name" optional="show"/>
+                <field name="title"/>
+                <field name="ticket_type" optional="show"/>
+                <field name="contract_id" optional="show"/>
+                <field name="customer_code" optional="show"/>
+                <field name="customer_name" optional="show"/>
+                <field name="customer_zone" optional="show"/>
+                <field name="incident_type_id" optional="show"/>
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="stage_id" optional="show"/>
+                <field name="channel" optional="hide"/>
+                <field name="area_id" optional="hide"/>
+                <field name="employee_id" optional="show"/>
+                <field name="sla_deadline" optional="show" string="⏳ Límite SLA"/>
+                <field name="sla_hours_remaining" optional="show" string="⏱ Horas restantes"/>
+                <!-- Semáforo como badge en lista -->
+                <field name="sla_status" optional="show" string="🚦 SLA" decoration-danger="sla_status == 'danger'" decoration-warning="sla_status == 'warning'" decoration-success="sla_status == 'ok'" decoration-muted="sla_status == 'closed'"/>
+                <field name="requires_visit" optional="hide"/>
+                <field name="postventa_done" optional="hide"/>
+                <field name="satisfaction" optional="hide"/>
+                <field name="is_escalated" optional="hide"/>
+                <field name="create_date" optional="hide"/>
+                <field name="is_closed" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         VISTA KANBAN — Odoo 19 (sin t-attf dinámico, sin raw_value en condicionales)
+    ====================================================================== -->
+    <record id="view_helpdesk_ticket_kanban" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.kanban</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column">
+                <!-- Todos los campos usados en el template deben declararse aquí -->
+                <field name="name"/>
+                <field name="title"/>
+                <field name="contract_id"/>
+                <field name="stage_id"/>
+                <field name="priority"/>
+                <field name="area_id"/>
+                <field name="employee_id"/>
+                <field name="ticket_type"/>
+                <field name="sla_status"/>
+                <field name="sla_deadline"/>
+                <field name="sla_hours_remaining"/>
+                <field name="sla_badge_label"/>
+                <field name="sla_badge_icon"/>
+                <field name="sla_badge_color"/>
+                <field name="is_closed"/>
+                <field name="is_escalated"/>
+                <field name="customer_name"/>
+                <field name="customer_code"/>
+                <field name="customer_zone"/>
+                <field name="requires_visit"/>
+                <field name="create_date"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="card">
+
+                        <!-- ── BARRA SUPERIOR DE COLOR según SLA ── -->
+                        <t t-if="record.sla_status.raw_value == 'danger'">
+                            <div style="height:4px; background:#dc3545; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        </t>
+                        <t t-elif="record.sla_status.raw_value == 'warning'">
+                            <div style="height:4px; background:#ffc107; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        </t>
+                        <t t-elif="record.sla_status.raw_value == 'closed'">
+                            <div style="height:4px; background:#6c757d; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        </t>
+                        <t t-else="">
+                            <div style="height:4px; background:#28a745; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        </t>
+
+                        <!-- ── CABECERA: prioridad y avatar ── -->
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <field name="priority" widget="priority"/>
+                            <field name="employee_id" options="{'size': 24}"/>
+                        </div>
+
+                        <!-- ── TÍTULO ── -->
+                        <field name="title" class="fw-bold"/>
+
+                        <!-- ── NÚMERO Y CÓDIGO CLIENTE ── -->
+                        <div class="text-muted small mt-1">
+                            <t t-if="record.name.value and record.name.value != '/'">
+                                <i class="fa fa-ticket"/>
+                                <t t-esc="record.name.value"/>
+                            </t>
+                            <t t-if="record.contract_id.value">
+                                &amp;nbsp;·&amp;nbsp;
+                                <i class="fa fa-file-text-o"/>
+                                <t t-esc="record.contract_id.value"/>
+                            </t>
+                            <t t-if="record.customer_code.value">
+                                &amp;nbsp;·&amp;nbsp;
+                                <i class="fa fa-user"/>
+                                <t t-esc="record.customer_code.value"/>
+                            </t>
+                        </div>
+
+                        <!-- ── NOMBRE CLIENTE ── -->
+                        <t t-if="record.customer_name.value">
+                            <div class="small mt-1 fw-semibold">
+                                <i class="fa fa-user-circle-o text-muted"/>
+                                <t t-esc="record.customer_name.value"/>
+                            </div>
+                        </t>
+
+                        <!-- ══════════════════════════════════════════
+                             SEMÁFORO SLA — dinámico desde config
+                        ══════════════════════════════════════════ -->
+                        <div class="mt-2 d-flex align-items-center gap-2">
+
+                            <!-- Badge principal con color y etiqueta dinámicos -->
+                            <t t-if="record.sla_status.raw_value == 'danger'">
+                                <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1" style="background-color:#dc3545; color:#fff; font-size:0.78rem;">
+                                    <i t-attf-class="fa #{record.sla_badge_icon.value or 'fa-exclamation-circle'}"/>
+                                    <t t-esc="record.sla_badge_label.value or 'SLA Vencido'"/>
+                                </span>
+                            </t>
+                            <t t-elif="record.sla_status.raw_value == 'warning'">
+                                <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1" style="background-color:#ffc107; color:#212529; font-size:0.78rem;">
+                                    <i t-attf-class="fa #{record.sla_badge_icon.value or 'fa-clock-o'}"/>
+                                    <t t-esc="record.sla_badge_label.value or 'Próximo a vencer'"/>
+                                </span>
+                            </t>
+                            <t t-elif="record.sla_status.raw_value == 'closed'">
+                                <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1" style="background-color:#6c757d; color:#fff; font-size:0.78rem;">
+                                    <i t-attf-class="fa #{record.sla_badge_icon.value or 'fa-check'}"/>
+                                    <t t-esc="record.sla_badge_label.value or 'Cerrado'"/>
+                                </span>
+                            </t>
+                            <t t-else="">
+                                <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1" style="background-color:#28a745; color:#fff; font-size:0.78rem;">
+                                    <i t-attf-class="fa #{record.sla_badge_icon.value or 'fa-check-circle'}"/>
+                                    <t t-esc="record.sla_badge_label.value or 'En tiempo'"/>
+                                </span>
+                            </t>
+
+                            <!-- Horas restantes (solo si no está cerrado y hay deadline) -->
+                            <t t-if="record.sla_status.raw_value != 'closed' and record.sla_deadline.value">
+                                <t t-if="record.sla_status.raw_value == 'danger'">
+                                    <small class="text-danger fw-bold">
+                                        <i class="fa fa-exclamation-triangle"/>
+                                        <t t-esc="Math.abs(record.sla_hours_remaining.raw_value).toFixed(1)"/>
+h vencido
+                                    </small>
+                                </t>
+                                <t t-else="">
+                                    <small class="text-muted">
+                                        <i class="fa fa-hourglass-half"/>
+                                        <t t-esc="record.sla_hours_remaining.raw_value.toFixed(1)"/>
+h restantes
+                                    </small>
+                                </t>
+                            </t>
+                        </div>
+
+                        <!-- ── BADGES ADICIONALES ── -->
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            <t t-if="record.area_id.value">
+                                <span class="badge text-bg-primary" style="font-size:0.72rem;">
+                                    <i class="fa fa-sitemap"/>
+                                    <t t-esc="record.area_id.value"/>
+                                </span>
+                            </t>
+                            <t t-if="record.ticket_type.value">
+                                <span class="badge text-bg-secondary" style="font-size:0.72rem;">
+                                    <i class="fa fa-tag"/>
+                                    <t t-esc="record.ticket_type.value"/>
+                                </span>
+                            </t>
+                            <t t-if="record.customer_zone.value">
+                                <span class="badge text-bg-info" style="font-size:0.72rem;">
+                                    <i class="fa fa-map-marker"/>
+                                    <t t-esc="record.customer_zone.value"/>
+                                </span>
+                            </t>
+                            <t t-if="record.requires_visit.raw_value == true">
+                                <span class="badge text-bg-warning" style="font-size:0.72rem;">
+                                    <i class="fa fa-wrench"/>
+ Visita
+                                </span>
+                            </t>
+                            <t t-if="record.is_escalated.raw_value == true">
+                                <span class="badge text-bg-danger" style="font-size:0.72rem;">
+                                    <i class="fa fa-arrow-up"/>
+ Escalado
+                                </span>
+                            </t>
+                        </div>
+
+                        <!-- ── FECHA LÍMITE SLA ── -->
+                        <t t-if="record.sla_deadline.value">
+                            <div class="text-muted mt-2" style="font-size:0.72rem;">
+                                <i class="fa fa-calendar-times-o"/>
+                                Límite SLA: <t t-esc="record.sla_deadline.value"/>
+                            </div>
+                        </t>
+
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets por Etapa" type="bar">
+                <field name="stage_id" type="row"/>
+                <field name="id" type="measure" string="Tickets"/>
+                <field name="resolution_hours" type="measure" string="Horas Resolución"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_by_diagnosis" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.diagnosis</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets por Diagnóstico" type="bar">
+                <field name="resolution_diagnosis_id" type="row"/>
+                <field name="id" type="measure" string="Tickets"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_by_solution" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.solution</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets por Solución" type="bar">
+                <field name="resolution_solution_id" type="row"/>
+                <field name="id" type="measure" string="Tickets"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_by_month" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.month</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets por Mes" type="bar">
+                <field name="create_date" interval="month" type="row"/>
+                <field name="stage_id" type="col"/>
+                <field name="id" type="measure" string="Tickets"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_by_customer" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.customer</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Top Clientes con más Tickets" type="bar" order="DESC">
+                <field name="customer_name" type="row"/>
+                <field name="id" type="measure" string="Tickets"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_pivot" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.pivot</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis de Tickets">
+                <field name="stage_id" type="row"/>
+                <field name="incident_type_id" type="row"/>
+                <field name="ticket_type" type="col"/>
+                <field name="priority" type="col"/>
+                <field name="id" type="measure" string="Tickets"/>
+                <field name="resolution_hours" type="measure" string="Horas Resolución"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- =====================================================================
+         ACCIONES
+    ====================================================================== -->
+    <record id="action_helpdesk_ticket_all" model="ir.actions.act_window">
+        <field name="name">Todos los Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,graph,pivot,form</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_analytics" model="ir.actions.act_window">
+        <field name="name">Gráficas y Reportes</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,pivot,list,kanban,form</field>
+        <field name="context">{'search_default_filter_open': 1}</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_diagnosis" model="ir.actions.act_window">
+        <field name="name">Tickets por Diagnóstico</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,list</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_by_diagnosis"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_solution" model="ir.actions.act_window">
+        <field name="name">Tickets por Solución</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,list</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_by_solution"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_month" model="ir.actions.act_window">
+        <field name="name">Tickets por Mes</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_by_month"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_customers" model="ir.actions.act_window">
+        <field name="name">Top Clientes con más Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,list</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_by_customer"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_my" model="ir.actions.act_window">
+        <field name="name">Mis Tickets</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">['|', ('employee_id.user_id', '=', uid), ('user_id', '=', uid)]</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_open" model="ir.actions.act_window">
+        <field name="name">Tablero Kanban</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_closed', '=', False)]</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_sla" model="ir.actions.act_window">
+        <field name="name">SLA Vencido</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('sla_status', '=', 'danger'), ('is_closed', '=', False)]</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_visit" model="ir.actions.act_window">
+        <field name="name">Visitas Pendientes</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('requires_visit', '=', True), ('visit_result', 'in', ('pending', 'in_progress', 'rescheduled')), ('is_closed', '=', False)]</field>
+    </record>
+
+    <record id="action_helpdesk_ticket_postventa" model="ir.actions.act_window">
+        <field name="name">Postventa Pendiente</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('postventa_done', '=', False), ('is_closed', '=', True)]</field>
+    </record>
+
+    <record id="view_helpdesk_recurrent_partner_list" model="ir.ui.view">
+        <field name="name">res.partner.helpdesk.recurrent.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Clientes Recurrentes">
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="helpdesk_ticket_count" string="Tickets"/>
+                <field name="contract_count" string="Contratos"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_helpdesk_ticket_recurrent_customers" model="ir.actions.act_window">
+        <field name="name">Clientes Recurrentes</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="wigo_helpdesk.view_helpdesk_recurrent_partner_list"/>
+        <field name="domain">[('helpdesk_ticket_count', '&gt;', 1)]</field>
+    </record>
+
+</odoo>

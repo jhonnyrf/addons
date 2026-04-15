@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         Hereda el formulario del lead del CRM (ya modificado por wigo_crm)
+         para agregar el botón de baja de servicio.
+    ═══════════════════════════════════════════════════════════ -->
+    <record id="crm_lead_form_inherit_cancellation" model="ir.ui.view">
+        <field name="name">crm.lead.form.cancellation</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="wigo_crm.crm_lead_form_inherit_wigo"/>
+        <field name="arch" type="xml">
+
+            <!-- ── Botón "Dar de baja servicio" junto al botón de Nuevo Contrato ── -->
+            <!-- Solo visible cuando el lead está GANADO y tiene contrato activo   -->
+            <xpath expr="//button[@name='action_create_contract']" position="after">
+                <button name="action_open_cancellation_wizard"
+                        type="object"
+                        string="🔴 Dar de baja"
+                        class="btn-danger"
+                        invisible="won_status != 'won'"/>
+            </xpath>
+
+            <!-- ── Smart button: Ver bajas registradas (si existen) ── -->
+            <xpath expr="//button[@name='action_open_contract']" position="before">
+                <button name="action_view_cancellations"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-times-circle"
+                        invisible="not has_cancellation">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="cancellation_count"/>
+                        </span>
+                        <span class="o_stat_text">Baja(s)</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Campos computados necesarios (invisibles) -->
+            <xpath expr="//field[@name='won_status']" position="after">
+                <field name="has_cancellation" invisible="1"/>
+                <field name="cancellation_count" invisible="1"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

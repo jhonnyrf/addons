@@ -1,0 +1,73 @@
+# ------------------------------
+# Python
+# ------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+coverage.xml
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ------------------------------
+# Odoo
+# ------------------------------
+# Logs / pid
+*.log
+*.pid
+
+# Odoo local runtime/data (common defaults)
+.odoo/
+.local/
+
+# Generated translations / backups
+*.po~
+*.pot~
+
+# ------------------------------
+# Docker / Compose
+# ------------------------------
+# Environment files
+.env
+.env.*
+
+# Local volumes (adjust if you keep them in repo)
+postgresql_data/
+pgdata/
+
+# ------------------------------
+# Editors
+# ------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ------------------------------
+# OS / Misc
+# ------------------------------
+Thumbs.db
+*.tmp
+*.bak

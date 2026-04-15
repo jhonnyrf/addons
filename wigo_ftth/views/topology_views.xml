@@ -1,0 +1,1350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- REGIONAL -->
+    <record id="view_ftth_regional_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.regional.list</field>
+        <field name="model">wigo.ftth.regional</field>
+        <field name="arch" type="xml">
+            <list string="Regionales">
+                <field name="name"/>
+                <field name="prefix"/>
+                <field name="nodo_count" string="Nodos"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ftth_regional_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.regional.form</field>
+        <field name="model">wigo.ftth.regional</field>
+        <field name="arch" type="xml">
+            <form string="Regional">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Ciudad..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="prefix"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Nodos" name="nodos">
+                            <field name="nodo_ids" invisible="id == False" context="{'default_regional_id': id}">
+                                <list create="true" edit="false" delete="true">
+                                    <field name="name"/>
+                                    <field name="number"/>
+
+                                    <field name="olt_count" string="OLTs"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_ftth_regional" model="ir.actions.act_window">
+        <field name="name">Regionales</field>
+        <field name="res_model">wigo.ftth.regional</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define las regiones o ciudades donde se despliega la red FTTH. Cada regional puede tener múltiples nodos de agregación asociados.
+            </p>
+        </field>
+    </record>
+
+    <!-- NODO -->
+    <!-- =========================
+        LIST VIEW
+     ========================= -->
+    <record id="view_ftth_nodo_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.nodo.list</field>
+        <field name="model">wigo.ftth.nodo</field>
+        <field name="arch" type="xml">
+            <list string="Nodos">
+
+                <field name="name"/>
+                <field name="number"/>
+                <field name="node_type"/>
+                <field name="regional_id"/>
+                <field name="address"/>
+                <field name="olt_count" string="OLTs"/>
+                <field name="active" widget="boolean_toggle"/>
+
+            </list>
+        </field>
+    </record>
+
+
+    <!-- =========================
+        FORM VIEW 
+     ========================= -->
+    <record id="view_ftth_nodo_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.nodo.form</field>
+        <field name="model">wigo.ftth.nodo</field>
+        <field name="arch" type="xml">
+            <form string="Nodo de Agregación">
+
+                <sheet>
+
+                    <!-- Header -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre del nodo"/>
+                        </h1>
+                    </div>
+
+                    <!-- Main Info -->
+                    <group col="2">
+
+                        <!-- Left Column -->
+                        <group>
+                            <field name="number"/>
+                            <field name="regional_id"/>
+                            <field name="address" widget="url"/>
+                        </group>
+
+                        <!-- Right Column -->
+                        <group>
+                            <field name="node_type"/>
+                            <field name="coordinates"/>
+                            <field name="active"/>
+                        </group>
+
+                    </group>
+
+                    <!-- Tabs -->
+                    <notebook>
+
+                        <!-- OLTs -->
+                        <page string="OLTs" name="olts">
+                            <field name="olt_ids" invisible="not id" context="{'default_node_id': id}">
+                                <list string="OLTs del Nodo">
+                                    <field name="olt_code"/>
+                                    <field name="name"/>
+                                    <field name="brand"/>
+                                    <field name="model"/>
+                                    <field name="port_count" string="Puertos"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Notes -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================
+        SEARCH VIEW
+     ========================= -->
+    <record id="view_ftth_nodo_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.nodo.search</field>
+        <field name="model">wigo.ftth.nodo</field>
+        <field name="arch" type="xml">
+            <search string="Nodos FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="name"/>
+                <field name="number"/>
+                <field name="regional_id"/>
+                <field name="node_type"/>
+                <field name="address"/>
+
+                <separator/>
+
+                <!-- Filtros de tipo de nodo -->
+                <filter name="filter_aggregation" string="Agregación" domain="[('node_type', '=', 'aggregation')]"/>
+                <filter name="filter_access" string="Acceso" domain="[('node_type', '=', 'acess')]"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_regional" string="Por Regional" domain="[]" context="{'group_by': 'regional_id'}"/>
+                <filter name="filter_by_node_type" string="Por Tipo de Nodo" domain="[]" context="{'group_by': 'node_type'}"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="regional_id" string="Regional"/>
+                    <field name="node_type" string="Tipo de Nodo"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ========================= 
+        ACTION 
+    ========================= -->
+    <record id="action_ftth_nodo" model="ir.actions.act_window">
+        <field name="name">Nodos</field>
+        <field name="res_model">wigo.ftth.nodo</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Cada nodo representa un punto de concentración en la red FTTH,
+            donde se instalan las OLTs. Asocia cada nodo a una regional y
+            define su ubicación física.
+            </p>
+        </field>
+    </record>
+
+    <!-- TECHNOLOGY -->
+    <!-- =========================
+        LIST VIEW
+     ========================= -->
+    <record id="view_ftth_technology_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.technology.list</field>
+        <field name="model">wigo.ftth.technology</field>
+        <field name="arch" type="xml">
+            <list string="Tecnologías FTTH">
+                <field name="name"/>
+                <field name="prefix"/>
+
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <!-- =========================
+        FORM VIEW 
+     ========================= -->
+    <record id="view_ftth_technology_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.technology.form</field>
+        <field name="model">wigo.ftth.technology</field>
+        <field name="arch" type="xml">
+            <form string="Tecnología">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tecnología..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="prefix"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- ========================= 
+        ACTION 
+    ========================= -->
+    <record id="action_ftth_technology" model="ir.actions.act_window">
+        <field name="name">Tecnologías</field>
+        <field name="res_model">wigo.ftth.technology</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define las tecnologías de acceso utilizadas en la red FTTH (GPON, XGS-PON, etc.) y asigna un prefijo único para cada una, que se utilizará en la codificación de OLTs y puertos.
+            </p>
+        </field>
+    </record>
+
+    <!-- OLT -->
+    <!-- =========================
+        LIST VIEW 
+     ========================= -->
+    <record id="view_ftth_olt_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.list</field>
+        <field name="model">wigo.ftth.olt</field>
+        <field name="arch" type="xml">
+            <list string="OLTs">
+
+                <field name="olt_code" string="Código"/>
+                <field name="name" string="Nombre"/>
+                <field name="brand"/>
+                <field name="model"/>
+                <field name="node_id"/>
+                <field name="technology_id" string="Tecnología"/>
+                <field name="port_count" string="Puertos"/>
+                <field name="active" widget="boolean_toggle"/>
+
+            </list>
+        </field>
+    </record>
+
+
+    <!-- =========================
+        FORM VIEW 
+     ========================= -->
+    <record id="view_ftth_olt_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.form</field>
+        <field name="model">wigo.ftth.olt</field>
+        <field name="arch" type="xml">
+            <form string="OLT">
+                <header>
+                    <button name="action_open_generate_ports_wizard" type="object" string="Generar Puertos" class="oe_highlight" invisible="id == False"/>
+                </header>
+                <sheet>
+                    <!-- Header -->
+                    <div class="oe_title">
+                        <label for="olt_code" string="Código OLT" class="o_form_label"/>
+                        <h1>
+                            <field name="olt_code" readonly="1" placeholder="Código OLT"/>
+                        </h1>
+                        <h2>
+                            <field name="name" placeholder="Nombre descriptivo del OLT"/>
+                        </h2>
+                    </div>
+
+                    <!-- Main Layout -->
+                    <group col="1">
+
+                        <!-- Left Column -->
+                        <group string="Identificación" col="2">
+                            <group>
+                                <field name="brand"/>
+                                <field name="model"/>
+                                <field name="active"/>
+                            </group>
+
+                            <group>
+                                <field name="node_id"/>
+                                <field name="technology_id"/>
+                            </group>
+
+
+                        </group>
+
+                        <!-- Code Info -->
+                        <group string="Información de codificación" col="2">
+
+                            <group>
+                                <field name="regional_prefix" readonly="1"/>
+                                <field name="node_number" readonly="1"/>
+                            </group>
+
+                            <group>
+                                <field name="olt_number" readonly="1"/>
+                                <field name="technology_prefix" readonly="1"/>
+                            </group>
+
+                        </group>
+
+                    </group>
+
+                    <!-- Tabs -->
+                    <notebook>
+
+                        <!-- Ports -->
+                        <page string="Puertos PON" name="ports">
+                            <field name="port_ids" invisible="not id">
+                                <list string="Puertos PON">
+                                    <field name="interface_port" string="Interfaz PON"/>
+                                    <field name="port_number" string="Nº Puerto"/>
+                                    <field name="technology_id" string="Tecnología"/>
+                                    <field name="capacity_max"/>
+                                    <field name="used_subinterfaces"/>
+                                    <field name="free_subinterfaces"/>
+                                    <field name="occupancy_percent" widget="progressbar"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- ODN -->
+                        <page string="ODNz" name="odns">
+                            <field name="odn_ids" invisible="not id">
+                                <list string="Puertos PON">
+                                    <field name="name" string="Nombre"/>
+                                    <field name="odn_number" string="Nº ODN"/>
+                                    <field name="odf_port" string="Puerto ODF "/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- Notes -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================
+     SEARCH VIEW ========================= -->
+    <record id="view_ftth_olt_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.search</field>
+        <field name="model">wigo.ftth.olt</field>
+        <field name="arch" type="xml">
+            <search string="OLTs FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="olt_code"/>
+                <field name="name"/>
+                <field name="brand"/>
+                <field name="model"/>
+                <field name="node_id"/>
+                <field name="technology_id"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_node" string="Por Nodo" domain="[]" context="{'group_by': 'node_id'}"/>
+                <filter name="filter_by_technology" string="Por Tecnología" domain="[]" context="{'group_by': 'technology_id'}"/>
+                <filter name="filter_by_brand" string="Por Marca" domain="[]" context="{'group_by': 'brand'}"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="node_id" string="Nodo"/>
+                    <field name="technology_id" string="Tecnología"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ========================= ACTION ========================= -->
+    <record id="action_ftth_olt" model="ir.actions.act_window">
+        <field name="name">OLTs</field>
+        <field name="res_model">wigo.ftth.olt</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Define las OLTs instaladas en cada nodo. Cada OLT tiene un código único
+            que sigue una estructura definida para facilitar su identificación.
+            </p>
+        </field>
+    </record>
+
+    <!-- PUERTO PON -->
+    <!-- =========================
+        LIST VIEW
+    ========================= -->
+    <record id="view_ftth_olt_port_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.port.list</field>
+        <field name="model">wigo.ftth.olt.port</field>
+        <field name="arch" type="xml">
+            <list string="Puertos PON" decoration-danger="occupancy_percent &gt;= 90" decoration-warning="occupancy_percent &gt;= 70 and occupancy_percent &lt; 90" decoration-success="occupancy_percent &lt; 70">
+                <field name="olt_id" string="OLT"/>
+                <field name="interface_port" string="Interfaz PON"/>
+                <field name="port_number" string="Nº Puerto"/>
+                <field name="technology_id" string="Tecnología"/>
+                <field name="capacity_max" string="Capacidada"/>
+                <field name="used_subinterfaces" string="Usadas"/>
+                <field name="free_subinterfaces" string="Libres"/>
+                <field name="occupancy_percent" string="Ocupacion %" widget="progressbar" options="{'editable': false, 'current_value': 'occupancy_percent', 'max_value': 100}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <!-- =========================
+        FORM VIEW
+    ========================= -->
+    <record id="view_ftth_olt_port_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.port.form</field>
+        <field name="model">wigo.ftth.olt.port</field>
+        <field name="arch" type="xml">
+            <form string="Puerto PON">
+                <!-- Header -->
+                <header>
+                    <button name="action_generate_subinterfaces" type="object" string="Generar Subinterfaces" class="btn-primary" confirm="¿Desea generar subinterfaces hasta la capacidad máxima?" invisible="id == False" />
+                </header>
+                <sheet>
+
+                    <!-- Title -->
+                    <div class="oe_title">
+                        <label for="interface_port" string="Interfaz PON" class="o_form_label"/>
+                        <h1>
+                            <field name="interface_port" class="o_field_widget text-primary" readonly="1" />
+                        </h1>
+                    </div>
+
+                    <!-- Information -->
+                    <group>
+                        <!-- Identification -->
+                        <group string="Identificación del Puerto" name="group_identificacion">
+                            <field name="prefix"/>
+                            <label for="chassis" string="Chasis / Slot / Puerto"/>
+                            <div class="o_row">
+                                <field name="chassis" class="o_field_widget me-1"/>
+                                <span class="text-muted mx-1">/</span>
+                                <field name="slot" class="o_field_widget me-1"/>
+                                <span class="text-muted mx-1">/</span>
+                                <field name="port_number" class="o_field_widget"/>
+                            </div>
+                            <field name="active"/>
+
+                        </group>
+
+                        <!-- OLT Link -->
+                        <group string="Vinculación OLT" name="group_olt">
+                            <field name="olt_id" options="{'no_create': True}" widget="many2one" onchange="1"/>
+                            <field name="technology_id" options="{'no_create': True}" widget="many2one"/>
+
+                            <field name="capacity_max"/>
+                        </group>
+                    </group>
+                    <!-- Occupancy -->
+                    <group string="Ocupación del Puerto" name="group_ocupacion">
+                        <group colspan="2">
+                            <div class="o_field_widget mb-3 w-100">
+                                <div class="row w-100">
+                                    <div class="col-3 text-center border-end">
+                                        <div class="text-muted small">Capacidad máxima</div>
+                                        <field name="capacity_max" readonly="1" class="fw-bold fs-5"/>
+                                    </div>
+                                    <div class="col-3 text-center border-end">
+                                        <div class="text-muted small">Usadas</div>
+                                        <field name="used_subinterfaces" readonly="1" class="fw-bold fs-5 text-danger"/>
+                                    </div>
+                                    <div class="col-3 text-center border-end">
+                                        <div class="text-muted small">Libres</div>
+                                        <field name="free_subinterfaces" readonly="1" class="fw-bold fs-5 text-success"/>
+                                    </div>
+                                    <div class="col-3 text-center d-flex flex-column align-items-center justify-content-center">
+                                        <div class="text-muted small">Ocupación</div>
+                                        <div class="w-60">
+                                            <field name="occupancy_percent" readonly="1" widget="progressbar"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </group>
+                    </group>
+                    <!-- Tabs -->
+                    <notebook>
+                        <!-- Box Groups -->
+                        <page string="Grupos de Cajas" name="box_groups">
+                            <field name="box_group_ids" invisible="id == False" context="{'default_olt_port_id': id}">
+                                <list >
+                                    <field name="group_number" string="Grupo" optional="show"/>
+                                    <field name="olt_port_id" string="Puerto OLT" optional="show"/>
+                                    <field name="zone_id" string="Zona" optional="show"/>
+                                    <field name="odn_id" string="ODN" optional="show"/>
+                                    <field name="splitter_level_1" string="Splitter 1er niv." optional="show"/>
+                                    <field name="splitter_level_2" string="Splitter 2do niv." optional="show"/>
+                                    <field name="box_count" string="NAPs" optional="show"/>
+                                    <field name="total_ports" string="Total Puertos" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <!-- Subinterfaces -->
+                        <page string="Subinterfaces" name="subinterfaces">
+                            <field name="subinterface_ids" invisible="id == False">
+                                <list>
+                                    <field name="code" string="Subinterfaz" decoration-muted="state == 'free'"/>
+                                    <field name="olt_port_id" string="Puerto OLT"/>
+                                    <field name="olt_id" string="OLT"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'free'" decoration-danger="state == 'occupied'" decoration-warning="state == 'reserved'" string="Estado"/>
+                                    <field name="client_service_id" string="Cliente" optional="show"/>
+                                    <field name="onu_id" string="ONU" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <!-- Notes -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- =========================
+        ACTION
+    ========================= -->
+    <record id="action_ftth_olt_port" model="ir.actions.act_window">
+        <field name="name">Puertos PON</field>
+        <field name="res_model">wigo.ftth.olt.port</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cada puerto PON en una OLT tiene una capacidad máxima de subinterfaces (clientes) que puede soportar. Esta vista te permite monitorear la ocupación de cada puerto y gestionar las subinterfaces asociadas.
+            </p>
+        </field>
+    </record>
+
+    <!-- ODN — con ODF/Puerto -->
+    <!-- =========================
+             LIST VIEW
+        ========================== -->
+    <record id="view_ftth_odn_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.odn.list</field>
+        <field name="model">wigo.ftth.odn</field>
+        <field name="arch" type="xml">
+            <list string="ODN">
+                <field name="name" string="Nombre ODN"/>
+                <field name="odn_number" string="N° ODN"/>
+                <field name="olt_id" string="OLT asociada"/>
+                <field name="odf_port" string="ODF / Puerto"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================
+             FORM VIEW
+        ========================== -->
+    <record id="view_ftth_odn_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.odn.form</field>
+        <field name="model">wigo.ftth.odn</field>
+        <field name="arch" type="xml">
+
+            <form string="ODN — Red de Distribución Óptica">
+
+                <sheet>
+
+                    <!-- headerr -->
+                    <div class="oe_title">
+                        <label for="name" string="ODN"/>
+                        <h1>
+                            <field name="name" placeholder="Ej: ODN_01..."/>
+                        </h1>
+                    </div>
+
+                    <!-- overview info-->
+                    <group string="Información General" col="2" name="group_general">
+
+                        <group>
+                            <field name="odn_number" readonly="1"/>
+                            <field name="odf_port" placeholder="Ej: 01, 02"/>
+                        </group>
+
+                        <group>
+                            <field name="olt_id" domain="[('odn_id', '=', False)]"/>
+                            <field name="node_name"/>
+
+                            <field name="active"/>
+                        </group>
+
+                    </group>
+
+
+                    <!-- notebook -->
+                    <notebook>
+
+                        <!-- box groups -->
+                        <page string="Grupos de Cajas / NAPs" name="box_groups">
+                            <field name="box_group_ids" nolabel="1" invisible="not id">
+
+                                <list string="Grupos de Cajas">
+                                    <field name="group_number" string="Grupo"/>
+                                    <field name="zone_id" string="Zona"/>
+                                    <field name="olt_port_id" string="Puerto OLT"/>
+                                    <field name="splitter_level_1" string="Splitter 1er niv."/>
+                                    <field name="splitter_level_2" string="Splitter 2do niv."/>
+                                    <field name="box_count" string="NAPs"/>
+                                    <field name="total_ports" string="Puertos"/>
+                                </list>
+
+                            </field>
+                        </page>
+
+                        <!-- notes -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+            </form>
+
+        </field>
+    </record>
+
+    <!-- =========================
+         SEARCH VIEW
+        ========================== -->
+    <record id="view_ftth_odn_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.odn.search</field>
+        <field name="model">wigo.ftth.odn</field>
+        <field name="arch" type="xml">
+            <search string="ODN FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="name"/>
+                <field name="odn_number"/>
+                <field name="olt_id"/>
+                <field name="odf_port"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_olt" string="Por OLT" domain="[]" context="{'group_by': 'olt_id'}"/>
+                <filter name="filter_by_group_count" string="Con Grupos" domain="[('box_group_ids', '!=', False)]"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="olt_id" string="OLT"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- =========================
+             ACTION
+        ========================== -->
+    <record id="action_ftth_odn" model="ir.actions.act_window">
+        <field name="name">ODN</field>
+        <field name="res_model">wigo.ftth.odn</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                    La ODN (Red de Distribución Óptica) representa la parte de la red FTTH
+                    que conecta las OLTs con las cajas de distribución (NAPs). Cada ODN está
+                    asociada a un puerto específico en una OLT y puede tener múltiples grupos
+                    de cajas vinculados.
+            </p>
+        </field>
+    </record>
+
+    <!-- GRUPO DE CAJAS — con splitters -->
+    <!-- ==========================================================================
+         LIST VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_group_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.group.list</field>
+        <field name="model">wigo.ftth.box.group</field>
+        <field name="arch" type="xml">
+            <list string="Grupos de Cajas / Zonas">
+
+                <field name="group_number" string="Grupo"/>
+                <field name="zone_id" string="Zona"/>
+                <field name="olt_port_id" string="Puerto OLT"/>
+                <field name="olt_id" string="OLT"/>
+
+                <field name="odn_id" string="ODN"/>
+
+                <field name="splitter_level_1" string="Splitter 1er"/>
+                <field name="splitter_level_2" string="Splitter 2do"/>
+
+                <field name="box_count" string="NAPs"/>
+                <field name="total_ports" string="Puertos"/>
+
+                <field name="active" widget="boolean_toggle"/>
+
+            </list>
+        </field>
+    </record>
+
+    <!-- ==========================================================================
+         FORM VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_group_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.group.form</field>
+        <field name="model">wigo.ftth.box.group</field>
+        <field name="arch" type="xml">
+            <form string="Grupo de Cajas / Zona">
+
+                <sheet>
+
+                    <!-- TITLE -->
+                    <div class="oe_title">
+                        <label for="group_number" string="Grupo"/>
+                        <h1>
+                            <field name="group_number" style="width: 4rem;" readonly="1"/>
+                            <span class="o_field_char" invisible="not zone_id"> — </span>
+                            <field name="zone_id" style="width: 15rem;" placeholder="Zona..."/>
+                        </h1>
+                    </div>
+
+                    <!-- MAIN DATA -->
+                    <group col="2">
+
+                        <!-- NETWORK ASSOCIATION -->
+                        <group string="Asociación de red">
+
+                            <field name="odn_id"/>
+
+                            <!-- OLT PORT (conditional display) -->
+                            <field name="olt_id" readonly="1"/>
+                            <field name="olt_port_id" domain="[('olt_id', '=', olt_id)]" readonly= "not olt_id"/>
+                            <field name="active"/>
+                            <field name="total_ports" readonly="1" string="Total puertos del grupo"/>
+
+                        </group>
+
+                        <!-- SPLITTERS -->
+                        <group string="Splitters de esta zona">
+                            <field name="splitter_level_1"/>
+                            <field name="splitter_level_2"/>
+                        </group>
+
+                    </group>
+
+                    <!-- NOTEBOOK -->
+                    <notebook>
+
+                        <!-- BOXES -->
+                        <page string="Cajas NAP" name="boxes">
+                            <field name="box_ids" invisible="id == False" context="{'default_box_group_id': id}" mode="list,form">
+                                <list>
+
+                                    <field name="identifier" placeholder="01A, 01B..."/>
+                                    <field name="port_capacity" string="Capacidad"/>
+                                    <field name="free_ports" string="Libres" readonly="1"/>
+                                    <field name="gps_coordinates" string="Coordenadas GPS"/>
+
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- NOTES -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- ==========================================================================
+         SEARCH VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_group_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.group.search</field>
+        <field name="model">wigo.ftth.box.group</field>
+        <field name="arch" type="xml">
+            <search string="Grupos de Cajas FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="group_number"/>
+                <field name="zone_id"/>
+                <field name="olt_id"/>
+                <field name="olt_port_id"/>
+                <field name="odn_id"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_zone" string="Por Zona" domain="[]" context="{'group_by': 'zone_id'}"/>
+                <filter name="filter_by_olt" string="Por OLT" domain="[]" context="{'group_by': 'olt_id'}"/>
+                <filter name="filter_by_odn" string="Por ODN" domain="[]" context="{'group_by': 'odn_id'}"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="zone_id" string="Zona"/>
+                    <field name="olt_id" string="OLT"/>
+                    <field name="odn_id" string="ODN"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ==========================================================================
+         ACTION
+    ========================================================================== -->
+    <record id="action_ftth_box_group" model="ir.actions.act_window">
+        <field name="name">Grupos de Cajas / Zonas</field>
+        <field name="res_model">wigo.ftth.box.group</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Los grupos de cajas (o zonas) permiten organizar las cajas NAP en función de su ubicación geográfica, la OLT y puerto al que están asociadas, y los splitters que utilizan. Esto facilita la gestión operativa y el seguimiento del despliegue de la red FTTH.
+            </p>
+        </field>
+    </record>
+
+    <!-- CAJAS NAP -->
+    <!-- ==========================================================================
+         LIST VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.list</field>
+        <field name="model">wigo.ftth.box</field>
+        <field name="arch" type="xml">
+            <list string="Cajas NAP">
+                <field name="identifier"/>
+                <field name="box_group_id"/>
+                <field name="port_capacity" string="Capacidad"/>
+                <field name="free_ports" string="Libres"/>
+                <field name="gps_coordinates" string="Coordenadas GPS"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <!-- ==========================================================================
+         FORM VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.form</field>
+        <field name="model">wigo.ftth.box</field>
+        <field name="arch" type="xml">
+            <form string="Caja NAP">
+                <header>
+                    <button name="action_open_generate_ports_wizard" type="object" string="Generar Puertos" class="btn-primary" invisible="id == False or port_ids"/>
+
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="identifier" string="NAP"/>
+                        <h1>
+                            <field name="identifier" placeholder="Ej: 01A, 02B..." readonly="1"/>
+                        </h1>
+                    </div>
+                    <group col="2">
+                        <group string="Información de NAP">
+                            <field name="box_group_id"/>
+                            <field name="port_capacity"/>
+                            <field name="free_ports" readonly="1"/>
+                        </group>
+                        <group string="Ubicación">
+
+                            <field name="physical_location" widget="url" />
+                            <field name="gps_coordinates"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Puertos" name="ports">
+                            <field name="port_ids" invisible="id == False">
+                                <list>
+                                    <field name="port_number"/>
+
+                                    <field name="subinterface_id"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'free'" decoration-danger="state == 'occupied'" decoration-warning="state == 'reserved'"/>
+
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas" name="notas">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ==========================================================================
+         SEARCH VIEW
+    ========================================================================== -->
+    <record id="view_ftth_box_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.search</field>
+        <field name="model">wigo.ftth.box</field>
+        <field name="arch" type="xml">
+            <search string="Cajas NAP FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="identifier"/>
+                <field name="box_group_id"/>
+                <field name="physical_location"/>
+                <field name="gps_coordinates"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por capacidad -->
+                <filter name="filter_8ports" string="8 puertos" domain="[('port_capacity', '=', '8')]"/>
+                <filter name="filter_16ports" string="16 puertos" domain="[('port_capacity', '=', '16')]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_group" string="Por Grupo de Caja" domain="[]" context="{'group_by': 'box_group_id'}"/>
+                <filter name="filter_by_capacity" string="Por Capacidad" domain="[]" context="{'group_by': 'port_capacity'}"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="box_group_id" string="Grupo de Caja"/>
+                    <field name="port_capacity" string="Capacidad"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+    <!-- ==========================================================================
+         ACTION
+    ========================================================================== -->
+    <record id="action_ftth_box" model="ir.actions.act_window">
+        <field name="name">Cajas NAP</field>
+        <field name="res_model">wigo.ftth.box</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Las cajas NAP (Network Access Point) son puntos de distribución en la red FTTH donde se conectan los clientes finales. Cada caja tiene un número determinado de puertos que pueden estar libres, reservados o ocupados. Esta vista te permite gestionar cada caja y su estado operativo.
+            </p>
+        </field>
+    </record>
+
+    <!-- PUERTO DE CAJA -->
+    <record id="view_ftth_box_port_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.port.list</field>
+        <field name="model">wigo.ftth.box.port</field>
+        <field name="arch" type="xml">
+            <list string="Puertos de Caja NAP" decoration-success="state == 'free'" decoration-primary="state == 'occupied'" decoration-warning="state == 'reserved'">
+                <field name="box_id" string="NAP"/>
+                <field name="port_number" string="Puerto"/>
+                <field name="state" widget="badge" decoration-success="state == 'free'" decoration-primary="state == 'occupied'" decoration-warning="state == 'reserved'"/>
+
+                <field name="subinterface_id" string="Subinterfaz OLT"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ftth_box_port_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.port.form</field>
+        <field name="model">wigo.ftth.box.port</field>
+        <field name="arch" type="xml">
+            <form string="Puerto de Caja NAP">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="free,reserved,occupied"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Infraestructura" bg_color="text-bg-primary" invisible="state != 'occupied'"/>
+                    <widget name="web_ribbon" title="Cliente Activo" bg_color="text-bg-success" invisible="state != 'reserved'"/>
+                    <div class="oe_title">
+                        <label for="port_number" string="Puerto NAP N."/>
+                        <h1>
+                            <field name="port_number"/>
+                        </h1>
+                    </div>
+                    <group col="2">
+                        <group string="Ubicacion">
+                            <field name="box_id"/>
+                            <field name="active" />
+
+                        </group>
+                        <group string="Estado y asignacion">
+                            <field name="state"/>
+                            <field name="subinterface_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notas" name="notas">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_box_port_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.box.port.search</field>
+        <field name="model">wigo.ftth.box.port</field>
+        <field name="arch" type="xml">
+            <search string="Puertos Caja FTTH">
+
+                <!-- Búsquedas rápidas -->
+                <field name="port_number"/>
+                <field name="box_id"/>
+                <field name="olt_id"/>
+                <field name="olt_port_id"/>
+                <field name="subinterface_id"/>
+
+                <separator/>
+
+                <!-- Filtros de estado -->
+                <filter name="filter_free" string="Libres" domain="[('state', '=', 'free')]"/>
+
+                <filter name="filter_occupied" string="Ocupados" domain="[('state', '=', 'occupied')]"/>
+
+                <filter name="filter_reserved" string="Reservados" domain="[('state', '=', 'reserved')]"/>
+
+                <separator/>
+
+
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- Filtros por relación -->
+                <filter name="filter_by_olt" string="Por OLT" domain="[]" context="{'group_by': 'olt_id'}"/>
+
+                <filter name="filter_by_box" string="Por Caja NAP" domain="[]" context="{'group_by': 'box_id'}"/>
+
+                <filter name="filter_by_olt_port" string="Por Puerto OLT" domain="[]" context="{'group_by': 'olt_port_id'}"/>
+
+                <separator/>
+
+                <!-- SearchPanel (sidebar) -->
+                <searchpanel>
+                    <field name="olt_id" string="OLT"/>
+                    <field name="olt_port_id" string="Puerto OLT"/>
+                    <field name="box_id" string="Caja NAP"/>
+                    <field name="state" string="Estado"/>
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+    <record id="action_ftth_box_port" model="ir.actions.act_window">
+        <field name="name">Puertos de Caja NAP</field>
+        <field name="res_model">wigo.ftth.box.port</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cada caja NAP tiene un número determinado de puertos que se utilizan para conectar a los clientes finales. Esta vista te permite gestionar el estado de cada puerto (libre, reservado, ocupado) y su vinculación con las subinterfaces de las OLTs.
+            </p>
+        </field>
+    </record>
+
+
+    <!-- SUBINTERFACES OLT -->
+    <record id="view_ftth_subinterface_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.subinterface.list</field>
+        <field name="model">wigo.ftth.subinterface</field>
+        <field name="arch" type="xml">
+            <list string="Subinterfaces OLT" decoration-success="state == 'free'" decoration-primary="state == 'occupied'" decoration-warning="state == 'reserved'">
+                <field name="code" string="Subinterfaz"/>
+                <field name="olt_id" string="OLT"/>
+                <field name="olt_port_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'free'" decoration-primary="state == 'occupied'" decoration-warning="state == 'reserved'"/>
+                <field name="client_service_id" string="Cliente"/>
+                <field name="onu_id" string="ONU"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ftth_subinterface_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.subinterface.form</field>
+        <field name="model">wigo.ftth.subinterface</field>
+        <field name="arch" type="xml">
+            <form string="Subinterfaz OLT">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="free,reserved,occupied"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Infraestructura" bg_color="text-bg-primary" invisible="state != 'occupied'"/>
+                    <widget name="web_ribbon" title="Cliente Activo" bg_color="text-bg-success" invisible="state != 'reserved'"/>
+
+                    <div class="oe_title">
+                        <label for="code" string="Subinterfaz"/>
+                        <h1>
+                            <field name="code" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+
+                        <!-- ================= PUERTO OLT ================= -->
+                        <group string="Puerto OLT">
+                            <field name="olt_port_id" required="1"/>
+                            <field name="subinterface_number"/>
+                            <field name="active"/>
+                        </group>
+
+                        <!-- ================= ASIGNACIÓN ================= -->
+                        <group string="Asignación">
+                            <field name="state"/>
+                            <field name="client_service_id" readonly="1"/>
+                            <field name="onu_id" readonly="1"/>
+                        </group>
+
+                        <!-- ================= JERARQUÍA FTTH ================= -->
+                        <group string="Jerarquía FTTH">
+
+                            <field name="box_group_id" domain="[('olt_port_id', '=', olt_port_id)]" options="{'no_create': True}"/>
+
+                            <field name="box_id" domain="[('box_group_id', '=', box_group_id)]" options="{'no_create': True}"/>
+
+                            <field name="box_port_id" domain="['|', ('id', '=', box_port_id), '&amp;', ('state', '=', 'free'), ('box_id', '=?', box_id)]" options="{'no_create': True}"/>
+                        </group>
+
+                    </group>
+                    <notebook>
+                        <page string="Notas" name="notas">
+                            <field name="notes" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_ftth_subinterface_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.subinterface.search</field>
+        <field name="model">wigo.ftth.subinterface</field>
+        <field name="arch" type="xml">
+            <search string="Subinterfaces OLT">
+
+                <!-- Búsqueda rápida -->
+                <field name="code"/>
+                <field name="subinterface_number"/>
+                <field name="olt_port_id"/>
+                <field name="olt_id"/>
+                <field name="box_group_id"/>
+                <field name="box_id"/>
+                <field name="box_port_id"/>
+                <field name="client_service_id"/>
+                <field name="onu_id"/>
+
+                <separator/>
+
+                <!-- =========================
+                 FILTROS DE ESTADO
+            ========================== -->
+
+                <filter name="filter_free" string="Libres" domain="[('state', '=', 'free')]"/>
+
+                <filter name="filter_occupied" string="Ocupadas" domain="[('state', '=', 'occupied')]"/>
+
+                <filter name="filter_reserved" string="Reservadas" domain="[('state', '=', 'reserved')]"/>
+
+
+
+                <separator/>
+
+                <!-- =========================
+                 ASIGNACIÓN / USO
+            ========================== -->
+
+                <filter name="filter_assigned_box" string="Con caja asignada" domain="[('box_id', '!=', False)]"/>
+
+                <filter name="filter_unassigned_box" string="Sin caja" domain="[('box_id', '=', False)]"/>
+
+                <filter name="filter_assigned_port" string="Con puerto de caja" domain="[('box_port_id', '!=', False)]"/>
+
+                <filter name="filter_free_port" string="Sin puerto de caja" domain="[('box_port_id', '=', False)]"/>
+
+                <filter name="filter_assigned_client" string="Con cliente" domain="[('client_service_id', '!=', False)]"/>
+
+                <filter name="filter_unassigned_client" string="Sin cliente" domain="[('client_service_id', '=', False)]"/>
+
+                <separator/>
+
+                <!-- =========================
+                 AGRUPACIONES
+            ========================== -->
+
+                <group >
+
+                    <filter name="group_by_olt" string="OLT" context="{'group_by': 'olt_id'}"/>
+
+                    <filter name="group_by_olt_port" string="Puerto OLT" context="{'group_by': 'olt_port_id'}"/>
+
+                    <filter name="group_by_box_group" string="Grupo de caja" context="{'group_by': 'box_group_id'}"/>
+
+                    <filter name="group_by_box" string="Caja" context="{'group_by': 'box_id'}"/>
+
+                    <filter name="group_by_state" string="Estado" context="{'group_by': 'state'}"/>
+
+                </group>
+
+                <!-- =========================
+                 SIDEBAR (SEARCHPANEL)
+            ========================== -->
+
+                <searchpanel>
+
+                    <field name="olt_id" string="OLT"/>
+                    <field name="olt_port_id" string="Puerto OLT"/>
+                    <field name="box_group_id" string="Grupo Caja"/>
+                    <field name="box_id" string="Caja"/>
+                    <field name="state" string="Estado"/>
+
+                </searchpanel>
+
+            </search>
+        </field>
+    </record>
+    <record id="action_ftth_subinterface" model="ir.actions.act_window">
+        <field name="name">Subinterfaces OLT</field>
+        <field name="res_model">wigo.ftth.subinterface</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Las subinterfaces de las OLTs representan las conexiones individuales que se asignan a los clientes finales. Cada subinterface tiene un estado que indica si está libre, reservada o ocupada, y puede estar vinculada a un servicio de cliente específico y a una ONU (Optical Network Unit).
+            </p>
+        </field>
+    </record>
+
+</odoo>

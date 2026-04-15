@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ftth_capacity_olt_port_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.port.capacity.list</field>
+        <field name="model">wigo.ftth.olt.port</field>
+        <field name="arch" type="xml">
+            <list string="Ocupación de Puertos OLT" decoration-danger="occupancy_percent &gt;= 90" decoration-warning="occupancy_percent &gt;= 70 and occupancy_percent &lt; 90" decoration-success="occupancy_percent &lt; 70">
+                <field name="olt_id" string="OLT"/>
+                <field name="interface_port" string="Interfaz PON"/>
+                <field name="port_number" string="Nº Puerto"/>
+                <field name="technology_id" string="Tecnología"/>
+                <field name="capacity_max" string="Capacidada"/>
+                <field name="used_subinterfaces" string="Usadas"/>
+                <field name="free_subinterfaces" string="Libres"/>
+                <field name="occupancy_percent" string="Ocupación %" widget="progressbar" options="{'editable': false, 'current_value': 'occupancy_percent', 'max_value': 100}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ftth_olt_port_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.olt.port.search</field>
+        <field name="model">wigo.ftth.olt.port</field>
+        <field name="arch" type="xml">
+            <search string="Puertos PON">
+                <field name="interface_port" string="Interfaz PON"/>
+                <searchpanel>
+                    <field name="olt_id"/>
+                    <field name="technology_id"/>
+                </searchpanel>
+                <separator/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="filter_high_ocupacion" string="Alta ocupación (≥90%)" domain="[('occupancy_percent', '&gt;=', 90)]"/>
+                <filter name="filter_medium_ocupacion" string="Ocupación media (70-89%)" domain="[('occupancy_percent', '&gt;=', 70), ('occupancy_percent', '&lt;', 90)]"/>
+                <filter name="filter_low_ocupacion" string="Baja ocupación (&lt;70%)" domain="[('occupancy_percent', '&lt;', 70)]"/>
+                <group >
+                    <filter name="group_by_olt" string="OLT" context="{'group_by': 'olt_id'}"/>
+                    <filter name="group_by_tecnologia" string="Tecnología" context="{'group_by': 'technology_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_ftth_capacity" model="ir.actions.act_window">
+        <field name="name">Capacidad de Puertos OLT</field>
+        <field name="res_model">wigo.ftth.olt.port</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_ftth_capacity_olt_port_list"/>
+        <field name="search_view_id" ref="view_ftth_olt_port_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay puertos OLT registrados aún.
+            </p>
+        </field>
+    </record>
+
+
+</odoo>

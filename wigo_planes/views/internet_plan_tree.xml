@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PLANES - Lista
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_internet_plan_list" model="ir.ui.view">
+        <field name="name">internet.plan.list</field>
+        <field name="model">internet.plan</field>
+        <field name="arch" type="xml">
+            <list string="Planes de Internet" decoration-muted="not active">
+                <field name="plan_identifier"/>
+                <field name="name"/>
+                <field name="plan_type" widget="badge" decoration-success="plan_type == 'fiber'" decoration-info="plan_type == 'wireless'" decoration-warning="plan_type == 'cable'"/>
+                <field name="speed" string="Mbps"/>
+                <field name="download_speed" string="DOWN (Mbps)"/>
+                <field name="upload_speed" string="UP (Mbps)"/>
+                <field name="price"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

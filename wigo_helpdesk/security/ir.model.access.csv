@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_helpdesk_stage_all,helpdesk.stage all,model_helpdesk_stage,,1,1,1,1
+access_helpdesk_category_all,helpdesk.category all,model_helpdesk_category,,1,1,1,1
+access_helpdesk_tag_all,helpdesk.tag all,model_helpdesk_tag,,1,1,1,1
+access_helpdesk_team_all,helpdesk.team all,model_helpdesk_team,,1,1,1,1
+access_helpdesk_ticket_all,helpdesk.ticket all,model_helpdesk_ticket,,1,1,1,1
+access_helpdesk_knowledge_all,helpdesk.knowledge all,model_helpdesk_knowledge,,1,1,1,1
+access_helpdesk_assign_wizard_all,helpdesk.assign.wizard all,model_helpdesk_assign_wizard,,1,1,1,1
+access_helpdesk_close_wizard_all,helpdesk.close.wizard all,model_helpdesk_close_wizard,,1,1,1,1
+access_helpdesk_sla_advanced_wizard_all,helpdesk.sla.advanced.wizard all,model_helpdesk_sla_advanced_wizard,,1,1,1,1
+access_helpdesk_incident_type_user,helpdesk.incident.type user,model_helpdesk_incident_type,base.group_user,1,1,1,1
+access_helpdesk_sla_config_all,helpdesk.sla.config all,model_helpdesk_sla_config,,1,1,1,1
+access_helpdesk_visit_diagnosis_type_user,helpdesk.visit.diagnosis.type user,model_helpdesk_visit_diagnosis_type,base.group_user,1,1,1,1
+access_helpdesk_visit_solution_type_user,helpdesk.visit.solution.type user,model_helpdesk_visit_solution_type,base.group_user,1,1,1,1

@@ -1,0 +1,83 @@
+<odoo>
+
+    <!-- Hereda el formulario de oportunidades para aplicar la personalizacion principal de Wigo. -->
+    <record id="crm_lead_form_inherit_wigo" model="ir.ui.view">
+        <field name="name">crm.lead.form.wigo</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Boton manual para crear contrato junto a Ganado/Perdido en la cabecera. -->
+            <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
+                <button name="action_create_contract" type="object" string="Nuevo Contrato" class="btn-primary" invisible="won_status != 'won' or contract_id or not partner_id or not plan_id"/>
+            </xpath>
+
+            <!-- Agrega boton estadistico para abrir contrato y mostrar cantidad asociada. -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_contract" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="not contract_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="contract_count"/>
+                        </span>
+                        <span class="o_stat_text">Contrato</span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Oculta ingreso esperado del flujo comercial estandar. -->
+            <xpath expr="//h2//field[@name='expected_revenue']/.." position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Oculta indicador de probabilidad para simplificar la pantalla. -->
+            <xpath expr="//div[@id='probability']/.." position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Oculta fecha estimada de cierre del lead. -->
+            <xpath expr="//field[@name='date_deadline']/.." position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Renombra el campo partner_id a Usuario en la UI. -->
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Usuario</attribute>
+            </xpath>
+
+            <!-- Inserta secciones propias de Wigo despues del primer grupo del formulario base. -->
+            <xpath expr="//group" position="after">
+                <!-- Datos operativos de instalacion del servicio Wigo. -->
+                <group name="wigo_installation" string="Datos de Instalación Wigo">
+                    <group>
+                        <field name="zona_id" placeholder="Seleccionar o crear zona" context="{'form_view_ref': 'wigo_crm.view_wigo_zone_form'}"/>
+                        <field name="direccion" placeholder="Dirección exacta"/>
+                        <field name="ubicacion" widget="url" placeholder="Pegar enlace de Google Maps aquí"/>
+                        <field name="coordenadas" placeholder="Ej. -17.783327, -63.182140"/>
+                        <field name="plan_id" placeholder="Seleccionar plan" readonly="contract_id"/>
+                    </group>
+                    <group>
+                        <field name="won_status" invisible="1"/>
+                    </group>
+
+                </group>
+                <!-- Resumen del contrato enlazado; visible solo cuando existe contract_id. -->
+                <group name="wigo_contract_summary" string="Resumen del Contrato" invisible="not contract_id">
+                    <group>
+                        <field name="contract_name" placeholder="CF-001" invisible="won_status != 'won'"/>
+
+                        <field name="contract_state" widget="badge" decoration-info="contract_state == 'draft'" decoration-warning="contract_state == 'pending'" decoration-success="contract_state in ('signed', 'active')" decoration-muted="contract_state == 'terminated'" readonly="1"/>
+                        <field name="contract_plan_id" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="contract_date" readonly="1"/>
+                        <field name="contract_installation_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <!-- Abre el formulario completo del contrato relacionado. -->
+                        <button name="action_open_contract" type="object" string="Ver Contrato Completo" class="btn-primary"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

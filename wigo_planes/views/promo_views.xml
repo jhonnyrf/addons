@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PROMOCIONES - Lista
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_view_list" model="ir.ui.view">
+        <field name="name">wigo.promo.view.list</field>
+        <field name="model">wigo.promo</field>
+        <field name="arch" type="xml">
+            <list string="Promociones"
+                  decoration-muted="not active"
+                  decoration-danger="date_end and date_end &lt; current_date">
+                <field name="name"/>
+                <field name="promo_type" widget="badge"
+                       decoration-info="promo_type == 'referral'"
+                       decoration-success="promo_type == 'free_month'"
+                       decoration-warning="promo_type == 'discount'"
+                       decoration-primary="promo_type == 'custom'"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="plan_id" optional="show"/>
+                <field name="reward_count" string="Recompensas"/>
+                <field name="referral_count" string="Referidos"
+                       invisible="promo_type != 'referral'"/>
+                <field name="active" widget="toggle_button"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PROMOCIONES - Formulario (diseño mejorado)
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_view_form" model="ir.ui.view">
+        <field name="name">wigo.promo.view.form</field>
+        <field name="model">wigo.promo</field>
+        <field name="arch" type="xml">
+            <form string="Promoción">
+                <header/>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivada"
+                            bg_color="text-bg-danger" invisible="active"/>
+
+                    <!-- Stat buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_rewards" type="object"
+                                class="oe_stat_button" icon="fa-gift">
+                            <field name="reward_count" widget="statinfo"
+                                   string="Recompensas"/>
+                        </button>
+                        <button name="action_view_referrals" type="object"
+                                class="oe_stat_button" icon="fa-users"
+                                invisible="promo_type != 'referral'">
+                            <field name="referral_count" widget="statinfo"
+                                   string="Referidos"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" string="Nombre de la Promoción"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="Ej: Campaña referidos Q1 2025..."/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="General">
+                            <field name="promo_type"/>
+                            <field name="active"/>
+                            <field name="plan_id"
+                                   help="Dejar vacío = aplica a todos los planes"/>
+                        </group>
+                        <group string="Vigencia">
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloque Referidos -->
+                    <group string="⚙️  Configuración de Referidos"
+                           invisible="promo_type != 'referral'">
+                        <group>
+                            <field name="required_referrals"/>
+                            <field name="referral_reward_type"/>
+                        </group>
+                        <group>
+                            <field name="discount_value"
+                                   invisible="referral_reward_type != 'discount'"
+                                   required="promo_type == 'referral' and referral_reward_type == 'discount'"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloque Descuento -->
+                    <group string="⚙️  Configuración de Descuento"
+                           invisible="promo_type != 'discount'">
+                        <group>
+                            <field name="discount_value"
+                                   required="promo_type == 'discount'"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloque Mes Gratis -->
+                    <group string="⚙️  Configuración de Mes Gratis"
+                           invisible="promo_type != 'free_month'">
+                        <group>
+                            <field name="free_months"
+                                   required="promo_type == 'free_month'"/>
+                        </group>
+                    </group>
+
+                    <!-- Bloque Personalizado -->
+                    <group string="⚙️  Configuración Personalizada"
+                           invisible="promo_type != 'custom'">
+                        <group>
+                            <field name="custom_benefit"
+                                   required="promo_type == 'custom'"/>
+                        </group>
+                    </group>
+
+                    <!-- Descripción -->
+                    <group string="Descripción / Condiciones">
+                        <field name="description" nolabel="1"
+                               placeholder="Describe las condiciones de esta promoción..."/>
+                    </group>
+
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PROMOCIONES - Kanban (diseño mejorado)
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_view_kanban" model="ir.ui.view">
+        <field name="name">wigo.promo.view.kanban</field>
+        <field name="model">wigo.promo</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="promo_type" sample="1">
+                <field name="name"/>
+                <field name="promo_type"/>
+                <field name="active"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="reward_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="fw-bold fs-5 mb-1">
+                            <field name="name"/>
+                        </div>
+                        <div class="text-muted small mb-2">
+                            <i class="fa fa-calendar me-1" title="Fecha"/>
+                            <field name="date_start"/>
+                            <span invisible="not date_end"> – <field name="date_end"/></span>
+                            <span invisible="date_end"> · Sin vencimiento</span>
+                        </div>
+                        <footer class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary">
+                                <i class="fa fa-gift me-1" title="Recompensas"/>
+                                <field name="reward_count"/> recompensas
+                            </span>
+                            <t t-if="!record.active.raw_value">
+                                <span class="badge bg-danger-subtle text-danger">Archivada</span>
+                            </t>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PROMOCIONES - Action
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_action" model="ir.actions.act_window">
+        <field name="name">Promociones</field>
+        <field name="res_model">wigo.promo</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primera promoción
+            </p>
+            <p>
+                Define descuentos, mes gratis, referidos u otros beneficios
+                para tus clientes de Wigo.
+            </p>
+        </field>
+    </record>
+
+</odoo>

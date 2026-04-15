@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         REFERIDOS - Search
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_referral_view_search" model="ir.ui.view">
+        <field name="name">wigo.promo.referral.view.search</field>
+        <field name="model">wigo.promo.referral</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="referrer_id" string="Cliente referente"/>
+                <field name="referred_id" string="Cliente referido"/>
+                <field name="promo_id"    string="Promoción"/>
+                <separator/>
+                <filter string="Pendientes"             name="pending"   domain="[('state','=','pending')]"/>
+                <filter string="Válidos"                name="valid"     domain="[('state','=','valid')]"/>
+                <filter string="Listos para recompensa" name="ready"     domain="[('state','=','ready_for_reward')]"/>
+                <filter string="Recompensados"          name="rewarded"  domain="[('state','=','rewarded')]"/>
+                <filter string="Cancelados"             name="cancelled" domain="[('state','=','cancelled')]"/>
+                <separator/>
+                <filter string="Agrupar por referente"  name="grp_referrer" context="{'group_by':'referrer_id'}"/>
+                <filter string="Agrupar por promoción"  name="grp_promo"    context="{'group_by':'promo_id'}"/>
+                <filter string="Agrupar por estado"     name="grp_state"    context="{'group_by':'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         REFERIDOS - Lista
+    ══════════════════════════════════════════════════════════ -->\n    <record id="wigo_promo_referral_view_list" model="ir.ui.view">
+        <field name="name">wigo.promo.referral.view.list</field>
+        <field name="model">wigo.promo.referral</field>
+        <field name="arch" type="xml">
+            <list string="Referidos"
+                  decoration-success="state == 'rewarded'"
+                  decoration-primary="state == 'ready_for_reward'"
+                  decoration-info="state == 'valid'"
+                  decoration-warning="state == 'pending'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="date"/>
+                <field name="referrer_id"/>
+                <field name="referred_id"/>
+                <field name="promo_id"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'pending'"
+                       decoration-info="state == 'valid'"
+                       decoration-primary="state == 'ready_for_reward'"
+                       decoration-success="state == 'rewarded'"
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="validation_date" optional="show"/>
+                <button name="action_validate" type="object" string="Validar"
+                        icon="fa-check" class="btn-sm btn-success"
+                        invisible="state != 'pending'"
+                        confirm="¿Confirmar validación de este referido?"/>
+                <button name="action_apply_reward_all" type="object" string="Dar Recompensa"
+                        icon="fa-gift" class="btn-sm btn-primary"
+                        invisible="state != 'ready_for_reward'"
+                        confirm="¿Confirmar entrega de recompensa? Se incluirán TODOS los referidos listos de este cliente."/>
+                <button name="action_cancel" type="object" string="Cancelar"
+                        icon="fa-times" class="btn-sm btn-danger"
+                        invisible="state in ['cancelled','rewarded']"
+                        confirm="¿Cancelar este referido?"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         REFERIDOS - Formulario
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_referral_view_form" model="ir.ui.view">
+        <field name="name">wigo.promo.referral.view.form</field>
+        <field name="model">wigo.promo.referral</field>
+        <field name="arch" type="xml">
+            <form string="Referido">
+                <header>
+                    <button name="action_validate" type="object" string="Validar"
+                            class="btn-primary" invisible="state != 'pending'"
+                            confirm="¿Confirmar validación?"/>
+                    <button name="action_apply_reward_all" type="object" string="Dar Recompensa"
+                            class="btn-primary" invisible="state != 'ready_for_reward'"
+                            confirm="¿Confirmar entrega? Se incluirán TODOS los referidos listos de este cliente."/>
+                    <button name="action_cancel" type="object" string="Cancelar"
+                            class="btn-secondary" invisible="state in ['cancelled','rewarded']"
+                            confirm="¿Cancelar este referido?"/>
+                    <button name="action_reset_to_pending" type="object" string="Reactivar"
+                            class="btn-secondary" invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,valid,ready_for_reward,rewarded"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="display_name" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Alerta cuando está listo para recompensa -->
+                    <div class="alert alert-success d-flex align-items-center gap-2" role="alert"
+                         invisible="state != 'ready_for_reward'">
+                        <i class="fa fa-gift fa-lg" title="Recompensa"/>
+                        <div>
+                            <strong>¡Este cliente alcanzó el umbral de referidos!</strong><br/>
+                            Confirma la entrega de la recompensa con el botón superior.
+                        </div>
+                    </div>
+
+                    <group col="2">
+                        <group string="Participantes">
+                            <field name="promo_id"/>
+                            <field name="referrer_id" readonly="state != 'pending'"/>
+                            <field name="referred_id" readonly="state != 'pending'"/>
+                        </group>
+                        <group string="Fechas">
+                            <field name="date"/>
+                            <field name="validation_date" readonly="1"/>
+                            <field name="ready_date"      readonly="1"/>
+                            <field name="reward_date"     readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Notas">
+                        <field name="notes" nolabel="1"
+                               placeholder="Observaciones adicionales..."/>
+                    </group>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         REFERIDOS - Actions
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_referral_action" model="ir.actions.act_window">
+        <field name="name">Referidos</field>
+        <field name="res_model">wigo.promo.referral</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="wigo_promo_referral_view_search"/>
+    </record>
+
+    <record id="wigo_promo_referral_action_ready" model="ir.actions.act_window">
+        <field name="name">Listos para Recompensa</field>
+        <field name="res_model">wigo.promo.referral</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state','=','ready_for_reward')]</field>
+        <field name="search_view_id" ref="wigo_promo_referral_view_search"/>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         RECOMPENSAS - Lista
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_reward_view_list" model="ir.ui.view">
+        <field name="name">wigo.promo.reward.view.list</field>
+        <field name="model">wigo.promo.reward</field>
+        <field name="arch" type="xml">
+            <list string="Recompensas"
+                  decoration-success="state == 'applied'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="promo_id"/>
+                <field name="reward_type" widget="badge"
+                       decoration-success="reward_type == 'free_month'"
+                       decoration-warning="reward_type == 'discount'"
+                       decoration-info="reward_type == 'custom'"/>
+                <field name="discount_value" optional="show"
+                       invisible="reward_type != 'discount'"/>
+                <field name="free_months" optional="show"
+                       invisible="reward_type != 'free_month'"/>
+                <field name="plan_id" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-warning="state == 'pending'"
+                       decoration-success="state == 'applied'"
+                       decoration-danger="state == 'cancelled'"/>
+                <button name="action_mark_applied" type="object"
+                        string="Marcar aplicada" icon="fa-check"
+                        class="btn-sm btn-success"
+                        invisible="state != 'pending'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         RECOMPENSAS - Formulario
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_reward_view_form" model="ir.ui.view">
+        <field name="name">wigo.promo.reward.view.form</field>
+        <field name="model">wigo.promo.reward</field>
+        <field name="arch" type="xml">
+            <form string="Recompensa">
+                <header>
+                    <button name="action_mark_applied" type="object"
+                            string="Marcar como aplicada"
+                            class="btn-primary" invisible="state != 'pending'"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancelar" class="btn-secondary"
+                            invisible="state != 'pending'"
+                            confirm="¿Cancelar esta recompensa?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,applied"/>
+                </header>
+                <sheet>
+                    <group col="2">
+                        <group string="Datos">
+                            <field name="promo_id"/>
+                            <field name="partner_id"/>
+                            <field name="plan_id"/>
+                            <field name="reward_type"/>
+                        </group>
+                        <group string="Beneficio">
+                            <field name="discount_value"
+                                   invisible="reward_type != 'discount'"/>
+                            <field name="free_months"
+                                   invisible="reward_type != 'free_month'"/>
+                            <field name="custom_detail"
+                                   invisible="reward_type != 'custom'"/>
+                            <field name="date"/>
+                            <field name="apply_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1"
+                               placeholder="Observaciones sobre esta recompensa..."/>
+                    </group>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         RECOMPENSAS - Action
+    ══════════════════════════════════════════════════════════ -->
+    <record id="wigo_promo_reward_action" model="ir.actions.act_window">
+        <field name="name">Recompensas</field>
+        <field name="res_model">wigo.promo.reward</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aún no hay recompensas registradas
+            </p>
+        </field>
+    </record>
+
+</odoo>

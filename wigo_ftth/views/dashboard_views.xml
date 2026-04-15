@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Accion para el dashboard — usa client.service como modelo base -->
+    <record id="action_ftth_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard FTTH</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="view_ftth_report_estado_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.client.service.report.estado</field>
+        <field name="model">wigo.ftth.client.service</field>
+        <field name="arch" type="xml">
+            <list string="Clientes por estado" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio in ['suspended','corte']" decoration-muted="estado_servicio in ['baja','cancelado']">
+                <field name="codigo_cliente"/>
+                <field name="partner_id"/>
+                <field name="plan_id"/>
+                <field name="gestor_comercial"/>
+                <field name="installer_id"/>
+                <field name="fecha_instalacion"/>
+                <field name="estado_servicio" widget="badge" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio == 'suspended'" decoration-danger="estado_servicio in ['corte','baja']" decoration-muted="estado_servicio == 'cancelado'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_report_graph" model="ir.ui.view">
+        <field name="name">wigo.ftth.client.service.report.graph</field>
+        <field name="model">wigo.ftth.client.service</field>
+        <field name="arch" type="xml">
+            <graph string="Reportes FTTH" type="bar">
+                <field name="estado_servicio"/>
+                <field name="id" type="measure" string="Clientes"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_ftth_report_pivot" model="ir.ui.view">
+        <field name="name">wigo.ftth.client.service.report.pivot</field>
+        <field name="model">wigo.ftth.client.service</field>
+        <field name="arch" type="xml">
+            <pivot string="Reportes FTTH">
+                <field name="estado_servicio" type="row"/>
+                <field name="plan_id" type="col"/>
+                <field name="id" type="measure" string="Clientes"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Accion reporte clientes por estado -->
+    <record id="action_ftth_report_estados" model="ir.actions.act_window">
+        <field name="name">Clientes por estado</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{'search_default_group_estado': 1}</field>
+    </record>
+
+    <!-- Accion reporte instalaciones por mes -->
+    <record id="action_ftth_report_instalaciones" model="ir.actions.act_window">
+        <field name="name">Instalaciones por mes</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{'search_default_group_mes': 1}</field>
+    </record>
+
+    <!-- Accion reporte por plan -->
+    <record id="action_ftth_report_planes" model="ir.actions.act_window">
+        <field name="name">Clientes por plan</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{'search_default_group_plan': 1}</field>
+    </record>
+
+    <!-- Accion reporte por nodo/OLT -->
+    <record id="action_ftth_report_nodo" model="ir.actions.act_window">
+        <field name="name">Clientes por nodo</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{'search_default_group_nodo': 1}</field>
+    </record>
+
+    <!-- Accion reporte instalador -->
+    <record id="action_ftth_report_instalador" model="ir.actions.act_window">
+        <field name="name">Clientes por instalador</field>
+        <field name="res_model">wigo.ftth.client.service</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{'search_default_group_instalador': 1}</field>
+    </record>
+
+</odoo>

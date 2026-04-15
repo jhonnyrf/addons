@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Grupo: Tecnica FTTH - acceso completo -->
+    <record id="group_ftth_tech" model="res.groups">
+        <field name="name">FTTH Tecnica</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Grupo: Solo lectura (Comercial / Contabilidad) -->
+    <record id="group_ftth_readonly" model="res.groups">
+        <field name="name">FTTH Solo lectura</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+</odoo>

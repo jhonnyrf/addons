@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_helpdesk_assign_wizard_form" model="ir.ui.view">
+        <field name="name">helpdesk.assign.wizard.form</field>
+        <field name="model">helpdesk.assign.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Asignar / Escalar Ticket">
+                <group>
+                    <field name="ticket_id" readonly="1"/>
+                    <field name="area_id"/>
+                    <field name="employee_id"/>
+                    <field name="escalation_reason" placeholder="Motivo del escalamiento..."/>
+                    <field name="note" placeholder="Nota interna opcional..."/>
+                </group>
+                <footer>
+                    <button name="action_assign" string="Confirmar" type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

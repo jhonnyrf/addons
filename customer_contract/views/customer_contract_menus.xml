@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menú raíz -->
+    <menuitem id="menu_customer_contract_root"
+              name="Contratos"
+              sequence="50"
+              web_icon="customer_contract,static/description/icon.png"/>
+
+    <!-- Acción: solo contratos ACTIVOS (vista principal) -->
+    <record id="action_customer_contract" model="ir.actions.act_window">
+        <field name="name">Contratos de Clientes</field>
+        <field name="res_model">customer.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_customer_contract_tree"/>
+        <field name="domain">[('state', '=', 'active'), ('is_superseded', '=', False)]</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- Acción: historial / cambios de plan (todos los estados) -->
+    <record id="action_contract_plan_history" model="ir.actions.act_window">
+        <field name="name">Historial de cambios de plan</field>
+        <field name="res_model">customer.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_customer_contract_tree"/>
+        <field name="domain">[('is_superseded', '=', True)]</field>
+        <field name="context">{'search_default_superseded': 1}</field>
+    </record>
+
+    <!-- Sub-menú: Contratos activos -->
+    <menuitem id="menu_customer_contract_list"
+              name="Contratos de Clientes"
+              parent="menu_customer_contract_root"
+              action="action_customer_contract"
+              sequence="10"/>
+
+    <!-- Sub-menú: Historial de cambios de plan -->
+    <menuitem id="menu_contract_plan_history"
+              name="Historial de cambios de plan"
+              parent="menu_customer_contract_root"
+              action="action_contract_plan_history"
+              sequence="20"/>
+</odoo>

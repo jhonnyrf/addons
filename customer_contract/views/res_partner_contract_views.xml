@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_form_contract_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.contract.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- SMART BUTTON -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_contracts" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="contract_count == 0">
+                    <field name="contract_count" widget="statinfo" string="Contratos"/>
+                </button>
+            </xpath>
+
+            <!-- TAB — contratos del cliente (activos e históricos) -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Contratos" name="wigo_contratos_cc">
+                    <field name="contract_ids" readonly="1" options="{'no_create': True}">
+                        <list string="Contratos" default_order="contract_date desc"
+                              decoration-success="state == 'active'"
+                              decoration-warning="state in ['pending','signed']"
+                              decoration-muted="state == 'terminated'">
+                            <field name="name" string="Nº de Contrato"/>
+                            <field name="plan_id" string="Plan"/>
+                            <field name="plan_type" optional="show"/>
+                            <field name="plan_speed" optional="show"/>
+                            <field name="plan_price" string="Tarifa" optional="show"/>
+                            <field name="contract_date" optional="show"/>
+                            <field name="installation_date" optional="show"/>
+                            <field name="termination_date" string="Terminado" optional="show"/>
+                            <field name="is_superseded" string="Reemplazado"
+                                   widget="boolean" optional="show"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-warning="state in ['pending','signed']"
+                                   decoration-muted="state == 'terminated'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

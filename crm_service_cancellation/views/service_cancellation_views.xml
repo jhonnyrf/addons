@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══ LISTA ═══ -->
+    <record id="view_service_cancellation_list" model="ir.ui.view">
+        <field name="name">service.cancellation.list</field>
+        <field name="model">service.cancellation</field>
+        <field name="arch" type="xml">
+            <list string="Bajas de servicio" decoration-danger="meses_deuda &gt; 0" decoration-muted="registrado_reporte == True">
+                <field name="fecha_baja"/>
+                <field name="partner_id"/>
+                <field name="ci_cliente"/>
+                <field name="codigo_cliente"/>
+                <field name="plan_id"/>
+                <field name="reason_id"/>
+                <field name="meses_deuda"/>
+                <field name="monto_deuda" optional="show"/>
+                <field name="contrato_terminado" optional="show"/>
+                <field name="registrado_reporte"/>
+                <field name="contract_id" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══ FORMULARIO ═══ -->
+    <record id="view_service_cancellation_form" model="ir.ui.view">
+        <field name="name">service.cancellation.form</field>
+        <field name="model">service.cancellation</field>
+        <field name="arch" type="xml">
+            <form string="Baja de Servicio">
+                <header>
+                    <field name="registrado_reporte" widget="boolean_toggle" string="Registrado en reporte semanal"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group string="Datos del cliente">
+                        <group>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="ci_cliente" readonly="1" string="Carnet de identidad"/>
+                            <field name="codigo_cliente" readonly="1"/>
+                            <field name="plan_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="lead_id" readonly="1"/>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="contract_state_at_cancellation" readonly="1" string="Estado contrato al dar de baja"/>
+                        </group>
+                    </group>
+
+                    <group string="Motivo de baja">
+                        <group>
+                            <field name="reason_id"/>
+                            <field name="fecha_baja"/>
+                        </group>
+                        <field name="motivo_detalle"/>
+                    </group>
+
+                    <group string="Equipo ONU">
+                        <group>
+                            <field name="onu_serial"/>
+                            <field name="onu_mac"/>
+                            <field name="onu_modelo"/>
+                        </group>
+                        <group>
+                            <field name="contrato_terminado"/>
+                        </group>
+                    </group>
+
+                    <group string="Deuda">
+                        <group>
+                            <field name="meses_deuda"/>
+                            <field name="monto_deuda" invisible="meses_deuda == 0"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="deuda_pendiente" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Notas internas">
+                        <field name="notas" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══ BÚSQUEDA ═══ -->
+    <record id="view_service_cancellation_search" model="ir.ui.view">
+        <field name="name">service.cancellation.search</field>
+        <field name="model">service.cancellation</field>
+        <field name="arch" type="xml">
+            <search string="Buscar bajas">
+                <field name="partner_id"/>
+                <field name="codigo_cliente"/>
+                <field name="ci_cliente"/>
+                <field name="reason_id"/>
+                <field name="fecha_baja"/>
+                <separator/>
+                <filter name="filter_deuda" string="Con deuda" domain="[('meses_deuda', '&gt;', 0)]"/>
+                <filter name="filter_no_reporte" string="Sin registrar en reporte" domain="[('registrado_reporte', '=', False)]"/>
+                <filter name="filter_contrato_terminado" string="Contrato terminado" domain="[('contrato_terminado', '=', True)]"/>
+                <separator/>
+                <filter name="group_motivo" string="Por motivo" context="{'group_by': 'reason_id'}"/>
+                <filter name="group_fecha" string="Por mes de baja" context="{'group_by': 'fecha_baja:month'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══ ACCIÓN ═══ -->
+    <record id="action_service_cancellation" model="ir.actions.act_window">
+        <field name="name">Bajas de Servicio</field>
+        <field name="res_model">service.cancellation</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_service_cancellation_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay bajas registradas aún
+            </p>
+            <p>
+                Las bajas se registran desde el botón
+                <strong>"Dar de baja"</strong> en el CRM.
+            </p>
+        </field>
+    </record>
+
+</odoo>

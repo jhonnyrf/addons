@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PLANES - Formulario (diseño mejorado)
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_internet_plan_form" model="ir.ui.view">
+        <field name="name">internet.plan.form</field>
+        <field name="model">internet.plan</field>
+        <field name="arch" type="xml">
+            <form string="Plan de Internet">
+
+                <header>
+                    <button name="action_save_plan" type="object" string="Guardar Plan" class="btn-primary" icon="fa-save"/>
+                    <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
+                </header>
+
+                <sheet>
+
+                    <!-- Ribbon archivado -->
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger" invisible="active"/>
+
+                    <div class="oe_title">
+                        <label for="name" string="Nombre del Plan"/>
+                        <h1>
+                            <field name="name" placeholder="Ej: Plan Hogar 100 Mbps..." class="oe_inline"/>
+                        </h1>
+                    </div>
+
+                    <group string="Identificación del Plan">
+                        <field name="plan_identifier" placeholder="Ej: IH30" required="1"/>
+                    </group>
+
+                    <!-- Tipo de plan - solo fibra óptica -->
+                    <!--   <group string="Tipo de Conexión">
+                        <field name="plan_type" readonly="1"/>
+                    </group> -->
+                    <group string="Tipo de Conexión">
+                        <span class="badge bg-success-subtle text-success p-2 d-inline-flex align-items-center gap-1">
+                            <i class="fa fa-bolt"/>
+                                    Fibra óptica 
+                        </span>
+                    </group>
+                    <!-- Detalles del plan -->
+                    <group string="Detalles del Plan" col="2">
+                        <group>
+                            <label for="speed"/>
+                            <div class="o_row">
+                                <field name="speed" decoration-danger="speed and speed &lt;= 0"/>
+                                <span class="oe_inline ms-1 text-muted">Mbps</span>
+                            </div>
+                        </group>
+                        <group>
+                            <label for="download_speed"/>
+                            <div class="o_row">
+                                <field name="download_speed" required="1" decoration-danger="download_speed and download_speed &lt;= 0"/>
+                                <span class="oe_inline ms-1 text-muted">Mbps</span>
+                            </div>
+                        </group>
+                        <group>
+                            <label for="upload_speed"/>
+                            <div class="o_row">
+                                <field name="upload_speed" required="1" decoration-danger="upload_speed and upload_speed &lt;= 0"/>
+                                <span class="oe_inline ms-1 text-muted">Mbps</span>
+                            </div>
+                        </group>
+                        <group>
+                            <label for="price"/>
+                            <div class="o_row">
+                                <field name="price"/>
+                                <span class="oe_inline ms-1 text-muted">Bs / mes</span>
+                            </div>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Descripción" name="description">
+                            <field name="description" placeholder="Describe los beneficios y características del plan..." nolabel="1"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PLANES - Action
+    ══════════════════════════════════════════════════════════ -->
+    <record id="action_internet_plans" model="ir.actions.act_window">
+        <field name="name">Planes de Internet</field>
+        <field name="res_model">internet.plan</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea tu primer plan de internet
+            </p>
+            <p>
+                Define planes de fibra óptica, inalámbrico o cable
+                con velocidad y tarifa mensual.
+            </p>
+        </field>
+    </record>
+
+</odoo>

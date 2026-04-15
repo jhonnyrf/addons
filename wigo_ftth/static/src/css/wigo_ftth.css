@@ -1,0 +1,22 @@
+/* ================================================================
+   Wigo FTTH — Estilos personalizados
+   ================================================================ */
+
+/* Kanban OTs — borde de color por estado */
+.o_kanban_view .o_kanban_group[data-group-by-value="pending"]       .o_kanban_record { border-left: 4px solid #6c757d; }
+.o_kanban_view .o_kanban_group[data-group-by-value="assigned"]      .o_kanban_record { border-left: 4px solid #fd7e14; }
+.o_kanban_view .o_kanban_group[data-group-by-value="in_field"]      .o_kanban_record { border-left: 4px solid #0dcaf0; }
+.o_kanban_view .o_kanban_group[data-group-by-value="installed"]     .o_kanban_record { border-left: 4px solid #6f42c1; }
+.o_kanban_view .o_kanban_group[data-group-by-value="active"]        .o_kanban_record { border-left: 4px solid #198754; }
+.o_kanban_view .o_kanban_group[data-group-by-value="incident"]      .o_kanban_record { border-left: 4px solid #dc3545; }
+.o_kanban_view .o_kanban_group[data-group-by-value="baja_executed"] .o_kanban_record { border-left: 4px solid #adb5bd; }
+
+/* Códigos técnicos en fuente monoespaciada */
+.o_field_char[name="codigo_cliente"],
+.o_field_char[name="codigo_olt"],
+.o_field_char[name="codigo"],
+.o_field_char[name="serial_number"] {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #1a56db;
+}

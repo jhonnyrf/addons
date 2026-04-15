@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PLANES - Kanban (diseño mejorado)
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_internet_plan_kanban" model="ir.ui.view">
+        <field name="name">internet.plan.kanban</field>
+        <field name="model">internet.plan</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="plan_identifier"/>
+                <field name="name"/>
+                <field name="plan_type"/>
+                <field name="speed"/>
+                <field name="download_speed"/>
+                <field name="upload_speed"/>
+                <field name="price"/>
+                <field name="active"/>
+                <field name="description"/>
+
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card wigo_plan_card #{record.plan_type.raw_value == 'fiber' and 'wigo_card_fiber' or ''} #{record.plan_type.raw_value == 'wireless' and 'wigo_card_wireless' or ''} #{record.plan_type.raw_value == 'cable' and 'wigo_card_cable' or ''}">
+                            <div class="wigo_card_header d-flex align-items-center justify-content-between mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <t t-if="record.plan_type.raw_value == 'fiber'">
+                                        <span class="wigo_badge wigo_badge_fiber">
+                                            <i class="fa fa-bolt me-1" title="Fibra óptica"/>
+ Fibra óptica</span>
+                                    </t>
+                                    <t t-if="record.plan_type.raw_value == 'wireless'">
+                                        <span class="wigo_badge wigo_badge_wireless">
+                                            <i class="fa fa-wifi me-1" title="Inalámbrico"/>
+ Inalámbrico</span>
+                                    </t>
+                                    <t t-if="record.plan_type.raw_value == 'cable'">
+                                        <span class="wigo_badge wigo_badge_cable">
+                                            <i class="fa fa-tv me-1" title="Cable"/>
+ Cable</span>
+                                    </t>
+                                </div>
+                                <t t-if="record.active.raw_value">
+                                    <span class="badge rounded-pill bg-success-subtle text-success" style="font-size:10px;">
+                                        <i class="fa fa-circle me-1" style="font-size:7px;" title="Activo"/>
+ Activo</span>
+                                </t>
+                                <t t-if="!record.active.raw_value">
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger" style="font-size:10px;">
+                                        <i class="fa fa-circle me-1" style="font-size:7px;" title="Inactivo"/>
+ Inactivo</span>
+                                </t>
+                            </div>
+
+                            <div class="wigo_plan_identity mb-3">
+                                <div class="wigo_plan_name">
+                                    <field name="name"/>
+                                </div>
+                                <div class="wigo_plan_identifier">
+                                    <field name="plan_identifier"/>
+                                </div>
+                            </div>
+
+                            <div class="wigo_plan_specs">
+                                <div class="wigo_stat_box text-center">
+                                    <div class="wigo_stat_value">
+                                        <field name="speed"/>
+                                    </div>
+                                    <div class="wigo_stat_label">Mbps</div>
+                                </div>
+                                <div class="wigo_stat_box text-center">
+                                    <div class="wigo_stat_value">
+                                        <field name="download_speed"/>
+                                    </div>
+                                    <div class="wigo_stat_label">Bajada</div>
+                                </div>
+                                <div class="wigo_stat_box text-center">
+                                    <div class="wigo_stat_value">
+                                        <field name="upload_speed"/>
+                                    </div>
+                                    <div class="wigo_stat_label">Subida</div>
+                                </div>
+                                <div class="wigo_stat_box text-center wigo_stat_price">
+                                    <div class="wigo_stat_value">
+                                        <field name="price"/>
+                                    </div>
+                                    <div class="wigo_stat_label">Bs/mes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>

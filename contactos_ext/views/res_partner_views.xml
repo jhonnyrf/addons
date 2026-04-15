@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- LISTA INLINE - Planes dentro del formulario del contacto -->
+    <record id="view_partner_plan_list_inline" model="ir.ui.view">
+        <field name="name">partner.plan.list.inline</field>
+        <field name="model">partner.plan</field>
+        <field name="arch" type="xml">
+            <list string="Planes contratados" decoration-success="state == 'active'" decoration-warning="state == 'suspended'" decoration-muted="state == 'cancelled'" editable="bottom">
+                <field name="codigo_cliente" placeholder="CF-001"/>
+                <field name="plan_id" options="{'no_create': True}"/>
+                <field name="plan_type" widget="badge" decoration-success="plan_type == 'fiber'" decoration-info="plan_type == 'wireless'" decoration-warning="plan_type == 'cable'"/>
+                <field name="plan_price" string="Bs/mes"/>
+                <field name="date_start"/>
+                <field name="date_end" optional="show"/>
+                <field name="zona" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-warning="state == 'suspended'" decoration-danger="state == 'cancelled'"/>
+                <button name="action_suspend" type="object" string="Suspender" icon="fa-pause" class="btn-sm btn-warning" invisible="state != 'active'" confirm="¿Suspender este plan?"/>
+                <button name="action_reactivate" type="object" string="Reactivar" icon="fa-play" class="btn-sm btn-success" invisible="state == 'active'" confirm="¿Reactivar este plan?"/>
+                <button name="action_cancel" type="object" string="Dar de baja" icon="fa-times" class="btn-sm btn-danger" invisible="state == 'cancelled'" confirm="¿Dar de baja este plan?"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- FORM - Formulario completo de un plan -->
+    <record id="view_partner_plan_form" model="ir.ui.view">
+        <field name="name">partner.plan.form</field>
+        <field name="model">partner.plan</field>
+        <field name="arch" type="xml">
+            <form string="Plan Contratado">
+                <header>
+                    <button name="action_suspend" type="object" string="Suspender" class="btn-warning" invisible="state != 'active'" confirm="¿Suspender este plan?"/>
+                    <button name="action_reactivate" type="object" string="Reactivar" class="btn-success" invisible="state == 'active'" confirm="¿Reactivar este plan?"/>
+                    <button name="action_cancel" type="object" string="Dar de baja" class="btn-danger" invisible="state == 'cancelled'" confirm="¿Confirmar baja de este plan?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,suspended,cancelled"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Suspendido" bg_color="text-bg-warning" invisible="state != 'suspended'"/>
+                    <widget name="web_ribbon" title="Dado de baja" bg_color="text-bg-danger" invisible="state != 'cancelled'"/>
+                    <div class="oe_title">
+                        <label for="codigo_cliente" string="Código de cliente"/>
+                        <h1>
+                            <field name="codigo_cliente" placeholder="CF-001"/>
+                        </h1>
+                    </div>
+                    <group col="2">
+                        <group string="Plan">
+                            <field name="partner_id" readonly="1"/>
+                            <field name="plan_id"/>
+                            <field name="plan_price" readonly="1"/>
+                        </group>
+                        <group string="Vigencia">
+                            <field name="date_start"/>
+                            <field name="date_end" readonly="1"/>
+                            <field name="lead_id"/>
+                        </group>
+                    </group>
+                    <group string="Datos de Instalación">
+                        <group>
+                            <field name="zona" placeholder="Ej. Zona Sur"/>
+                            <field name="direccion" placeholder="Dirección exacta"/>
+                        </group>
+                        <group>
+                            <field name="ubicacion" widget="url" placeholder="Enlace Google Maps"/>
+                        </group>
+                    </group>
+                    <group string="Notas">
+                        <field name="notes" nolabel="1" placeholder="Observaciones adicionales..."/>
+                    </group>
+                </sheet>
+                <chatter>
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </chatter>
+            </form>
+        </field>
+    </record>
+
+    <!-- FORMULARIO res.partner — EXTENSIÓN PRINCIPAL -->
+    <record id="view_partner_form_ext_clean" model="ir.ui.view">
+        <field name="name">res.partner.form.ext.clean</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Ocultar campos no necesarios -->
+            <xpath expr="//field[@name='function']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='vat']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='category_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='lang']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Quitar C.P. / Provincia / País -->
+            <xpath expr="//field[@name='state_id']" position="replace"/>
+            <xpath expr="//field[@name='zip']" position="replace"/>
+            <xpath expr="//field[@name='country_id']" position="replace"/>
+
+            <!-- Celular, CI y Es empleado — encima del bloque de dirección,
+                 igual que en la versión inicial que funcionaba correctamente -->
+            <xpath expr="//group[.//field[@name='street']]" position="before">
+                <group col="2">
+                    <field name="celular" string="Celular" placeholder="Celular" invisible="company_type == 'company'"/>
+                    <field name="ci" string="CI" placeholder="CI" invisible="company_type != 'person'"/>
+                    <field name="is_employee" string="Es empleado de Wigo" invisible="company_type != 'person'"/>
+                </group>
+            </xpath>
+
+            <!-- Ocultar pestañas originales de Odoo -->
+            <xpath expr="//notebook/page[1]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//notebook/page[2]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//notebook/page[3]" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Stat buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+
+                <!-- Planes activos -->
+                <button name="action_view_plans" type="object" class="oe_stat_button" icon="fa-wifi" invisible="total_plan_count == 0">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="active_plan_count"/>
+                        </span>
+                        <span class="o_stat_text">Planes activos</span>
+                    </div>
+                </button>
+
+                <!-- Referidos que hice — siempre visible para personas -->
+                <button name="action_view_referrals" type="object" class="oe_stat_button" icon="fa-users" invisible="is_company">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="referral_count"/>
+                        </span>
+                        <span class="o_stat_text">Referidos</span>
+                    </div>
+                </button>
+
+            </xpath>
+
+            <!-- Pestañas nuevas -->
+            <xpath expr="//notebook" position="inside">
+
+                <!-- REFERIDOS: personas que YO recomendé -->
+                <page string="Referidos" name="wigo_referrals" invisible="company_type == 'company'">
+
+                    <!-- Bloque: quién me recomendó a MÍ (solo informativo, sin contador) -->
+                    <field name="referral_as_referred_ids" readonly="1" invisible="not referral_as_referred_ids">
+                        <list string="Fui recomendado por">
+                            <field name="referrer_id" string="Me recomendó"/>
+                            <field name="promo_id" string="Promoción"/>
+                            <field name="date" string="Fecha"/>
+                            <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state == 'valid'" decoration-success="state == 'rewarded'" decoration-danger="state == 'cancelled'"/>
+                        </list>
+                    </field>
+                    <div class="alert alert-info mb-3" invisible="not referral_as_referred_ids">
+                        <i class="fa fa-info-circle"/>
+ Fuiste recomendado por un cliente.
+                        Este registro es solo informativo y no suma al contador de referidos.
+                    </div>
+
+                    <!-- Separador visual -->
+                    <div class="o_horizontal_separator mt-2 mb-2" invisible="not referral_as_referred_ids">
+                        Clientes que yo recomendé
+                    </div>
+
+                    <!-- Bloque: personas que YO recomendé (estas SÍ suman al contador) -->
+                    <field name="referral_as_referrer_ids" readonly="1">
+                        <list string="Clientes que recomendé" decoration-success="state == 'rewarded'" decoration-info="state == 'valid'" decoration-warning="state == 'pending'" decoration-muted="state == 'cancelled'">
+                            <field name="referred_id" string="Cliente referido"/>
+                            <field name="promo_id" string="Promoción"/>
+                            <field name="date" string="Fecha"/>
+                            <field name="validation_date" string="Validado el" optional="show"/>
+                            <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state == 'valid'" decoration-primary="state == 'ready_for_reward'" decoration-success="state == 'rewarded'" decoration-danger="state == 'cancelled'"/>
+                        </list>
+                    </field>
+
+                    <div class="mt-2 text-muted small" invisible="referral_count == 0">
+                        Total referidos activos: <strong>
+                        <field name="referral_count" readonly="1"/>
+                    </strong>
+                </div>
+                <div class="mt-2 text-muted small" invisible="referral_count != 0">
+                        Aún no has recomendado a ningún cliente.
+                        Los referidos se registran en <b>Promociones → Referidos</b>.
+                </div>
+
+            </page>
+
+        </xpath>
+
+    </field>
+</record>
+
+<!-- FILTROS Y BÚSQUEDA PERSONALIZADOS -->
+<record id="res_partner_search_filters_custom" model="ir.ui.view">
+    <field name="name">res.partner.search.filters.custom</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_res_partner_filter"/>
+    <field name="arch" type="xml">
+        <xpath expr="//search" position="inside">
+            <field name="partner_plan_ids" string="Código CF" filter_domain="[('partner_plan_ids.codigo_cliente','ilike',self)]"/>
+            <filter string="Con plan activo" name="with_active_plan" domain="[('partner_plan_ids.state','=','active')]"/>
+            <filter string="Ha referido" name="has_referrals" domain="[('referral_as_referrer_ids','!=',False)]"/>
+            <filter string="Fue referido" name="was_referred" domain="[('referral_as_referred_ids','!=',False)]"/>
+            <filter string="Empleados" name="employees" domain="[('is_employee','=',True)]"/>
+            <filter string="Con oportunidades" name="with_leads" domain="[('lead_ids','!=',False)]"/>
+        </xpath>
+    </field>
+</record>
+
+</odoo>

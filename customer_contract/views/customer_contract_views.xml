@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════
+         VISTA FORMULARIO (FORM) — customer.contract
+    ═══════════════════════════════════════════════════════ -->
+    <record id="view_customer_contract_form" model="ir.ui.view">
+        <field name="name">customer.contract.form</field>
+        <field name="model">customer.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contrato de Cliente">
+
+                <header>
+                    <button name="action_set_pending" string="Enviar a Pendiente"
+                            type="object" class="btn-secondary"
+                            context="{'force_save': True}"
+                            invisible="state != 'draft'"/>
+
+                    <button name="action_sign" string="Subir / Validar Contrato"
+                            type="object" class="btn-primary"
+                            context="{'force_save': True}"
+                            invisible="state != 'pending'"/>
+
+                    <button name="action_activate" string="Activar Servicio"
+                            type="object" class="btn-success"
+                            invisible="state != 'signed'"/>
+
+                    <button name="action_change_plan_wizard" string="Cambiar plan"
+                            type="object" class="btn-primary"
+                            invisible="state != 'active' or is_superseded"
+                            confirm="Se creará un nuevo contrato con el nuevo plan. ¿Continuar?"/>
+
+                    <button name="action_terminate" string="Terminar Contrato"
+                            type="object" class="btn-secondary"
+                            confirm="¿Estás seguro de que deseas terminar este contrato?"
+                            invisible="state != 'active'"/>
+
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,pending,signed,active,terminated"/>
+                </header>
+
+                <sheet>
+
+                    <!-- Ribbon si fue reemplazado -->
+                    <widget name="web_ribbon" title="Reemplazado"
+                            bg_color="text-bg-secondary"
+                            invisible="not is_superseded"/>
+
+                    <div class="oe_title">
+                        <label for="name" string="Nº de Contrato"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <!-- Alerta si tiene contrato anterior o siguiente -->
+                    <div class="alert alert-info mb-2"
+                         invisible="not previous_contract_id and not next_contract_id">
+                        <i class="fa fa-info-circle"/>
+                        <span invisible="not previous_contract_id">
+                            Contrato originado por cambio de plan desde
+                            <field name="previous_contract_id" readonly="1" nolabel="1"
+                                   options="{'no_open': False}"/>.
+                        </span>
+                        <span invisible="not next_contract_id">
+                            Este contrato fue reemplazado por
+                            <field name="next_contract_id" readonly="1" nolabel="1"
+                                   options="{'no_open': False}"/>.
+                        </span>
+                    </div>
+
+                    <notebook>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 1 — Información General ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="General" name="general">
+                            <group string="Datos del Cliente">
+                                <group>
+                                    <field name="partner_id" string="Cliente"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="customer_type" readonly="1"/>
+                                    <field name="ci" placeholder="Número de CI"
+                                           invisible="customer_type != 'person'"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="vat" placeholder="Número de NIT"
+                                           invisible="customer_type == 'person'"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                                <group>
+                                    <field name="phone" placeholder="Teléfono fijo"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="mobile" placeholder="Celular"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="email" placeholder="Correo electrónico"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="address" placeholder="Dirección del cliente"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                            </group>
+
+                            <group string="Fechas del Contrato">
+                                <group>
+                                    <field name="contract_date" widget="date"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="installation_date" widget="date"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                                <group>
+                                    <field name="end_date"/>
+                                    <field name="termination_date" invisible="not termination_date"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 2 — Plan de Servicio    ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="Plan de Servicio" name="plan">
+                            <group string="Plan Contratado">
+                                <group>
+                                    <field name="plan_id" string="Plan"
+                                           options="{'no_create': True, 'no_edit': True}"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="plan_identifier" readonly="1"/>
+                                    <field name="plan_type" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="plan_speed" readonly="1"/>
+                                    <field name="plan_price" readonly="1"/>
+                                </group>
+                            </group>
+
+                        </page>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 3 — Facturación         ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="Facturación" name="billing">
+                            <group string="Responsable de Facturación">
+                                <group>
+                                    <field name="billing_name" placeholder="Nombre del responsable de pago"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="billing_ci" placeholder="CI del facturante"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                                <group>
+                                    <field name="billing_phone" placeholder="Teléfono del facturante"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 4 — Técnico / Ubicación ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="Técnico" name="technical">
+                            <group string="Ubicación de Instalación">
+                                <group>
+                                    <field name="location_link" string="Enlace de Ubicación"
+                                           widget="url"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                                <group>
+                                    <field name="coordinates" string="Coordenadas GPS"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 5 — Documentos          ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="Documentos" name="documents">
+                            <field name="contrato_mimetype" invisible="1"/>
+                            <field name="contrato_is_image" invisible="1"/>
+                            <field name="contrato_is_pdf" invisible="1"/>
+
+                            <group string="Contrato Físico Firmado">
+                                <group>
+                                    <field name="contrato" widget="binary"
+                                           filename="contrato_filename"
+                                           string="Archivo del contrato"
+                                           readonly="state not in ['draft','pending','signed']"/>
+                                </group>
+                                <div role="alert" class="alert alert-info mb-3"
+                                     invisible="contrato"
+                                     style="margin: 8px 0; width: 100%; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-info-circle me-1"/>
+                                    Formatos aceptados: <strong>JPG, PNG, PDF</strong>.
+                                    El archivo quedará registrado en el historial del contrato.
+                                </div>
+                            </group>
+
+                            <group string="Vista previa de la imagen" invisible="not contrato_is_image">
+                                <field name="contrato" widget="image" nolabel="1" readonly="1"
+                                       options="{'size': [900, 600]}" class="o_field_image_full"/>
+                            </group>
+
+                            <group string="Documento PDF adjunto" invisible="not contrato_is_pdf">
+                                <group>
+                                    <div role="alert" class="alert alert-success"
+                                         style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                                        <i class="fa fa-file-pdf-o fa-2x text-danger"/>
+                                        <div>
+                                            <strong>Archivo PDF cargado correctamente.</strong><br/>
+                                            Usa el botón de descarga (↓) junto al nombre del archivo
+                                            para abrirlo o guardarlo.
+                                        </div>
+                                    </div>
+                                </group>
+                            </group>
+
+                            <group invisible="not contrato or contrato_is_image or contrato_is_pdf">
+                                <div role="alert" class="alert alert-warning" style="margin: 8px 0;">
+                                    <i class="fa fa-exclamation-triangle me-1" title="Advertencia"/>
+                                    <strong>Formato no reconocido.</strong>
+                                    Solo se permiten archivos JPG, PNG o PDF.
+                                    Por favor, reemplaza el archivo.
+                                </div>
+                            </group>
+                        </page>
+
+                        <!-- ╔══════════════════════════════════════════════╗
+                             ║  PESTAÑA 6 — Historial de cambios de plan   ║
+                             ╚══════════════════════════════════════════════╝ -->
+                        <page string="Historial de contratos" name="history"
+                              invisible="not previous_contract_id and not contract_history_ids">
+                            <group string="Contrato anterior" invisible="not previous_contract_id">
+                                <field name="previous_contract_id" readonly="1" nolabel="1"/>
+                            </group>
+                            <field name="contract_history_ids" readonly="1" nolabel="1">
+                                <list string="Contratos generados por cambio de plan"
+                                      decoration-muted="is_superseded">
+                                    <field name="name" string="Nº de Contrato"/>
+                                    <field name="plan_id" string="Plan"/>
+                                    <field name="plan_price" string="Tarifa (Bs)"/>
+                                    <field name="contract_date" string="Fecha"/>
+                                    <field name="termination_date" string="Terminado el" optional="show"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'active'"
+                                           decoration-muted="state == 'terminated'"/>
+                                    <field name="is_superseded" string="Reemplazado"
+                                           widget="boolean" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+
+                    </notebook>
+                </sheet>
+
+                <chatter/>
+
+            </form>
+        </field>
+    </record>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         VISTA LISTA (TREE) — customer.contract
+    ═══════════════════════════════════════════════════════ -->
+    <record id="view_customer_contract_tree" model="ir.ui.view">
+        <field name="name">customer.contract.tree</field>
+        <field name="model">customer.contract</field>
+        <field name="arch" type="xml">
+            <list string="Contratos de Clientes"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state == 'pending'"
+                  decoration-primary="state == 'signed'"
+                  decoration-success="state == 'active'"
+                  decoration-muted="state == 'terminated'">
+                <field name="name" string="Nº de Contrato" optional="show"/>
+                <field name="contact_name" string="Cliente"/>
+                <field name="billing_name" string="Facturante" optional="show"/>
+                <field name="ci" optional="show"/>
+                <field name="phone" optional="hide"/>
+                <field name="plan_id" string="Plan"/>
+                <field name="plan_price" string="Tarifa (Bs)"/>
+                <field name="installation_date" string="Instalación" optional="show"/>
+                <field name="contract_date" string="Fecha Contrato" optional="hide"/>
+                <field name="is_superseded" string="Reemplazado" optional="show"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+
+
+
+
+</odoo>

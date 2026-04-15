@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+from odoo import api, SUPERUSER_ID
+
+
+def post_init_hook(cr, registry):
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    escalated_stage = env.ref('wigo_helpdesk.stage_escalated', raise_if_not_found=False)
+    waiting_stage = env['helpdesk.stage'].search([('name', '=', 'En Espera')], limit=1)
+
+    if not escalated_stage:
+        return
+
+    if waiting_stage and escalated_stage.id != waiting_stage.id:
+        env['helpdesk.ticket'].sudo().search([('stage_id', '=', escalated_stage.id)]).write({
+            'stage_id': waiting_stage.id,
+        })
+
+    escalated_stage.sudo().unlink()

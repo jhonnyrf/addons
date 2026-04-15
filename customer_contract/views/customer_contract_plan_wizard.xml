@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_customer_contract_plan_wizard_form" model="ir.ui.view">
+        <field name="name">customer.contract.plan.wizard.form</field>
+        <field name="model">customer.contract.plan.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cambiar plan del contrato">
+                <sheet>
+                    <group string="Contrato actual">
+                        <field name="contract_id" readonly="1"/>
+                        <field name="current_plan_id" readonly="1"/>
+                        <field name="current_price" readonly="1"/>
+                    </group>
+                    <group string="Nuevo plan">
+                        <field name="new_plan_id"/>
+                        <field name="new_price" readonly="1"/>
+                    </group>
+                    <group string="Motivo del cambio">
+                        <field name="note" nolabel="1"
+                               placeholder="Describe el motivo: aumento/reducción de velocidad, solicitud del cliente, etc."/>
+                    </group>
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fa fa-exclamation-triangle"/>
+                        Este contrato quedará como <strong>Finalizado (reemplazado)</strong> y se creará
+                        un nuevo contrato activo con el plan seleccionado.
+                        El precio se actualizará para que contabilidad facture correctamente.
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="Confirmar cambio" type="object"
+                            name="action_confirm" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-default" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

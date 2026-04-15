@@ -1,0 +1,51 @@
+<odoo>
+
+    <!-- Vista lista para administrar zonas configuradas en Wigo CRM. -->
+    <record id="view_wigo_zone_tree" model="ir.ui.view">
+        <field name="name">wigo.zone.tree</field>
+        <field name="model">wigo.zone</field>
+        <field name="arch" type="xml">
+            <list string="Zonas">
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista formulario para crear, editar y eliminar zonas. -->
+    <record id="view_wigo_zone_form" model="ir.ui.view">
+        <field name="name">wigo.zone.form</field>
+        <field name="model">wigo.zone</field>
+        <field name="arch" type="xml">
+            <form string="Zona">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Accion para gestionar zonas desde Configuracion del CRM. -->
+    <record id="action_wigo_zone" model="ir.actions.act_window">
+        <field name="name">Zonas</field>
+        <field name="res_model">wigo.zone</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Accion URL que redirige al menu raiz del modulo de planes desde CRM. -->
+    <record id="action_open_wigo_planes_root" model="ir.actions.act_url">
+        <field name="name">Wigo Planes</field>
+        <field name="url" eval="'/odoo?menu_id=%d' % ref('wigo_planes.menu_wigo_planes_root')"/>
+        <field name="target">self</field>
+    </record>
+
+    <!-- Entrada para administrar zonas del selector de Zona en leads. -->
+    <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/>
+
+    <!-- Entrada en Configuracion de CRM para acceder a Planes sin salir del backend. -->
+    <menuitem id="menu_wigo_crm_planes" name="Planes" parent="crm.crm_menu_config" action="action_open_wigo_planes_root" sequence="100"/>
+
+</odoo>

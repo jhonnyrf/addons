@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_type_view_form_inherit_post_sale" model="ir.ui.view">
+        <field name="name">mail.activity.type.form.post.sale</field>
+        <field name="model">mail.activity.type</field>
+        <field name="inherit_id" ref="mail.mail_activity_type_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='summary']" position="after">
+                <field name="is_post_sale"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mail_activity_type_view_tree_inherit_post_sale" model="ir.ui.view">
+        <field name="name">mail.activity.type.tree.post.sale</field>
+        <field name="model">mail.activity.type</field>
+        <field name="inherit_id" ref="mail.mail_activity_type_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="is_post_sale" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mail_activity_view_form_popup_inherit_post_sale" model="ir.ui.view">
+        <field name="name">mail.activity.form.popup.post.sale</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form_popup"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='summary']" position="after">
+                <group string="Seguimiento Posventa" invisible="not is_post_sale_activity" col="2">
+                    <field name="post_sale_client_id" readonly="1"/>
+                    <field name="post_sale_cf_code" readonly="1"/>
+                    <field name="post_sale_contact_phone" readonly="1"/>
+                    <field name="post_sale_is_active_customer" readonly="1"/>
+                    <field name="post_sale_call_date"/>
+                    <field name="post_sale_done_by"/>
+                    <field name="post_sale_state"/>
+                    <field name="post_sale_satisfaction" required="post_sale_state == 'done'"/>
+                </group>
+                <group string="Comentarios del cliente" invisible="not is_post_sale_activity">
+                    <field name="post_sale_customer_comment" required="post_sale_state == 'done'" placeholder="Detalle lo comentado por el cliente sobre el servicio..."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mail_activity_view_form_inherit_post_sale" model="ir.ui.view">
+        <field name="name">mail.activity.form.post.sale</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='summary']" position="after">
+                <group string="Seguimiento Posventa" invisible="not is_post_sale_activity" col="2">
+                    <field name="post_sale_client_id" readonly="1"/>
+                    <field name="post_sale_cf_code" readonly="1"/>
+                    <field name="post_sale_contact_phone" readonly="1"/>
+                    <field name="post_sale_is_active_customer" readonly="1"/>
+                    <field name="post_sale_call_date"/>
+                    <field name="post_sale_done_by"/>
+                    <field name="post_sale_state"/>
+                    <field name="post_sale_satisfaction" required="post_sale_state == 'done'"/>
+                </group>
+                <group string="Comentarios del cliente" invisible="not is_post_sale_activity">
+                    <field name="post_sale_customer_comment" required="post_sale_state == 'done'"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_post_sale_call_tree" model="ir.ui.view">
+        <field name="name">crm.post.sale.call.tree</field>
+        <field name="model">crm.post.sale.call</field>
+        <field name="arch" type="xml">
+            <list string="Llamadas Posventa" default_order="post_sale_call_date desc" create="false">
+                <field name="post_sale_call_date"/>
+                <field name="post_sale_state"/>
+                <field name="post_sale_client_id"/>
+                <field name="post_sale_cf_code"/>
+                <field name="post_sale_done_by"/>
+                <field name="post_sale_satisfaction"/>
+                <field name="post_sale_customer_comment"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="crm_post_sale_call_form" model="ir.ui.view">
+        <field name="name">crm.post.sale.call.form</field>
+        <field name="model">crm.post.sale.call</field>
+        <field name="arch" type="xml">
+            <form string="Llamada Posventa" create="false" edit="false">
+                <sheet>
+                    <group col="2">
+                        <field name="post_sale_client_id"/>
+                        <field name="post_sale_cf_code"/>
+                        <field name="post_sale_call_date"/>
+                        <field name="post_sale_done_by"/>
+                        <field name="post_sale_state"/>
+                        <field name="post_sale_satisfaction"/>
+                    </group>
+                    <group string="Comentarios del cliente">
+                        <field name="post_sale_customer_comment"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="crm_post_sale_call_search" model="ir.ui.view">
+        <field name="name">crm.post.sale.call.search</field>
+        <field name="model">crm.post.sale.call</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Llamadas Posventa">
+                <field name="post_sale_client_id"/>
+                <field name="post_sale_cf_code"/>
+                <field name="post_sale_done_by"/>
+                <filter name="post_sale_pending" string="Pendientes" domain="[('post_sale_state', '=', 'pending')]"/>
+                <filter name="post_sale_done" string="Realizadas" domain="[('post_sale_state', '=', 'done')]"/>
+                <filter name="post_sale_satisfied" string="Satisfecho" domain="[('post_sale_satisfaction', '=', 'satisfied')]"/>
+                <filter name="post_sale_partial" string="Parcial" domain="[('post_sale_satisfaction', '=', 'partial')]"/>
+                <filter name="post_sale_unsatisfied" string="Insatisfecho" domain="[('post_sale_satisfaction', '=', 'unsatisfied')]"/>
+                <group>
+                    <filter name="group_by_done_by" string="Ejecutivo" context="{'group_by': 'post_sale_done_by'}"/>
+                    <filter name="group_by_state" string="Estado" context="{'group_by': 'post_sale_state'}"/>
+                    <filter name="group_by_satisfaction" string="Satisfaccion" context="{'group_by': 'post_sale_satisfaction'}"/>
+                    <filter name="group_by_date" string="Fecha" context="{'group_by': 'post_sale_call_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mail_activity_post_sale" model="ir.actions.act_window">
+        <field name="name">Llamadas Posventa</field>
+        <field name="res_model">crm.post.sale.call</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="crm_post_sale_call_tree"/>
+        <field name="search_view_id" ref="crm_post_sale_call_search"/>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <menuitem id="crm_menu_post_sale_calls" name="Llamadas Posventa" parent="crm.crm_menu_root" action="action_mail_activity_post_sale" sequence="29"/>
+</odoo>

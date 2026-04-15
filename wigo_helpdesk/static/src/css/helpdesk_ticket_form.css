@@ -1,0 +1,172 @@
+.o_form_view .wigo_sla_block {
+    border: 1px solid #d4deea;
+    border-radius: 12px;
+    padding: 12px 14px 8px;
+    background: linear-gradient(180deg, #fbfdff 0%, #f8fbff 100%);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+    margin-top: 6px;
+}
+
+.o_form_view .wigo_sla_block_ok {
+    background: linear-gradient(180deg, #edf9f1 0%, #e5f6ec 100%);
+    border-color: #bfe3cc;
+}
+
+.o_form_view .wigo_sla_block_warning {
+    background: linear-gradient(180deg, #fff8e8 0%, #fff3d8 100%);
+    border-color: #efd59b;
+}
+
+.o_form_view .wigo_sla_block_danger {
+    background: linear-gradient(180deg, #fdeeee 0%, #fce3e3 100%);
+    border-color: #eab6b6;
+}
+
+.o_form_view .wigo_sla_block_closed {
+    background: linear-gradient(180deg, #f2f4f7 0%, #eaedf2 100%);
+    border-color: #d2d8e1;
+}
+
+.o_form_view .wigo_sla_block .o_inner_group {
+    gap: 12px;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_col_left,
+.o_form_view .wigo_sla_block .wigo_sla_col_right {
+    min-width: 320px;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_header_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_header_row .o_field_widget[name="sla_status"] {
+    margin: 0;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_row_dates {
+    align-items: end;
+}
+
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_start_datetime"],
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_end_datetime"],
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_deadline"],
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_quick_days"] {
+    background: #ffffff;
+    border: 1px solid #e6edf5;
+    border-radius: 8px;
+}
+
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_status"] {
+    margin-top: 2px;
+}
+
+.o_form_view .wigo_sla_block .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_summary {
+    width: 100%;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_top_row {
+    row-gap: 8px;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_data_row {
+    row-gap: 6px;
+    column-gap: 14px;
+}
+
+.o_form_view .wigo_sla_block .wigo_sla_data_row > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_hours_remaining"] {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.o_form_view .wigo_resolution_block {
+    border: 1px solid #d7e0ea;
+    border-radius: 14px;
+    padding: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+}
+
+.o_form_view .wigo_resolution_block .wigo_resolution_grid,
+.o_form_view .wigo_resolution_block .wigo_resolution_footer {
+    width: 100%;
+}
+
+.o_form_view .wigo_resolution_block .wigo_resolution_card {
+    min-width: 320px;
+}
+
+.o_form_view .wigo_resolution_block .wigo_resolution_card .o_field_html,
+.o_form_view .wigo_resolution_block .wigo_resolution_card .o_field_text {
+    min-height: 220px;
+}
+
+.o_form_view .wigo_resolution_block .o_field_widget[name="resolution_notes"],
+.o_form_view .wigo_resolution_block .o_field_widget[name="technical_notes"] {
+    background: #ffffff;
+    border: 1px solid #e6edf5;
+    border-radius: 10px;
+}
+
+.o_form_view .wigo_resolution_block .note-editable {
+    min-height: 220px;
+}
+
+.o_form_view .wigo_resolution_block .alert {
+    border-radius: 12px;
+}
+
+.o_form_view .wigo_priority_big.o_field_widget,
+.o_form_view .wigo_priority_big .o_field_widget,
+.o_form_view .wigo_priority_big .o_priority {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.o_form_view .wigo_priority_big .fa,
+.o_form_view .wigo_priority_big .o_priority_star,
+.o_form_view .wigo_priority_big i {
+    font-size: 1.35rem;
+}
+
+.o_form_view .o_field_widget[name="resolution_notes"] {
+    border: 1px solid #d5dee9;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.o_form_view .o_field_widget[name="resolution_notes"] .note-editable {
+    min-height: 240px;
+}
+
+.o_form_view .o_field_widget[name="technical_notes"] textarea {
+    min-height: 220px;
+    border-radius: 8px;
+}
+
+@media (max-width: 992px) {
+    .o_form_view .wigo_sla_block .wigo_sla_col_left,
+    .o_form_view .wigo_sla_block .wigo_sla_col_right {
+        min-width: 100%;
+    }
+
+    .o_form_view .wigo_resolution_block .wigo_resolution_card {
+        min-width: 100%;
+    }
+}

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_helpdesk_sla_advanced_wizard_form" model="ir.ui.view">
+        <field name="name">helpdesk.sla.advanced.wizard.form</field>
+        <field name="model">helpdesk.sla.advanced.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Configurar SLA">
+                <sheet>
+
+                    <!-- Estado actual -->
+                    <div class="alert alert-secondary d-flex align-items-start gap-3 mb-3 py-2 px-3" role="status">
+                        <i class="fa fa-clock-o fa-lg" title="SLA"/>
+                        <div class="d-flex flex-column gap-2 w-100">
+                            <div class="d-flex gap-4 flex-wrap align-items-center">
+                                <span>
+                                    <strong>Estado:</strong>
+                                    <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
+                                </span>
+                            </div>
+
+                            <div class="d-flex gap-4 flex-wrap align-items-center">
+                                <span class="text-muted">Actual</span>
+                                <span invisible="not sla_deadline_current">
+                                    <strong>Límite:</strong>
+                                    <field name="sla_deadline_current" nolabel="1" readonly="1"/>
+                                </span>
+                                <span invisible="sla_status == 'closed' or not sla_deadline_current">
+                                    <strong>Horas restantes:</strong>
+                                    <field name="sla_hours_remaining_current_display" nolabel="1" readonly="1"/>
+                                </span>
+                            </div>
+
+                            <div class="d-flex gap-4 flex-wrap align-items-center">
+                                <span class="text-muted">Vista previa</span>
+                                <span invisible="not sla_deadline_preview">
+                                    <strong>Límite:</strong>
+                                    <field name="sla_deadline_preview" nolabel="1" readonly="1"/>
+                                </span>
+                                <span invisible="not sla_deadline_preview">
+                                    <strong>Horas restantes:</strong>
+                                    <field name="sla_hours_remaining_preview_display" nolabel="1" readonly="1"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector de modo -->
+                    <group>
+                        <field name="sla_mode" widget="radio" string="Tipo de configuración"/>
+                    </group>
+
+                    <!-- Modo DIAS -->
+                    <group string="⏱ Duración en días" invisible="sla_mode != 'quick'">
+                        <div class="text-muted small mb-2">
+                            El límite SLA se calculará desde la fecha de apertura del ticket.
+                        </div>
+                        <group col="2">
+                            <field name="sla_quick_days" string="Días de resolución" widget="radio"/>
+                        </group>
+                    </group>
+
+                    <!-- Modo AVANZADO -->
+                    <group string="📅 Fechas personalizadas" invisible="sla_mode != 'advanced'">
+                        <div class="text-muted small mb-2">
+                            Define exactamente cuándo empieza y termina el período SLA.
+                        </div>
+                        <group col="2">
+                            <field name="sla_start_datetime" string="🔓 Inicio SLA"/>
+                            <field name="sla_end_datetime" string="⏳ Fin SLA"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <footer>
+                    <button name="action_apply" type="object" string="Aplicar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
