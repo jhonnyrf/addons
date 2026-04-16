@@ -1,0 +1,33 @@
+<odoo>
+    <data>
+        <!-- =========================
+             WIZARD: GENERATE SUBINTERFACES
+        ========================== -->
+        <record id="view_generate_subinterfaces_wizard_form" model="ir.ui.view">
+            <field name="name">generate.subinterfaces.wizard.form</field>
+            <field name="model">wigo.ftth.generate.subinterfaces.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Generar Subinterfaces">
+                    <group>
+                        <field name="olt_port_id"/>
+                        <field name="capacity_max"/>
+                        <field name="existing_count"/>
+                    </group>
+
+                    <group string="Parámetros">
+                        <field name="vlan_text" placeholder="Ej: 4000"/>
+                        <field name="target_capacity" placeholder="Ej: 128"/>
+                        <div class="text-muted" colspan="2">
+                            La capacidad se valida contra la capacidad máxima del puerto.
+                        </div>
+                    </group>
+
+                    <footer>
+                        <button name="action_generate" type="object" string="Generar" class="btn-primary"/>
+                        <button string="Cancelar" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

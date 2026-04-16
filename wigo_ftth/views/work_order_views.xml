@@ -114,7 +114,7 @@
         <field name="name">wigo.ftth.work.order.form</field>
         <field name="model">wigo.ftth.work.order</field>
         <field name="arch" type="xml">
-            <form string="Orden de Trabajo FTTH" readonly="state == 'active'">
+            <form string="Orden de Trabajo FTTH" readonly="state == 'active'" class="wigo_ftth_work_order_form">
 
                 <!-- HEADER -->
                 <header>
@@ -159,7 +159,7 @@
                     <group col="4">
                         <group string="OT / Cliente" colspan="2">
                             <field name="work_type"/>
-                            <field name="contract_id"/>
+                            <field name="contract_id" readonly="state == 'active'"/>
 
                             <field name="partner_id" readonly="1"/>
                             <field name="customer_code" readonly="1"/>
@@ -170,8 +170,8 @@
                             <field name="scheduled_date" readonly="1" force_save="1"/>
                             <field name="execution_date" readonly="1"/>
 
-                            <field name="installer_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-                            <field name="technical_responsible_id" domain="[('department_id.name', '=', 'Area Técnica')]"/>
+                            <field name="installer_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager" readonly="state == 'active'"/>
+                            <field name="technical_responsible_id" domain="[('department_id.name', '=', 'Area Técnica')]" readonly="state == 'active'"/>
                         </group>
                     </group>
 
@@ -192,13 +192,13 @@
                         <page string="Datos técnicos" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
                             <group col="4">
                                 <group string="Selección" colspan="2">
-                                    <field name="zone_id"/>
+                                    <field name="zone_id" readonly="state == 'active'"/>
 
-                                    <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id" options="{'no_create': True}"/>
+                                    <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id or state == 'active'" options="{'no_create': True}"/>
 
-                                    <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id" options="{'no_create': True}"/>
+                                    <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id or state == 'active'" options="{'no_create': True}"/>
 
-                                    <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id" options="{'no_create': True}"/>
+                                    <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id or state == 'active'" options="{'no_create': True}"/>
                                 </group>
 
                                 <group string="Ruta calculada" colspan="2">
@@ -216,7 +216,7 @@
                         <page string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
                             <group col="4">
                                 <group string="Selección" colspan="2">
-                                    <field name="onu_id" domain="[('state','=','available')]"/>
+                                    <field name="onu_id" domain="[('state','=','available')]" readonly="state == 'active'"/>
                                 </group>
 
                                 <group string="Detalle" colspan="2" invisible="not onu_id">

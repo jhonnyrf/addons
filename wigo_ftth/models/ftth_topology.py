@@ -652,7 +652,24 @@ class FtthOltPort(models.Model):
             for rec in self
         ]
 
+    def action_open_generate_subinterfaces_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Generar Subinterfaces',
+            'res_model': 'wigo.ftth.generate.subinterfaces.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'default_olt_port_id': self.id,
+                'default_target_capacity': self.capacity_max,
+                'default_vlan_id': 1,
+            },
+        }
+
     def action_generate_subinterfaces(self):
+        # Backward compatible behavior: generate missing subinterfaces up to capacity_max.
         for port in self:
             existing = set(port.subinterface_ids.mapped('subinterface_number'))
             max_cap = port.capacity_max
@@ -663,6 +680,7 @@ class FtthOltPort(models.Model):
                     self.env['wigo.ftth.subinterface'].create({
                         'olt_port_id': port.id,
                         'subinterface_number': next_num,
+                        'vlan_id': 1,
                     })
                     existing.add(next_num)
                 next_num += 1
@@ -1019,7 +1037,7 @@ class FtthBoxGroup(models.Model):
     # ═════════════════════════════════════════════════════════════════════════════
 
     _group_number_unique = models.Constraint(
-        'unique(ond_id,group_number)',
+        'unique(odn_id,group_number)',
         'El número de grupo debe ser único en el sistema.'
     )
 
@@ -1686,6 +1704,11 @@ class FtthSubinterface(models.Model):
     _description = 'Subinterfaz OLT'
     _order = 'olt_port_id, subinterface_number'
 
+    _vlan_range_check = models.Constraint(
+        'CHECK (vlan_id BETWEEN 1 AND 4094)',
+        'VLAN ID must be between 1 and 4094.'
+    )
+
     # ─────────────────────────────────────────────────────────────
     # FIELDS
     # ─────────────────────────────────────────────────────────────
@@ -1714,6 +1737,24 @@ class FtthSubinterface(models.Model):
     )
 
     subinterface_number = fields.Integer(string='Nº Subinterfaz', required=True)
+
+    # IEEE 802.1Q VLAN identifier associated to this subinterface.
+    vlan_id = fields.Integer(
+        string='VLAN',
+        required=True,
+        index=True,
+        default=1,
+        help='IEEE 802.1Q VLAN ID (valid range: 1-4094).',
+    )
+
+    # UI helper: keep a plain string representation (no thousands separators like 4.000).
+    vlan_text = fields.Char(
+        string='VLAN',
+        compute='_compute_vlan_text',
+        inverse='_inverse_vlan_text',
+        store=False,
+        help='VLAN ID sin separadores de miles (ej: 4000).',
+    )
 
     code = fields.Char(
         string='Código',
@@ -1759,6 +1800,25 @@ class FtthSubinterface(models.Model):
         for rec in self:
             rec.olt_id = rec.olt_port_id.olt_id if rec.olt_port_id else False
 
+    @api.depends('vlan_id')
+    def _compute_vlan_text(self):
+        for rec in self:
+            rec.vlan_text = str(rec.vlan_id) if rec.vlan_id else ''
+
+    def _inverse_vlan_text(self):
+        for rec in self:
+            raw = (rec.vlan_text or '').strip()
+            if not raw:
+                rec.vlan_id = False
+                continue
+
+            # Accept common separators but store as plain integer.
+            normalized = raw.replace('.', '').replace(',', '').replace(' ', '')
+            if not normalized.isdigit():
+                raise ValidationError('La VLAN debe ser un número entero (1-4094).')
+
+            rec.vlan_id = int(normalized)
+
     def _build_code(self, rec):
         if rec.olt_port_id and rec.subinterface_number:
             return f"{rec.olt_port_id.interface_port}:{rec.subinterface_number}"
@@ -1774,6 +1834,15 @@ class FtthSubinterface(models.Model):
                 raise ValidationError(
                     f"La subinterfaz {rec.code} ya existe en este puerto (RN-02)."
                 )
+
+    @api.constrains('vlan_id')
+    def _check_vlan_id_range(self):
+        """Ensure VLAN ID is within the IEEE 802.1Q valid range."""
+        for rec in self:
+            if rec.vlan_id is None:
+                raise ValidationError('VLAN ID is required.')
+            if rec.vlan_id < 1 or rec.vlan_id > 4094:
+                raise ValidationError('VLAN ID must be between 1 and 4094.')
 
     def _exists_duplicate(self, rec):
         return self.search([

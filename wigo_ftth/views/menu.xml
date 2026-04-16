@@ -7,6 +7,10 @@
     <menuitem id="menu_ftth_wo_root" name="Ordenes de Trabajo" parent="menu_wigo_ftth_root" sequence="10"/>
     <menuitem id="menu_ftth_wo_all" name="Todas las OTs" parent="menu_ftth_wo_root" action="action_ftth_work_order" sequence="20"/>
 
+    <!-- 2. FICHAS TECNICAS DE CLIENTE -->
+    <menuitem id="menu_ftth_client_service_root" name="Clientes" parent="menu_wigo_ftth_root" sequence="25"/>
+
+    <menuitem id="menu_ftth_client_service" name="Fichas Técnicas" parent="menu_ftth_client_service_root" action="action_ftth_client_service" sequence="10"/>
     <!-- 3. INVENTARIO ONUs -->
     <menuitem id="menu_ftth_onu_root" name="Inventario ONUs" parent="menu_wigo_ftth_root" action="action_ftth_onu" sequence="30" groups="base.group_user,base.group_system"/>
     <menuitem id="menu_ftth_onu" name="Equipos ONU" parent="menu_ftth_onu_root" action="action_ftth_onu" sequence="10" groups="base.group_user,base.group_system"/>
@@ -23,16 +27,28 @@
 
     <!-- 5. CONFIGURACION -->
     <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-    <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_root" action="action_ftth_regional" sequence="10"/>
-    <menuitem id="menu_ftth_config_nodo" name="Nodos" parent="menu_ftth_config_root" action="action_ftth_nodo" sequence="20"/>
-    <menuitem id="menu_ftth_config_technology" name="Tecnologías" parent="menu_ftth_config_root" action="action_ftth_technology" sequence="25"/>
-    <menuitem id="menu_ftth_config_olt" name="OLTs" parent="menu_ftth_config_root" action="action_ftth_olt" sequence="30"/>
-    <menuitem id="menu_ftth_config_olt_port" name="Puertos PON" parent="menu_ftth_config_root" action="action_ftth_olt_port" sequence="40"/>
-    <menuitem id="menu_ftth_config_odn" name="ODN" parent="menu_ftth_config_root" action="action_ftth_odn" sequence="50"/>
-    <menuitem id="menu_ftth_config_box_group" name="Grupos de Cajas / Zonas" parent="menu_ftth_config_root" action="action_ftth_box_group" sequence="60"/>
-    <menuitem id="menu_ftth_config_box" name="Cajas NAP" parent="menu_ftth_config_root" action="action_ftth_box" sequence="70"/>
-    <menuitem id="menu_ftth_config_box_port" name="Puertos de Caja" parent="menu_ftth_config_root" action="action_ftth_box_port" sequence="80"/>
-    <menuitem id="menu_ftth_config_subinterface" name="Subinterfaces OLT" parent="menu_ftth_config_root" action="action_ftth_subinterface" sequence="90"/>
-    <menuitem id="menu_ftth_config_installer" name="Instaladores / Tecnicos" parent="menu_ftth_config_root" action="action_ftth_installer" sequence="100"/>
+
+    <!-- Submenús para ordenar la configuración -->
+    <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10"/>
+    <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20"/>
+    <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30"/>
+
+    <!-- Ubicación y segmentación -->
+    <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_location" action="action_ftth_regional" sequence="10"/>
+    <menuitem id="menu_ftth_config_nodo" name="Nodos" parent="menu_ftth_config_location" action="action_ftth_nodo" sequence="20"/>
+    <menuitem id="menu_ftth_config_box_group" name="Zonas / Grupos de Cajas" parent="menu_ftth_config_location" action="action_ftth_box_group" sequence="30"/>
+
+    <!-- Red GPON -->
+    <menuitem id="menu_ftth_config_technology" name="Tecnologías" parent="menu_ftth_config_network" action="action_ftth_technology" sequence="10"/>
+    <menuitem id="menu_ftth_config_olt" name="OLTs" parent="menu_ftth_config_network" action="action_ftth_olt" sequence="20"/>
+    <menuitem id="menu_ftth_config_olt_port" name="Puertos PON" parent="menu_ftth_config_network" action="action_ftth_olt_port" sequence="30"/>
+    <menuitem id="menu_ftth_config_subinterface" name="Subinterfaces OLT" parent="menu_ftth_config_network" action="action_ftth_subinterface" sequence="40"/>
+    <menuitem id="menu_ftth_config_odn" name="ODN" parent="menu_ftth_config_network" action="action_ftth_odn" sequence="50"/>
+    <menuitem id="menu_ftth_config_box" name="Cajas NAP" parent="menu_ftth_config_network" action="action_ftth_box" sequence="60"/>
+    <menuitem id="menu_ftth_config_box_port" name="Puertos de Caja" parent="menu_ftth_config_network" action="action_ftth_box_port" sequence="70"/>
+
+    <!-- Operación -->
+    <menuitem id="menu_ftth_config_installer" name="Instaladores / Técnicos" parent="menu_ftth_config_operations" action="action_ftth_installer" sequence="10"/>
+    <menuitem id="menu_ftth_config_additional_equipment" name="Equipos Adicionales" parent="menu_ftth_config_operations" action="action_ftth_additional_equipment" sequence="20"/>
 
 </odoo>

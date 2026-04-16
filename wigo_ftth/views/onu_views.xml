@@ -8,22 +8,13 @@
         <field name="name">wigo.ftth.onu.list</field>
         <field name="model">wigo.ftth.onu</field>
         <field name="arch" type="xml">
-            <list string="Inventario ONUs"
-                  decoration-success="state == 'available'"
-                  decoration-info="state == 'in_field'"
-                  decoration-primary="state == 'assigned'"
-                  decoration-muted="state in ['retired','damaged']">
+            <list string="Inventario ONUs" decoration-success="state == 'available'" decoration-info="state == 'in_field'" decoration-primary="state == 'assigned'" decoration-muted="state in ['retired','damaged']">
                 <field name="serial_number"/>
                 <field name="rotulo"/>
                 <field name="marca_id"/>
                 <field name="modelo_id"/>
                 <field name="perfil_olt"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'available'"
-                       decoration-info="state == 'in_field'"
-                       decoration-primary="state == 'assigned'"
-                       decoration-warning="state == 'damaged'"
-                       decoration-muted="state == 'retired'"/>
+                <field name="state" widget="badge" decoration-success="state == 'available'" decoration-info="state == 'in_field'" decoration-primary="state == 'assigned'" decoration-warning="state == 'damaged'" decoration-muted="state == 'retired'"/>
                 <field name="client_service_id" string="Cliente"/>
                 <field name="installer_id" string="Instalador"/>
             </list>
@@ -36,16 +27,15 @@
         <field name="arch" type="xml">
             <form string="ONU / ONT">
                 <header>
-                    <button name="action_retire" type="object" string="Retirar del inventario"
-                            class="btn-secondary" invisible="state == 'retired'"
-                            confirm="¿Retirar esta ONU del inventario?"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="available,in_field,assigned,retired"/>
+                    <button name="action_retire" type="object" string="Retirar del inventario" class="btn-secondary" invisible="state == 'retired'" confirm="¿Retirar esta ONU del inventario?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="available,in_field,assigned,retired"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="serial_number" string="Número de serie"/>
-                        <h1><field name="serial_number" placeholder="N/S del equipo..."/></h1>
+                        <h1>
+                            <field name="serial_number" placeholder="N/S del equipo..."/>
+                        </h1>
                     </div>
                     <group col="2">
                         <group string="Equipo">
@@ -63,8 +53,7 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Identificadores PON" name="pon"
-                              groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                        <page string="Identificadores PON" name="pon" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
                             <group col="2">
                                 <group>
                                     <field name="pon_sn"/>
@@ -85,7 +74,9 @@
                                 <field name="eth_ports"/>
                             </group>
                         </page>
-                        <page string="Notas"><field name="notes" nolabel="1"/></page>
+                        <page string="Notas">
+                            <field name="notes" nolabel="1"/>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter>
@@ -107,9 +98,9 @@
                 <field name="modelo"/>
                 <separator/>
                 <filter string="Disponibles" name="available" domain="[('state','=','available')]"/>
-                <filter string="Asignadas"   name="assigned"  domain="[('state','=','assigned')]"/>
-                <filter string="En campo"    name="in_field"  domain="[('state','=','in_field')]"/>
-                <filter string="Retiradas"   name="retired"   domain="[('state','=','retired')]"/>
+                <filter string="Asignadas" name="assigned" domain="[('state','=','assigned')]"/>
+                <filter string="En campo" name="in_field" domain="[('state','=','in_field')]"/>
+                <filter string="Retiradas" name="retired" domain="[('state','=','retired')]"/>
                 <separator/>
                 <filter string="Agrupar por marca" name="by_marca" context="{'group_by':'marca'}"/>
                 <filter string="Agrupar por estado" name="by_state" context="{'group_by':'state'}"/>
@@ -152,7 +143,9 @@
             <form string="Lote de Entrega ONUs">
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="name" placeholder="Referencia del lote..."/></h1>
+                        <h1>
+                            <field name="name" placeholder="Referencia del lote..."/>
+                        </h1>
                     </div>
                     <group col="2">
                         <group>
@@ -192,7 +185,9 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Notas"><field name="notes" nolabel="1"/></page>
+                        <page string="Notas">
+                            <field name="notes" nolabel="1"/>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter>
