@@ -6,13 +6,11 @@
         <field name="arch" type="xml">
             <list string="Instaladores" decoration-muted="state == 'inactive'">
                 <field name="name"/>
-                <field name="tipo" widget="badge"/>
-                <field name="encargado"/>
+                <field name="installer_type" widget="badge"/>
+                <field name="manager_name"/>
                 <field name="phone"/>
                 <field name="work_order_count" string="OTs"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'active'"
-                       decoration-muted="state == 'inactive'"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-muted="state == 'inactive'"/>
             </list>
         </field>
     </record>
@@ -23,11 +21,15 @@
         <field name="arch" type="xml">
             <form string="Instalador">
                 <sheet>
-                    <div class="oe_title"><h1><field name="name" placeholder="Nombre o razón social..."/></h1></div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre o razón social..."/>
+                        </h1>
+                    </div>
                     <group col="2">
                         <group>
-                            <field name="tipo"/>
-                            <field name="encargado" invisible="tipo != 'company'"/>
+                            <field name="installer_type"/>
+                            <field name="manager_name" invisible="installer_type != 'company'"/>
                             <field name="phone"/>
                         </group>
                         <group>
@@ -35,7 +37,13 @@
                             <field name="work_order_count" readonly="1"/>
                         </group>
                     </group>
-                    <group string="Notas"><field name="notes" nolabel="1"/></group>
+                    <notebook>
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notes" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -45,5 +53,12 @@
         <field name="name">Instaladores</field>
         <field name="res_model">wigo.ftth.installer</field>
         <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aquí puedes gestionar los instaladores registrados en el sistema. Puedes crear nuevos instaladores, editar su información y consultar las órdenes de trabajo asociadas a cada uno.
+            </p>
+        </field>
     </record>
 </odoo>

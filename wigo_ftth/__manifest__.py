@@ -27,6 +27,7 @@
         'data/sequence.xml',      
         'views/topology_views.xml',
         'views/generate_ports_wizard.xml',
+        'views/generate_boxes_wizard.xml',
         'views/generic_confirm_wizard.xml',
         'views/onu_views.xml',
         'views/installer_views.xml',
@@ -40,6 +41,5 @@
         'web.assets_backend': [
             'wigo_ftth/static/src/css/wigo_ftth.css',
         ],
-    },
-    'post_init_hook': 'post_init_migrate_zona_to_zona_id',
+    }    
 }

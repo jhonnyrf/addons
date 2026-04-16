@@ -63,7 +63,7 @@ class FtthWorkOrder(models.Model):
     box_group_id = fields.Many2one(
         'wigo.ftth.box.group',
         string='Grupo de cajas',
-        domain="[('zona_id', '=', zone_id)]",
+        domain="[('zone_id', '=', zone_id)]",
         tracking=True,
     )
 
@@ -104,6 +104,22 @@ class FtthWorkOrder(models.Model):
         string='ONU asignada',
         domain="[('state', '=', 'available')]",
         tracking=True,
+    )
+
+    # Datos de la ONU (solo lectura)
+    onu_state = fields.Selection(related='onu_id.state', string='Estado ONU', readonly=True)
+    onu_serial_number = fields.Char(related='onu_id.serial_number', string='Nº serie ONU', readonly=True)
+    onu_rotulo = fields.Char(related='onu_id.rotulo', string='Rótulo / Etiqueta', readonly=True)
+    onu_marca = fields.Char(related='onu_id.marca', string='Marca', readonly=True)
+    onu_modelo = fields.Char(related='onu_id.modelo', string='Modelo', readonly=True)
+    onu_perfil_olt = fields.Char(related='onu_id.perfil_olt', string='Perfil OLT', readonly=True)
+    onu_pon_sn = fields.Char(related='onu_id.pon_sn', string='PON S/N', readonly=True)
+    onu_wifi_ssid = fields.Char(related='onu_id.wifi_ssid', string='WiFi SSID', readonly=True)
+    onu_wifi_password = fields.Char(
+        related='onu_id.wifi_password',
+        string='WiFi Password',
+        readonly=True,
+        groups='wigo_ftth.group_ftth_tech'
     )
 
     # ==========================================================================
@@ -192,7 +208,7 @@ class FtthWorkOrder(models.Model):
         if group.olt_port_id:
             self.olt_port_id = group.olt_port_id
             self.olt_id = group.olt_port_id.olt_id
-            self.node_id = group.olt_port_id.olt_id.nodo_id if group.olt_port_id.olt_id else False
+            self.node_id = group.olt_port_id.olt_id.node_id if group.olt_port_id.olt_id else False
         else:
             self.olt_port_id = False
             self.olt_id = False
@@ -211,7 +227,9 @@ class FtthWorkOrder(models.Model):
 
         if self.box_port_id:
             sub = self.box_port_id.subinterface_id
-            if sub and sub.state == 'occupied':
+            # Si el puerto ya está vinculado a una subinterfaz, autocompletarla
+            # (puede estar en infraestructura, asignada a OT, en activación o activa).
+            if sub and sub.state != 'free':
                 self.subinterface_id = sub
 
     # ==========================================================================
@@ -222,10 +240,19 @@ class FtthWorkOrder(models.Model):
             self._validate_assignment(record)
 
             record.write({'state': 'assigned'})
-            record.onu_id.sudo().write({
-                'state': 'in_field',
-                'installer_id': record.installer_id.id
-            })
+
+            # Recursos quedan "apartados" para esta OT
+            if record.subinterface_id:
+                record.subinterface_id.sudo().write({'state': 'allocated'})
+
+            if record.box_port_id:
+                record.box_port_id.sudo().write({'state': 'allocated'})
+
+            if record.onu_id:
+                record.onu_id.sudo().write({
+                    'state': 'in_field',
+                    'installer_id': record.installer_id.id
+                })
 
     def _validate_assignment(self, record):
         if not record.onu_id:
@@ -235,6 +262,13 @@ class FtthWorkOrder(models.Model):
         if not record.installer_id:
             raise ValidationError("Debe asignar un instalador antes de pasar a Asignada.")
 
+        # Disponibilidad de recursos
+        if record.subinterface_id.state != 'occupied':
+            raise ValidationError("La subinterfaz seleccionada no está disponible (debe estar en 'Infraestructura').")
+
+        if record.box_port_id and record.box_port_id.state != 'occupied':
+            raise ValidationError("El puerto de caja seleccionado no está disponible (debe estar en 'Infraestructura').")
+
     def action_in_field(self):
         for record in self:
             record.write({
@@ -243,7 +277,15 @@ class FtthWorkOrder(models.Model):
             })
 
     def action_installed(self):
-        self.write({'state': 'installed'})
+        for record in self:
+            record.write({'state': 'installed'})
+
+            # En esta etapa el cliente ya está instalado pero falta configurar/activar
+            if record.subinterface_id:
+                record.subinterface_id.sudo().write({'state': 'reserved'})
+
+            if record.box_port_id:
+                record.box_port_id.sudo().write({'state': 'reserved'})
 
     def action_activate(self):
         for record in self:
@@ -252,19 +294,18 @@ class FtthWorkOrder(models.Model):
             record._sync_resources_on_activation()
 
     def _sync_resources_on_activation(self):
+        self.ensure_one()
+
         if self.subinterface_id:
-            self.subinterface_id.with_context(skip_state_sync=True).write({'state': 'reserved'})
+            self.subinterface_id.sudo().write({'state': 'active'})
 
         if self.box_port_id:
-            self.box_port_id.with_context(skip_state_sync=True).write({
-                'state': 'reserved',
-                'subinterface_id': self.subinterface_id.id,
-            })
+            self.box_port_id.sudo().write({'state': 'active'})
 
         if self.onu_id:
             self.onu_id.sudo().write({
                 'state': 'assigned',
-                'assignment_date': fields.Date.today()
+                'fecha_asignacion': fields.Date.today()
             })
 
     def action_incident(self):
@@ -276,18 +317,18 @@ class FtthWorkOrder(models.Model):
             record.write({'state': 'deactivation_executed'})
 
     def _release_resources(self):
+        # Volver a estado de infraestructura (sin cliente), manteniendo el enlace
+        # subinterface ⇄ box_port para no perder la topología.
         if self.subinterface_id:
             self.subinterface_id.sudo().write({
                 'state': 'occupied',
                 'client_service_id': False,
-                'onu_id': False
+                'onu_id': False,
             })
 
         if self.box_port_id:
-            self.box_port_id.sudo().write({
-                'state': 'occupied',
-                'subinterface_id': False
-            })
+            # No limpiar subinterface_id; solo devolver a infraestructura
+            self.box_port_id.sudo().write({'state': 'occupied'})
 
         if self.onu_id:
             self.onu_id.sudo().write({
@@ -298,7 +339,10 @@ class FtthWorkOrder(models.Model):
             })
 
         if self.client_service_id:
-            self.client_service_id.sudo().write({'estado_servicio': 'baja'})
+            self.client_service_id.sudo().write({
+                'estado_servicio': 'baja',
+                'fecha_baja': fields.Date.today(),
+            })
 
     # ==========================================================================
     # Client Service
@@ -308,25 +352,46 @@ class FtthWorkOrder(models.Model):
 
         service_model = self.env['wigo.ftth.client.service'].sudo()
 
-        existing = service_model.search(
-            [('lead_id', '=', self.lead_id.id)],
-            limit=1
-        ) if self.lead_id else False
+        domain = [('work_order_id', '=', self.id)]
+        if self.lead_id:
+            domain = ['|', ('lead_id', '=', self.lead_id.id), ('work_order_id', '=', self.id)]
+
+        existing = service_model.search(domain, limit=1)
 
         vals = self._prepare_client_service_vals()
 
-        service = existing.write(vals) or existing if existing else service_model.create(vals)
+        if existing:
+            # No reescribir datos históricos si ya existen.
+            if existing.fecha_instalacion:
+                vals.pop('fecha_instalacion', None)
+            vals.pop('estado_servicio', None)
+
+            existing.write(vals)
+            service = existing
+        else:
+            service = service_model.create(vals)
 
         self.client_service_id = service.id
         self._link_resources_to_service(service)
 
     def _prepare_client_service_vals(self):
+        # Importante: algunos campos de la ONU (p.ej. wifi_password) están restringidos por grupos.
+        # Usamos sudo() para poder leerlos durante la activación aunque el usuario no sea técnico.
+        onu = self.onu_id.sudo() if self.onu_id else False
+        lead = self.lead_id.sudo() if self.lead_id else False
         return {
             'partner_id': self.partner_id.id,
             'codigo_cliente': self.customer_code,
             'plan_id': self.plan_id.id if self.plan_id else False,
+            'servicio': self.plan_id.display_name if self.plan_id else False,
             'fecha_instalacion': fields.Date.today(),
             'estado_servicio': 'active',
+
+            # Comercial (si hay lead de origen)
+            'gestor_comercial': lead.team_id.name if lead and lead.team_id else False,
+            'responsable_comercial_id': lead.user_id.id if lead and lead.user_id else False,
+
+            # Topología / ruta
             'nodo_id': self.node_id.id if self.node_id else False,
             'olt_id': self.olt_id.id if self.olt_id else False,
             'olt_port_id': self.olt_port_id.id if self.olt_port_id else False,
@@ -335,9 +400,23 @@ class FtthWorkOrder(models.Model):
             'box_group_id': self.box_group_id.id if self.box_group_id else False,
             'box_id': self.box_id.id if self.box_id else False,
             'box_port_id': self.box_port_id.id if self.box_port_id else False,
-            'onu_id': self.onu_id.id if self.onu_id else False,
+
+            # Equipos
+            'onu_id': onu.id if onu else False,
+
+            # Operación
             'installer_id': self.installer_id.id if self.installer_id else False,
             'link_ubicacion': self.location_link,
+            'observaciones': self.notes or False,
+
+            # Config / WiFi (si viene en la ONU seleccionada)
+            'tcont': onu.tcont if onu else False,
+            'gemport': onu.gemport if onu else False,
+            'vport': onu.vport if onu else False,
+            'wifi_ssid': onu.wifi_ssid if onu else False,
+            'wifi_pass': onu.wifi_password if onu else False,
+
+            # Vínculos
             'lead_id': self.lead_id.id if self.lead_id else False,
             'work_order_id': self.id,
         }

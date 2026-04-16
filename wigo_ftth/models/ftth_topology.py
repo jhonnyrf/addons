@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -729,6 +729,7 @@ class FtthOdn(models.Model):
     olt_id = fields.Many2one(
         'wigo.ftth.olt',
         string='OLT asociada',
+        domain=[('has_odn', '=', False)],
         required=True,
         ondelete='restrict'
     )
@@ -818,12 +819,36 @@ class FtthOdn(models.Model):
         next_number = self._get_next_odn_number_int()
 
         for vals in vals_list:
+            _logger.info(f"Creando ODN con valores: {vals}")
             if not vals.get('odn_number'):
                 vals['odn_number'] = self._format_number(next_number)
-                next_number += 1
+                next_number += 1  
 
-        return super().create(vals_list)
-    
+        records = super().create(vals_list)
+
+        for record in records:
+            record._update_has_odn_on_olt()
+
+        return records
+    def write(self, vals):
+        
+        old_olts = self.mapped('olt_id')
+        res = super().write(vals)        
+        new_olts = self.mapped('olt_id')       
+        olts_to_update = (old_olts | new_olts).filtered(lambda o: o)
+
+        for olt in olts_to_update:
+            has_odn = bool(self.search([
+                ('olt_id', '=', olt.id)
+            ], limit=1))
+
+            _logger.info(
+                f"Actualizando has_odn para OLT {olt.id} a {has_odn}"
+            )
+
+            olt.write({'has_odn': has_odn})
+
+        return res    
    # ═════════════════════════════════════════════════════════════════════════════
     # Compute Methods
     # ═════════════════════════════════════════════════════════════════════════════
@@ -855,6 +880,36 @@ class FtthOdn(models.Model):
         if not odn_number:
             return "ODN_X"
         return f"ODN_{odn_number}"  
+    def unlink(self):
+        olts = self.mapped('olt_id')
+
+        res = super().unlink()
+
+        for olt in olts:
+            has_odn = bool(self.search([
+                ('olt_id', '=', olt.id)
+            ], limit=1))
+
+            olt.has_odn = has_odn
+
+        return res
+    def _update_has_odn_on_olt(self):
+        olts = self.mapped('olt_id')
+
+        for olt in olts:
+            if olt:
+                has_odn = bool(self.search([
+                    ('olt_id', '=', olt.id)
+                ], limit=1))
+
+                _logger.info(
+                    f"Actualizando has_odn para OLT {olt.id} a {has_odn}"
+                )
+
+                olt.has_odn = has_odn
+         
+            
+                
     def _get_next_odn_number(self):
         if self.olt_id:
            return self.olt_id.olt_number if self.olt_id else '01'
@@ -964,7 +1019,7 @@ class FtthBoxGroup(models.Model):
     # ═════════════════════════════════════════════════════════════════════════════
 
     _group_number_unique = models.Constraint(
-        'unique(group_number)',
+        'unique(ond_id,group_number)',
         'El número de grupo debe ser único en el sistema.'
     )
 
@@ -1108,6 +1163,35 @@ class FtthBoxGroup(models.Model):
                 )
 
     # ═════════════════════════════════════════════════════════════════════════════
+    # Actions
+    # ═════════════════════════════════════════════════════════════════════════════
+
+    def action_open_generate_boxes_wizard(self):
+        self.ensure_one()
+
+        default_capacity = '16'
+        if self.splitter_level_2 and ':' in self.splitter_level_2:
+            try:
+                _left, right = self.splitter_level_2.split(':', 1)
+                if right in ('8', '16'):
+                    default_capacity = right
+            except Exception:
+                pass
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Generar Cajas NAP',
+            'res_model': 'generate.boxes.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_id': self.id,
+                'default_port_capacity': default_capacity,
+                'default_quantity': 1,
+            },
+        }
+
+    # ═════════════════════════════════════════════════════════════════════════════
     # Display
     # ═════════════════════════════════════════════════════════════════════════════
 
@@ -1235,11 +1319,69 @@ class FtthBox(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create para generar identificador automáticamente."""
-        for vals in vals_list:
-            self._auto_generate_identifier(vals)
+        """Override create para generar identificadores únicos.
 
+        Importante: cuando se crean múltiples NAPs en un solo create_multi (ej. wizard),
+        no se puede depender de búsquedas en BD por cada `vals`, porque los registros
+        aún no existen y se repetiría la misma letra (01A, 01A, 01A...).
+
+        Esta implementación asigna letras secuenciales por grupo dentro del mismo batch.
+        """
+        self._assign_identifiers_for_create(vals_list)
         return super().create(vals_list)
+
+    def _assign_identifiers_for_create(self, vals_list):
+        """Asigna `identifier` a los `vals` que no lo traen y tienen `box_group_id`.
+
+        - Hace 1 búsqueda para obtener identificadores existentes por grupo.
+        - Asigna letras A..Z en el orden en el que llegan los `vals`.
+        - Evita duplicados en create_multi.
+        """
+        vals_by_group = {}
+        for vals in vals_list:
+            if vals.get('identifier') or not vals.get('box_group_id'):
+                continue
+            vals_by_group.setdefault(vals['box_group_id'], []).append(vals)
+
+        if not vals_by_group:
+            return
+
+        group_ids = list(vals_by_group.keys())
+        groups = self.env['wigo.ftth.box.group'].browse(group_ids)
+        group_by_id = {g.id: g for g in groups if g.exists()}
+
+        used_letters_by_group = {gid: set() for gid in group_ids}
+        existing_rows = self.search_read(
+            [('box_group_id', 'in', group_ids), ('identifier', '!=', False)],
+            ['box_group_id', 'identifier'],
+        )
+        for row in existing_rows:
+            group_id = row.get('box_group_id') and row['box_group_id'][0]
+            identifier = row.get('identifier') or ''
+            if not group_id or not identifier:
+                continue
+
+            last_char = identifier[-1]
+            if last_char.isalpha():
+                used_letters_by_group.setdefault(group_id, set()).add(last_char.upper())
+
+        for group_id, group_vals in vals_by_group.items():
+            group = group_by_id.get(group_id)
+            if not group:
+                continue
+
+            used_letters = used_letters_by_group.get(group_id, set())
+            next_letter = self.FIRST_LETTER if not used_letters else chr(ord(sorted(used_letters)[-1]) + 1)
+
+            for vals in group_vals:
+                if not next_letter.isalpha() or ord(next_letter) > ord('Z'):
+                    raise UserError(
+                        'No se pueden generar más cajas en este grupo: se alcanzó el límite de letras (A-Z).\n'
+                        'Cree un nuevo grupo o ajuste la numeración del grupo actual.'
+                    )
+
+                vals['identifier'] = self._build_identifier(group, next_letter)
+                next_letter = chr(ord(next_letter) + 1)
 
     # ═════════════════════════════════════════════════════════════════════════════
     # Display Methods
@@ -1386,7 +1528,9 @@ class FtthBoxPort(models.Model):
     state = fields.Selection([
         ('free', 'Libre'),
         ('occupied', 'Infraestructura'),
-        ('reserved', 'Cliente Activo'),
+        ('allocated', 'Asignada a OT'),
+        ('reserved', 'En proceso de activación'),
+        ('active', 'Activa (cliente funcionando)'),
     ], string='Estado')
     notes = fields.Html(string='Notas')
     subinterface_id = fields.Many2one(
@@ -1582,8 +1726,10 @@ class FtthSubinterface(models.Model):
 
     state = fields.Selection([
         ('free', 'Libre'),
-        ('occupied', 'Infraestructura'),
-        ('reserved', 'Cliente Activo'),
+        ('occupied', 'Infraestructura'),        
+        ('allocated', 'Asignada a OT'),
+        ('reserved', 'En proceso de activación'),
+        ('active', 'Activa (cliente funcionando)'),
     ], string='Estado', default='free')
 
     notes = fields.Html(string='Notas')

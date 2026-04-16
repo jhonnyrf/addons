@@ -114,7 +114,7 @@
         <field name="name">wigo.ftth.work.order.form</field>
         <field name="model">wigo.ftth.work.order</field>
         <field name="arch" type="xml">
-            <form string="Orden de Trabajo FTTH">
+            <form string="Orden de Trabajo FTTH" readonly="state == 'active'">
 
                 <!-- HEADER -->
                 <header>
@@ -130,10 +130,10 @@
 
                     <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state == 'deactivation_executed'" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active" readonly="state == 'active'"/>
                 </header>
 
-                <sheet>
+                <sheet readonly="state == 'active'">
 
                     <!-- RIBBONS -->
                     <widget name="web_ribbon" title="Con incidencia" bg_color="text-bg-warning" invisible="state != 'incident'"/>
@@ -155,9 +155,9 @@
                         </h1>
                     </div>
 
-                    <!-- MAIN INFO -->
-                    <group col="2">
-                        <group string="Tipo y cliente">
+                    <!-- SUMMARY (arriba: lectura rápida) -->
+                    <group col="4">
+                        <group string="OT / Cliente" colspan="2">
                             <field name="work_type"/>
                             <field name="contract_id"/>
 
@@ -166,63 +166,83 @@
                             <field name="plan_id" readonly="1"/>
                         </group>
 
-                        <group string="Programación">
-                            <field name="scheduled_date" readonly="1"/>
+                        <group string="Planificación" colspan="2">
+                            <field name="scheduled_date" readonly="1" force_save="1"/>
                             <field name="execution_date" readonly="1"/>
+
+                            <field name="installer_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
                             <field name="technical_responsible_id" domain="[('department_id.name', '=', 'Area Técnica')]"/>
                         </group>
                     </group>
 
-                    <!-- CUSTOMER DATA -->
-                    <group string="Datos del cliente" col="2">
-                        <group>
-                            <field name="address" readonly="1"/>
-                            <field name="contact_phone" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="location_link" widget="url" readonly="1"/>
-                        </group>
-                    </group>
-
-                    <!-- TECHNICAL ASSIGNMENT -->
-                    <group string="Asignación técnica" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
-
-                        <group string="Instalador">
-                            <field name="installer_id"/>
-                        </group>
-
-                        <group string="Ruta de red">
-
-                            <field name="zone_id"/>
-
-                            <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id" options="{'no_create': True}"/>
-
-                            <field name="olt_id" readonly="1" force_save="1"/>
-                            <field name="olt_port_id" readonly="1" force_save="1"/>
-                            <field name="odn_id" readonly="1" force_save="1"/>
-                            <field name="node_id" readonly="1" force_save="1"/>
-
-                            <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id" options="{'no_create': True}"/>
-
-                            <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id" options="{'no_create': True}"/>
-
-                            <field name="subinterface_id" domain="[('olt_port_id','=',olt_port_id),('state','=','occupied')]" readonly="1"/>
-                        </group>
-                    </group>
-
-                    <!-- ONU -->
-                    <group string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
-                        <field name="onu_id" domain="[('state','=','available')]"/>
-                    </group>
-
-                    <!-- NOTES -->
+                    <!-- DETAIL TABS (menos scroll, mejor separación) -->
                     <notebook>
-                        <page string="Accesorios y notas">
-                            <group>
-                                <field name="accessories" nolabel="1"/>
+                        <page string="Cliente">
+                            <group col="4">
+                                <group string="Contacto" colspan="2">
+                                    <field name="address" readonly="1" force_save="1"/>
+                                    <field name="contact_phone" readonly="1" force_save="1"/>
+                                </group>
+                                <group string="Ubicación" colspan="2">
+                                    <field name="location_link" widget="url" readonly="1" force_save="1"/>
+                                </group>
                             </group>
-                            <group string="Observaciones">
-                                <field name="notes" nolabel="1"/>
+                        </page>
+
+                        <page string="Datos técnicos" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group col="4">
+                                <group string="Selección" colspan="2">
+                                    <field name="zone_id"/>
+
+                                    <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id" options="{'no_create': True}"/>
+
+                                    <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id" options="{'no_create': True}"/>
+
+                                    <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id" options="{'no_create': True}"/>
+                                </group>
+
+                                <group string="Ruta calculada" colspan="2">
+                                    <field name="olt_id" readonly="1" force_save="1"/>
+                                    <field name="olt_port_id" readonly="1" force_save="1"/>
+
+                                    <field name="subinterface_id" domain="[('olt_port_id','=',olt_port_id),('state','=','occupied')]" readonly="1" force_save="1"/>
+
+                                    <field name="odn_id" readonly="1" force_save="1"/>
+                                    <field name="node_id" readonly="1" force_save="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group col="4">
+                                <group string="Selección" colspan="2">
+                                    <field name="onu_id" domain="[('state','=','available')]"/>
+                                </group>
+
+                                <group string="Detalle" colspan="2" invisible="not onu_id">
+                                    <group col="2">
+                                        <field name="onu_state" readonly="1"/>
+                                        <field name="onu_serial_number" readonly="1"/>
+                                        <field name="onu_rotulo" readonly="1"/>
+                                        <field name="onu_marca" readonly="1"/>
+                                        <field name="onu_modelo" readonly="1"/>
+                                        <field name="onu_perfil_olt" readonly="1"/>
+                                        <field name="onu_pon_sn" readonly="1"/>
+                                        <field name="onu_wifi_ssid" readonly="1"/>
+                                        <field name="onu_wifi_password" readonly="1" widget="password"/>
+                                    </group>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Notas">
+                            <group col="2">
+                                <group string="Accesorios">
+                                    <field name="accessories" nolabel="1"/>
+                                </group>
+                                <group string="Observaciones">
+                                    <field name="notes" nolabel="1"/>
+                                </group>
                             </group>
                         </page>
                     </notebook>
@@ -246,7 +266,7 @@
     <record id="action_ftth_work_order" model="ir.actions.act_window">
         <field name="name">Órdenes de Trabajo</field>
         <field name="res_model">wigo.ftth.work.order</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ftth_work_order_search"/>
         <field name="context">{'active_test': False}</field>
         <field name="help" type="html">

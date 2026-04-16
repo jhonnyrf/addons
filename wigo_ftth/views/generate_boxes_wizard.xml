@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- =========================
+             WIZARD: GENERATE BOXES (NAPs)
+        ========================== -->
+        <record id="view_generate_boxes_wizard_form" model="ir.ui.view">
+            <field name="name">generate.boxes.wizard.form</field>
+            <field name="model">generate.boxes.wizard</field>
+            <field name="arch" type="xml">
+
+                <form string="Generar Cajas NAP">
+
+                    <group>
+                        <field name="quantity"/>
+                        <field name="port_capacity"/>
+                    </group>
+
+                    <footer>
+                        <button name="action_generate" type="object" string="Generar" class="btn-primary"/>
+                        <button string="Cancelar" special="cancel"/>
+                    </footer>
+
+                </form>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

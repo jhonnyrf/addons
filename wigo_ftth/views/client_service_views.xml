@@ -5,10 +5,7 @@
         <field name="name">wigo.ftth.client.service.list</field>
         <field name="model">wigo.ftth.client.service</field>
         <field name="arch" type="xml">
-            <list string="Fichas Técnicas de Clientes"
-                  decoration-success="estado_servicio == 'active'"
-                  decoration-warning="estado_servicio in ['suspended','corte']"
-                  decoration-muted="estado_servicio in ['baja','cancelado']">
+            <list string="Fichas Técnicas de Clientes" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio in ['suspended','corte']" decoration-muted="estado_servicio in ['baja','cancelado']">
                 <field name="codigo_cliente"/>
                 <field name="partner_id"/>
                 <field name="plan_id"/>
@@ -16,15 +13,11 @@
                 <field name="gestor_comercial"/>
                 <field name="installer_id"/>
                 <field name="fecha_instalacion"/>
-                <field name="nodo_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-                <field name="olt_id" string="OLT" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-                <field name="subinterface_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-                <field name="onu_id" string="ONU (N/S)"/>
-                <field name="estado_servicio" widget="badge"
-                       decoration-success="estado_servicio == 'active'"
-                       decoration-warning="estado_servicio == 'suspended'"
-                       decoration-danger="estado_servicio in ['corte','baja']"
-                       decoration-muted="estado_servicio == 'cancelado'"/>
+                <field name="nodo_id" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
+                <field name="olt_id" string="OLT" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
+                <field name="subinterface_id" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
+                <field name="onu_id" string="ONU (N/S)" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
+                <field name="estado_servicio" widget="badge" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio == 'suspended'" decoration-danger="estado_servicio in ['corte','baja']" decoration-muted="estado_servicio == 'cancelado'"/>
             </list>
         </field>
     </record>
@@ -35,120 +28,144 @@
         <field name="arch" type="xml">
             <form string="Ficha Técnica del Cliente">
                 <header>
-                    <field name="estado_servicio" widget="statusbar"
-                           statusbar_visible="active,suspended,corte,baja"/>
+                    <field name="estado_servicio" widget="statusbar" statusbar_visible="active,suspended,corte,baja"/>
                 </header>
                 <sheet>
-                    <widget name="web_ribbon" title="Suspendido" bg_color="text-bg-warning"
-                            invisible="estado_servicio != 'suspended'"/>
-                    <widget name="web_ribbon" title="En corte" bg_color="text-bg-danger"
-                            invisible="estado_servicio != 'corte'"/>
-                    <widget name="web_ribbon" title="Dado de baja" bg_color="text-bg-danger"
-                            invisible="estado_servicio != 'baja'"/>
-                    <widget name="web_ribbon" title="Cancelado" bg_color="text-bg-secondary"
-                            invisible="estado_servicio != 'cancelado'"/>
+                    <widget name="web_ribbon" title="Suspendido" bg_color="text-bg-warning" invisible="estado_servicio != 'suspended'"/>
+                    <widget name="web_ribbon" title="En corte" bg_color="text-bg-danger" invisible="estado_servicio != 'corte'"/>
+                    <widget name="web_ribbon" title="Dado de baja" bg_color="text-bg-danger" invisible="estado_servicio != 'baja'"/>
+                    <widget name="web_ribbon" title="Cancelado" bg_color="text-bg-secondary" invisible="estado_servicio != 'cancelado'"/>
 
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_work_order" type="object"
-                                class="oe_stat_button" icon="fa-wrench"
-                                invisible="not work_order_id">
+                        <button name="action_view_work_order" type="object" class="oe_stat_button" icon="fa-wrench" invisible="not work_order_id">
                             <span class="o_stat_text">OT origen</span>
+                        </button>
+
+                        <button name="action_sync_from_work_order" type="object" class="oe_stat_button" icon="fa-refresh" invisible="not work_order_id">
+                            <span class="o_stat_text">Actualizar datos</span>
                         </button>
                     </div>
 
                     <div class="oe_title">
                         <label for="codigo_cliente" string="Código de cliente"/>
-                        <h1><field name="codigo_cliente"/></h1>
+                        <h1>
+                            <field name="codigo_cliente"/>
+                        </h1>
                     </div>
 
-                    <!-- Datos del servicio — visibles para todos -->
-                    <group string="Datos del servicio" col="2">
-                        <group>
+                    <!-- RESUMEN (arriba: lectura rápida, menos scroll) -->
+                    <group col="4">
+                        <group string="Cliente / Servicio" colspan="2">
                             <field name="partner_id"/>
                             <field name="plan_id"/>
                             <field name="servicio"/>
+                        </group>
+
+                        <group string="Operación" colspan="2">
                             <field name="fecha_instalacion"/>
                             <field name="fecha_baja" invisible="estado_servicio not in ['baja','cancelado']"/>
-                        </group>
-                        <group>
-                            <field name="gestor_comercial"/>
-                            <field name="responsable_comercial_id"/>
                             <field name="installer_id"/>
-                            <field name="link_ubicacion" widget="url"/>
-                            <field name="metraje"/>
                         </group>
                     </group>
 
-                    <!-- ONU: visible para Técnica + Contabilidad -->
-                    <group string="Equipo ONU"
-                           groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
-                        <field name="onu_id"/>
-                    </group>
+                    <!-- DETALLE (pestañas) -->
+                    <notebook>
+                        <page string="Servicio">
+                            <group col="4">
+                                <group string="Comercial" colspan="2">
+                                    <field name="gestor_comercial"/>
+                                    <field name="responsable_comercial_id"/>
+                                    <field name="metraje"/>
+                                </group>
 
-                    <!-- Topología: solo Técnica -->
-                    <group string="Topología de red — Ruta técnica"
-                           groups="wigo_ftth.group_ftth_tech,base.group_erp_manager" col="2">
-                        <group>
-                            <field name="nodo_id"/>
-                            <field name="olt_id"/>
-                            <field name="olt_port_id"/>
-                            <field name="subinterface_id"/>
-                            <field name="odn_id"/>
-                        </group>
-                        <group>
-                            <field name="box_group_id"/>
-                            <field name="box_id"/>
-                            <field name="box_port_id"/>
-                            <field name="ruta" readonly="1"/>
-                        </group>
-                    </group>
+                                <group string="Ubicación" colspan="2">
+                                    <field name="link_ubicacion" widget="url"/>
+                                </group>
+                            </group>
 
-                    <!-- Credenciales PPPoE / VLAN: solo Técnica -->
-                    <group string="Configuración OLT / PPPoE"
-                           groups="wigo_ftth.group_ftth_tech,base.group_erp_manager" col="2">
-                        <group>
-                            <field name="pppoe_user"/>
-                            <field name="pppoe_password" password="True"/>
-                            <field name="vlan"/>
-                        </group>
-                        <group>
-                            <field name="tcont"/>
-                            <field name="gemport"/>
-                            <field name="vport"/>
-                        </group>
-                    </group>
+                            <group string="Origen" col="2">
+                                <group>
+                                    <field name="work_order_id" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
 
-                    <!-- WiFi: solo Técnica -->
-                    <group string="WiFi"
-                           groups="wigo_ftth.group_ftth_tech,base.group_erp_manager" col="2">
-                        <group>
-                            <field name="wifi_ssid"/>
-                            <field name="wifi_pass" password="True"/>
-                        </group>
-                    </group>
+                        <page string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
+                            <group col="2">
+                                <group>
+                                    <field name="onu_id"/>
+                                </group>
+                            </group>
+                        </page>
 
-                    <!-- Equipos adicionales -->
-                    <group string="Equipos adicionales (cámaras, routers, etc.)"
-                           groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"
-                           col="2">
-                        <group string="Equipo adicional 1">
-                            <field name="equipo_adicional_1" placeholder="Ej: Cámara IP 1"/>
-                            <field name="equipo_adicional_1_marca"/>
-                            <field name="equipo_adicional_1_rotulo"/>
-                            <field name="equipo_adicional_1_sn"/>
-                        </group>
-                        <group string="Equipo adicional 2">
-                            <field name="equipo_adicional_2" placeholder="Ej: Cámara IP 2"/>
-                            <field name="equipo_adicional_2_marca"/>
-                            <field name="equipo_adicional_2_rotulo"/>
-                            <field name="equipo_adicional_2_sn"/>
-                        </group>
-                    </group>
+                        <page string="Topología" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
+                            <group col="4">
+                                <group string="OLT / Subinterfaz" colspan="2">
+                                    <field name="nodo_id"/>
+                                    <field name="olt_id"/>
+                                    <field name="olt_port_id"/>
+                                    <field name="subinterface_id"/>
+                                    <field name="odn_id"/>
+                                </group>
 
-                    <group string="Observaciones"
-                           groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
-                        <field name="observaciones" nolabel="1"/>
-                    </group>
+                                <group string="NAP" colspan="2">
+                                    <field name="box_group_id"/>
+                                    <field name="box_id"/>
+                                    <field name="box_port_id"/>
+                                    <field name="ruta" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Configuración" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group col="4">
+                                <group string="PPPoE / VLAN" colspan="2">
+                                    <field name="pppoe_user"/>
+                                    <field name="pppoe_password" password="True"/>
+                                    <field name="vlan"/>
+                                </group>
+
+                                <group string="T-CONT / Puertos" colspan="2">
+                                    <field name="tcont"/>
+                                    <field name="gemport"/>
+                                    <field name="vport"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="WiFi" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                            <group col="2">
+                                <group>
+                                    <field name="wifi_ssid"/>
+                                    <field name="wifi_pass" password="True"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Equipos adicionales" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
+                            <group col="4">
+                                <group string="Equipo adicional 1" colspan="2">
+                                    <field name="equipo_adicional_1" placeholder="Ej: Cámara IP 1"/>
+                                    <field name="equipo_adicional_1_marca"/>
+                                    <field name="equipo_adicional_1_rotulo"/>
+                                    <field name="equipo_adicional_1_sn"/>
+                                </group>
+
+                                <group string="Equipo adicional 2" colspan="2">
+                                    <field name="equipo_adicional_2" placeholder="Ej: Cámara IP 2"/>
+                                    <field name="equipo_adicional_2_marca"/>
+                                    <field name="equipo_adicional_2_rotulo"/>
+                                    <field name="equipo_adicional_2_sn"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Observaciones" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
+                            <group>
+                                <field name="observaciones" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
 
                 </sheet>
                 <chatter>
@@ -169,21 +186,19 @@
                 <field name="partner_id"/>
                 <field name="gestor_comercial"/>
                 <separator/>
-                <filter string="Activos"        name="active"     domain="[('estado_servicio','=','active')]"/>
-                <filter string="Suspendidos"    name="suspended"  domain="[('estado_servicio','=','suspended')]"/>
-                <filter string="En corte"       name="corte"      domain="[('estado_servicio','=','corte')]"/>
-                <filter string="Dados de baja"  name="baja"       domain="[('estado_servicio','=','baja')]"/>
-                <filter string="Cancelados"     name="cancelado"  domain="[('estado_servicio','=','cancelado')]"/>
+                <filter string="Activos" name="active" domain="[('estado_servicio','=','active')]"/>
+                <filter string="Suspendidos" name="suspended" domain="[('estado_servicio','=','suspended')]"/>
+                <filter string="En corte" name="corte" domain="[('estado_servicio','=','corte')]"/>
+                <filter string="Dados de baja" name="baja" domain="[('estado_servicio','=','baja')]"/>
+                <filter string="Cancelados" name="cancelado" domain="[('estado_servicio','=','cancelado')]"/>
                 <separator/>
-                <filter string="Por estado"      name="group_estado"     context="{'group_by':'estado_servicio'}"/>
-                <filter string="Por plan"        name="group_plan"       context="{'group_by':'plan_id'}"/>
-                <filter string="Por instalador"  name="group_instalador" context="{'group_by':'installer_id'}"/>
-                <filter string="Por gestor"      name="group_gestor"     context="{'group_by':'gestor_comercial'}"/>
-                <filter string="Por mes inst."   name="group_mes"        context="{'group_by':'fecha_instalacion:month'}"/>
-                <filter string="Por nodo"        name="group_nodo"       context="{'group_by':'nodo_id'}"
-                        groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-                <filter string="Por OLT"         name="group_olt"        context="{'group_by':'olt_id'}"
-                        groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
+                <filter string="Por estado" name="group_estado" context="{'group_by':'estado_servicio'}"/>
+                <filter string="Por plan" name="group_plan" context="{'group_by':'plan_id'}"/>
+                <filter string="Por instalador" name="group_instalador" context="{'group_by':'installer_id'}"/>
+                <filter string="Por gestor" name="group_gestor" context="{'group_by':'gestor_comercial'}"/>
+                <filter string="Por mes inst." name="group_mes" context="{'group_by':'fecha_instalacion:month'}"/>
+                <filter string="Por nodo" name="group_nodo" context="{'group_by':'nodo_id'}" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
+                <filter string="Por OLT" name="group_olt" context="{'group_by':'olt_id'}" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
             </search>
         </field>
     </record>
