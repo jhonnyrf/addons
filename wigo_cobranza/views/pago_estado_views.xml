@@ -69,9 +69,9 @@
                             <field name="contract_state" readonly="1"/>
                             <field name="client_service_id" placeholder="Opcional: se autocompleta si existe servicio FTTH"/>
                             <field name="plan_id" readonly="1"/>
-                            <field name="mes"/>
-                            <field name="anio"/>
-                            <field name="periodo" readonly="1"/>
+                            <field name="mes" invisible="1"/>
+                            <field name="anio" invisible="1"/>
+                            <field name="periodo_fecha" string="Periodo" widget="date" options="{'numeric': true}"/>
                         </group>
                         <group>
                             <field name="partner_direccion" readonly="1"/>
@@ -88,7 +88,7 @@
                             <group string="Registro de pago" col="2">
                                 <group>
                                     <field name="monto_pagado"/>
-                                    <field name="fecha_pago"/>
+                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
                                     <field name="canal_pago"/>
                                 </group>
                                 <group>
@@ -106,7 +106,19 @@
                                     <field name="comprobante_adjunto_fname" readonly="1"/>
                                 </group>
                                 <group>
-                                    <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto"/>
+                                    <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto_is_image"/>
+                                    <group string="Documento PDF adjunto" invisible="not comprobante_adjunto_is_pdf">
+                                        <group>
+                                            <div role="alert" class="alert alert-success"
+                                                 style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                                                <i class="fa fa-file-pdf-o fa-2x text-danger"/>
+                                                <div>
+                                                    <strong>Archivo PDF cargado correctamente.</strong><br/>
+                                                    Haz clic en el nombre del archivo para abrirlo o descargarlo.
+                                                </div>
+                                            </div>
+                                        </group>
+                                    </group>
                                 </group>
                             </group>
                         </page>

@@ -42,12 +42,14 @@ class CustomerContractCobranza(models.Model):
             'res_model': 'wigo.pago.estado',
             'view_mode': 'list,form',
             'views': views or False,
-            'target': 'new',
+            'target': 'current',
             'domain': [('contract_id', '=', self.id)],
             'context': {
                 'default_partner_id': self.partner_id.id,
                 'default_contract_id': self.id,
                 'default_client_service_id': False,
+                'create': True,
+                'show_create': True,
             },
         }
 

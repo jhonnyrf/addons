@@ -126,6 +126,12 @@ class WigoPagoEstado(models.Model):
     comprobante = fields.Char(string='Referencia / N° comprobante', tracking=True)
     comprobante_adjunto = fields.Binary(string='Comprobante (imagen o PDF)')
     comprobante_adjunto_fname = fields.Char()
+    comprobante_adjunto_is_image = fields.Boolean(
+        string='Adjunto es imagen', compute='_compute_comprobante_adjunto_type', store=False,
+    )
+    comprobante_adjunto_is_pdf = fields.Boolean(
+        string='Adjunto es PDF', compute='_compute_comprobante_adjunto_type', store=False,
+    )
     registrado_por = fields.Many2one(
         'res.users', string='Registrado por',
         default=lambda self: self.env.user, tracking=True,
@@ -192,13 +198,13 @@ class WigoPagoEstado(models.Model):
     # ─────────────────────────────────────────────────────────────
     @api.depends('anio', 'mes')
     def _compute_periodo(self):
-        meses = {
-            '1': 'Enero', '2': 'Febrero', '3': 'Marzo', '4': 'Abril',
-            '5': 'Mayo', '6': 'Junio', '7': 'Julio', '8': 'Agosto',
-            '9': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre',
-        }
         for rec in self:
-            rec.periodo = f"{meses.get(rec.mes, '')} {rec.anio}" if rec.mes and rec.anio else ''
+            if rec.mes and rec.anio:
+                month = int(rec.mes)
+                year = str(rec.anio)[-2:]
+                rec.periodo = f"1/{month:02}/{year}"
+            else:
+                rec.periodo = ''
 
     @api.depends('mes', 'anio')
     def _compute_periodo_fecha(self):
@@ -236,10 +242,17 @@ class WigoPagoEstado(models.Model):
         for rec in self:
             partner = rec.partner_id
             rec.partner_ci = (getattr(partner, 'ci', False) or False) if partner else False
-            rec.partner_celular = (getattr(partner, 'celular', False) or partner.mobile or False) if partner else False
-            rec.partner_telefono = partner.phone if partner else False
+            rec.partner_celular = (
+                getattr(partner, 'celular', False) or
+                getattr(partner, 'mobile', False) or
+                getattr(partner, 'phone', False) or
+                False
+            ) if partner else False
+            rec.partner_telefono = getattr(partner, 'phone', False) if partner else False
             rec.partner_email = partner.email if partner else False
-            rec.partner_direccion = (getattr(partner, 'direccion', False) or partner.street or False) if partner else False
+            rec.partner_direccion = (
+                getattr(partner, 'direccion', False) or partner.street or False
+            ) if partner else False
 
     @api.depends('client_service_id', 'contract_id', 'mes', 'anio', 'monto_plan')
     def _compute_prorrateo(self):
@@ -279,6 +292,13 @@ class WigoPagoEstado(models.Model):
     def _compute_diferencia(self):
         for rec in self:
             rec.diferencia = rec.monto_pagado - rec.monto_a_cobrar
+
+    @api.depends('comprobante_adjunto_fname')
+    def _compute_comprobante_adjunto_type(self):
+        for rec in self:
+            name = (rec.comprobante_adjunto_fname or '').lower()
+            rec.comprobante_adjunto_is_image = bool(name.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')))
+            rec.comprobante_adjunto_is_pdf = name.endswith('.pdf')
 
     @api.depends('partner_id', 'periodo')
     def _compute_display_name(self):

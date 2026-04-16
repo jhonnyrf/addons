@@ -12,6 +12,13 @@ class ResPartner(models.Model):
         'partner_id',
         string='Contratos',
     )
+    active_contract_ids = fields.One2many(
+        'customer.contract',
+        compute='_compute_active_contract_ids',
+        string='Contratos activos',
+        readonly=True,
+        store=False,
+    )
     contract_count = fields.Integer(
         string='Cantidad de Contratos',
         compute='_compute_contract_count',
@@ -22,6 +29,12 @@ class ResPartner(models.Model):
     # COMPUTED
     # =========================================================
     @api.depends('contract_ids')
+    def _compute_active_contract_ids(self):
+        for partner in self:
+            partner.active_contract_ids = partner.contract_ids.filtered(
+                lambda c: c.state == 'active' and not c.is_superseded
+            )
+
     def _compute_contract_count(self):
         # read_group para eficiencia cuando hay muchos registros en lista
         domain = [('partner_id', 'in', self.ids)]

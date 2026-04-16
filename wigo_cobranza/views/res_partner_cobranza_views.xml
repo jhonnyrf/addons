@@ -5,7 +5,7 @@
         <field name="name">res.partner.list.cobranza.clients</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <list string="Clientes con contrato" default_order="name asc" decoration-success="active_contract_count &gt; 0">
+            <list string="Clientes con contrato" default_order="name asc" decoration-success="active_contract_count &gt; 0" create="false">
                 <field name="name" string="Cliente"/>
                 <field name="cobranza_ci" optional="show"/>
                 <field name="cobranza_celular" optional="show"/>
@@ -22,11 +22,11 @@
         <field name="name">res.partner.kanban.cobranza.clients</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_small_column" default_group_by="zona">
+            <kanban class="o_kanban_small_column" create="false">
                 <field name="name"/>
+                <field name="image_1920"/>
                 <field name="cobranza_ci"/>
                 <field name="cobranza_celular"/>
-                <field name="zona"/>
                 <field name="cobranza_zona"/>
                 <field name="active_contract_count"/>
                 <field name="contract_any_count"/>
@@ -34,9 +34,14 @@
                     <t t-name="card">
                         <main class="o_kanban_record_body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <strong>
-                                    <field name="name"/>
-                                </strong>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="o_kanban_image_container" style="width:36px; height:36px; overflow:hidden; border-radius:50%;">
+                                        <field name="image_1920" widget="image" class="o_kanban_image" style="width:36px; height:36px; object-fit:cover; border-radius:50%;"/>
+                                    </div>
+                                    <strong>
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
                                 <span class="badge text-bg-success" t-esc="record.active_contract_count.value or 0"/>
                             </div>
                             <div class="text-muted">CI: <field name="cobranza_ci"/>
@@ -59,21 +64,18 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <form string="Perfil de Cliente - Cobranza" create="false" delete="false">
-                <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" readonly="1"/>
-                        </h1>
-                    </div>
-
-                    <group col="2">
-                        <group/>
-                        <group>
-                            <div class="text-end">
-                                <button name="action_open_contact_form" type="object" string="Ver más detalles contacto" class="btn-success" icon="fa-external-link"/>
+                <sheet style="width:100%;max-width:none;padding:1.5rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-4" style="gap:1rem;">
+                        <div class="d-flex align-items-center gap-3">
+                            <field name="image_1920" widget="image" class="rounded-circle" style="width:72px; height:72px; object-fit:cover;"/>
+                            <div>
+                                <h1 class="text-primary mb-0" style="font-size:2rem; line-height:1.1;">
+                                    <field name="name" readonly="1"/>
+                                </h1>
                             </div>
-                        </group>
-                    </group>
+                        </div>
+                        <button name="action_open_contact_form" type="object" string="Ver más detalles contacto" class="btn-success" icon="fa-external-link"/>
+                    </div>
 
                     <group string="Datos del cliente" col="2">
                         <group>
@@ -126,6 +128,7 @@
         <field name="name">Clientes con Contrato</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">list,kanban,form</field>
+        <field name="context">{'create': False}</field>
         <field name="search_view_id" ref="view_partner_search_cobranza_clients"/>
         <field name="domain">[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]</field>
     </record>

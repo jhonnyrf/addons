@@ -5,7 +5,7 @@
         <field name="name">wigo.pago.estado.contract.workspace.list</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <list string="Pagos mensuales por contrato" default_order="anio desc, mes desc" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'">
+            <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'">
                 <field name="periodo"/>
                 <field name="monto_a_cobrar" string="A cobrar (Bs)"/>
                 <field name="monto_pagado" string="Pagado (Bs)"/>
@@ -37,7 +37,7 @@
                             <field name="partner_id" readonly="1"/>
                             <field name="contract_id" readonly="1"/>
                             <field name="plan_id" readonly="1"/>
-                            <field name="periodo_fecha" string="Periodo"/>
+                            <field name="periodo_fecha" string="Periodo" widget="date" options="{'numeric': true}"/>
                             <field name="mes" invisible="1"/>
                             <field name="anio" invisible="1"/>
                         </group>
@@ -45,7 +45,7 @@
                             <field name="monto_plan" readonly="1"/>
                             <field name="monto_a_cobrar" readonly="1"/>
                             <field name="monto_pagado"/>
-                            <field name="fecha_pago"/>
+                            <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
                             <field name="canal_pago"/>
                         </group>
                     </group>
@@ -57,7 +57,17 @@
                             <field name="comprobante_adjunto_fname" readonly="1"/>
                         </group>
                         <group>
-                            <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto"/>
+                            <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto_is_image"/>
+                            <group string="Documento PDF adjunto" invisible="not comprobante_adjunto_is_pdf">
+                                <div role="alert" class="alert alert-success"
+                                     style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-file-pdf-o fa-2x text-danger"/>
+                                    <div>
+                                        <strong>Archivo PDF cargado correctamente.</strong><br/>
+                                        Usa el botón de descarga junto al nombre del archivo.
+                                    </div>
+                                </div>
+                            </group>
                         </group>
                     </group>
 
