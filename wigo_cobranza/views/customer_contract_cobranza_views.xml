@@ -1,8 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- ══════════════════════════════════════════════════════════
+         Inherited form: añadir pestaña Cobranza en customer.contract
+    ══════════════════════════════════════════════════════════ -->
     <record id="view_customer_contract_form_cobranza_inherit" model="ir.ui.view">
-        <field name="active" eval="False"/>
+        <field name="name">customer.contract.form.cobranza</field>
+        <field name="model">customer.contract</field>
+        <field name="inherit_id" ref="customer_contract.view_customer_contract_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Cobranza" name="cobranza" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,wigo_cobranza.group_cobranza_readonly,base.group_erp_manager">
+
+                    <group col="4">
+                        <group string="Resumen" colspan="2">
+                            <field name="unpaid_month_count" readonly="1"/>
+                        </group>
+
+                        <group string="Acciones" colspan="2" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,base.group_erp_manager">
+                            <button name="action_view_cobranza_mensual" type="object" string="Ver cobranza mensual" class="btn-primary"/>
+                            <button name="action_crear_pago_mes_contrato" type="object" string="+ Registrar pago del mes" class="btn-secondary"/>
+                        </group>
+                    </group>
+
+                    <field name="pago_estado_ids" nolabel="1" readonly="1" context="{'default_partner_id': partner_id, 'default_contract_id': id}">
+                        <list string="Cobros mensuales" default_order="anio desc, mes desc" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'">
+                            <field name="periodo"/>
+                            <field name="monto_a_cobrar" string="A cobrar (Bs)"/>
+                            <field name="monto_pagado" string="Pagado (Bs)"/>
+                            <field name="diferencia" string="Diferencia (Bs)"/>
+                            <field name="fecha_pago"/>
+                            <field name="estado_pago" widget="badge"/>
+                            <field name="canal_pago" optional="show"/>
+                            <field name="registrado_por" optional="show"/>
+                        </list>
+                    </field>
+
+                </page>
+            </xpath>
+
+        </field>
     </record>
 
 </odoo>
