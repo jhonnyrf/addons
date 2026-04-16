@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+     <!-- ══════════════════════════════════════════════════════════
+         Menú principal: Cobranza
+    ══════════════════════════════════════════════════════════ -->
+     <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.svg" groups="base.group_user"/>
+
+     <!-- ─── Gestión ──────────────────────────────────────────── -->
+     <menuitem id="menu_cobranza_gestion" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>
+
+     <record id="action_open_pago_estado_auto" model="ir.actions.server">
+          <field name="name">Abrir Cobros (Auto)</field>
+          <field name="model_id" ref="model_wigo_pago_estado"/>
+          <field name="state">code</field>
+          <field name="code">action = model.action_open_registros_cobro()</field>
+     </record>
+
+     <menuitem id="menu_cobranza_clientes" name="Clientes con Contrato" parent="menu_cobranza_gestion" action="wigo_cobranza.action_cobranza_clientes_contrato" sequence="10"/>
+
+     <menuitem id="menu_cobranza_contratos" name="Contratos Activos" parent="menu_cobranza_gestion" action="customer_contract.action_customer_contract" sequence="20"/>
+
+     <menuitem id="menu_cobranza_todos" name="Pagos Mensuales" parent="menu_cobranza_gestion" action="wigo_cobranza.action_open_pago_estado_auto" sequence="30"/>
+
+     <menuitem id="menu_cobranza_mora" name="Clientes en Mora" parent="menu_cobranza_gestion" action="wigo_cobranza.action_mora" sequence="40"/>
+
+     <menuitem id="menu_cobranza_suspender_hoy" name="⚠️ Suspender Hoy" parent="menu_cobranza_gestion" action="wigo_cobranza.action_suspender_hoy" sequence="50"/>
+
+     <!-- ─── Reportes ─────────────────────────────────────────── -->
+     <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>
+
+     <menuitem id="menu_reporte_mora" name="Reporte de Mora" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_mora" sequence="10"/>
+
+     <menuitem id="menu_reporte_altas_bajas" name="Altas / Bajas / Cambios de Plan" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_altas_bajas" sequence="20"/>
+
+     <!-- Forzar grupos del menú raíz para limpiar relaciones previas -->
+     <record id="menu_cobranza_root" model="ir.ui.menu">
+          <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
+     </record>
+
+     <!-- ══════════════════════════════════════════════════════════
+         Acceso de solo lectura para Comercial y Técnica:
+         Estado de pago visible desde sus propios menús vía la
+         ficha del cliente (wigo_ftth). No se añade menú separado.
+         Ver: view_ftth_cs_form_cobranza_inherit (pestaña Cobranza)
+    ══════════════════════════════════════════════════════════ -->
+
+</odoo>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_list_cobranza_clients" model="ir.ui.view">
+        <field name="name">res.partner.list.cobranza.clients</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Clientes con contrato" default_order="name asc" decoration-success="active_contract_count &gt; 0">
+                <field name="name" string="Cliente"/>
+                <field name="cobranza_ci" optional="show"/>
+                <field name="cobranza_celular" optional="show"/>
+                <field name="cobranza_zona" optional="show"/>
+                <field name="phone" optional="show"/>
+                <field name="email" optional="show"/>
+                <field name="active_contract_count" string="Contratos activos"/>
+                <field name="contract_any_count" string="Total contratos" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_partner_kanban_cobranza_clients" model="ir.ui.view">
+        <field name="name">res.partner.kanban.cobranza.clients</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column" default_group_by="zona">
+                <field name="name"/>
+                <field name="cobranza_ci"/>
+                <field name="cobranza_celular"/>
+                <field name="zona"/>
+                <field name="cobranza_zona"/>
+                <field name="active_contract_count"/>
+                <field name="contract_any_count"/>
+                <templates>
+                    <t t-name="card">
+                        <main class="o_kanban_record_body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>
+                                    <field name="name"/>
+                                </strong>
+                                <span class="badge text-bg-success" t-esc="record.active_contract_count.value or 0"/>
+                            </div>
+                            <div class="text-muted">CI: <field name="cobranza_ci"/>
+                            </div>
+                            <div class="text-muted">Celular: <field name="cobranza_celular"/>
+                            </div>
+                            <div class="text-muted">Zona: <field name="cobranza_zona"/>
+                            </div>
+                            <div class="mt-2">Contratos totales: <field name="contract_any_count"/>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_partner_form_cobranza_profile" model="ir.ui.view">
+        <field name="name">res.partner.form.cobranza.profile</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <form string="Perfil de Cliente - Cobranza" create="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group/>
+                        <group>
+                            <div class="text-end">
+                                <button name="action_open_contact_form" type="object" string="Ver más detalles contacto" class="btn-success" icon="fa-external-link"/>
+                            </div>
+                        </group>
+                    </group>
+
+                    <group string="Datos del cliente" col="2">
+                        <group>
+                            <field name="cobranza_ci" readonly="1" string="Carnet / CI"/>
+                            <field name="cobranza_celular" readonly="1" string="Celular"/>
+                            <field name="phone" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cobranza_zona" readonly="1" string="Zona"/>
+                            <field name="cobranza_direccion" readonly="1" string="Dirección"/>
+                            <field name="email" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Contratos del cliente">
+                        <field name="contract_ids" nolabel="1" readonly="1" domain="[('is_superseded', '=', False)]" context="{'default_partner_id': id, 'search_default_active': 1}">
+                            <list string="Contratos" default_order="contract_date desc" decoration-success="state == 'active'" decoration-warning="state in ['pending','signed']" decoration-muted="state == 'terminated'">
+                                <field name="name" string="Código contrato"/>
+                                <field name="plan_id" string="Plan"/>
+                                <field name="plan_price" string="Tarifa (Bs)" optional="show"/>
+                                <field name="installation_date" string="Inicio cobro"/>
+                                <field name="contract_date" string="Fecha contrato" optional="show"/>
+                                <field name="state" widget="badge"/>
+                                <button name="action_crear_pago_mes_contrato" type="object" string="Registrar pago" class="btn-primary" icon="fa-money"/>
+                                <button name="action_view_cobranza_mensual" type="object" string="Ver meses" class="btn-secondary" icon="fa-calendar"/>
+                                <button name="action_open_contract_full" type="object" string="Mas detalles" class="btn-secondary" icon="fa-external-link"/>
+                            </list>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_search_cobranza_clients" model="ir.ui.view">
+        <field name="name">res.partner.search.cobranza.clients</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search string="Buscar clientes con contrato">
+                <field name="name" string="Cliente"/>
+                <field name="cobranza_ci" string="CI"/>
+                <field name="cobranza_celular" string="Celular"/>
+                <filter name="has_active_contract" string="Con contrato activo" domain="[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]"/>
+                <filter name="has_payments" string="Con pagos registrados" domain="[('cobranza_pago_ids', '!=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_cobranza_clientes_contrato" model="ir.actions.act_window">
+        <field name="name">Clientes con Contrato</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="view_partner_search_cobranza_clients"/>
+        <field name="domain">[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]</field>
+    </record>
+
+    <record id="action_cobranza_clientes_contrato_list" model="ir.actions.act_window.view">
+        <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_partner_list_cobranza_clients"/>
+    </record>
+
+    <record id="action_cobranza_clientes_contrato_form" model="ir.actions.act_window.view">
+        <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
+        <field name="sequence" eval="3"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_partner_form_cobranza_profile"/>
+    </record>
+
+    <record id="action_cobranza_clientes_contrato_kanban" model="ir.actions.act_window.view">
+        <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_partner_kanban_cobranza_clients"/>
+    </record>
+
+</odoo>

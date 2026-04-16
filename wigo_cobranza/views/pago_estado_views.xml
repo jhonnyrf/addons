@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         LIST VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_pago_estado_list" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.list</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <list string="Registros de Cobro" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc">
+                <field name="codigo_cliente" optional="show"/>
+                <field name="partner_id"/>
+                <field name="partner_ci" optional="show"/>
+                <field name="partner_celular" optional="show"/>
+                <field name="contract_id" optional="show"/>
+                <field name="contract_state" optional="show"/>
+                <field name="plan_id" optional="show"/>
+                <field name="periodo"/>
+                <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="diferencia" string="Diferencia (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="fecha_pago"/>
+                <field name="canal_pago" optional="show"/>
+                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
+                <field name="registrado_por" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         FORM VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_pago_estado_form" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.form</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <form string="Registro de Pago">
+                <header>
+                    <button name="action_registrar_pago" string="✅ Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
+                    <button name="action_marcar_mora" string="🔴 Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
+                    <button name="action_instruir_baja" string="⛔ Instruir Baja" type="object" class="btn-danger" invisible="estado_pago == 'baja_definitiva'" confirm="¿Confirma instruir la BAJA DEFINITIVA del cliente? Se notificará al área técnica."/>
+                    <button name="action_open_contract_crm" string="📌 Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
+                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
+                    <widget name="web_ribbon" title="Al día" bg_color="text-bg-success" invisible="estado_pago != 'al_dia'"/>
+                    <widget name="web_ribbon" title="Baja definitiva" bg_color="text-bg-secondary" invisible="estado_pago != 'baja_definitiva'"/>
+
+                    <div class="oe_title">
+                        <label for="partner_id" string="Cliente"/>
+                        <h1>
+                            <field name="partner_id" readonly="1" invisible="not partner_id"/>
+                        </h1>
+                        <h2>
+                            <field name="codigo_cliente" readonly="1"/>
+                        </h2>
+                    </div>
+
+                    <group string="Período, contrato y servicio" col="2">
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="partner_ci" readonly="1"/>
+                            <field name="partner_celular" readonly="1"/>
+                            <field name="partner_telefono" readonly="1"/>
+                            <field name="partner_email" readonly="1"/>
+                            <field name="contract_id"/>
+                            <field name="contract_state" readonly="1"/>
+                            <field name="client_service_id" placeholder="Opcional: se autocompleta si existe servicio FTTH"/>
+                            <field name="plan_id" readonly="1"/>
+                            <field name="mes"/>
+                            <field name="anio"/>
+                            <field name="periodo" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="partner_direccion" readonly="1"/>
+                            <field name="monto_plan" readonly="1"/>
+                            <field name="es_primer_mes" readonly="1"/>
+                            <field name="monto_prorrateo" readonly="1" invisible="not es_primer_mes"/>
+                            <field name="monto_a_cobrar" readonly="1"/>
+                            <field name="crm_lead_id" readonly="1" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Pago">
+                            <group string="Registro de pago" col="2">
+                                <group>
+                                    <field name="monto_pagado"/>
+                                    <field name="fecha_pago"/>
+                                    <field name="canal_pago"/>
+                                </group>
+                                <group>
+                                    <field name="comprobante" placeholder="N° de transacción / referencia"/>
+                                    <field name="diferencia" readonly="1"/>
+                                    <field name="registrado_por" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Comprobante">
+                            <group string="Adjunto de respaldo" col="2">
+                                <group>
+                                    <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Subir imagen o PDF"/>
+                                    <field name="comprobante_adjunto_fname" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+
+                    <!-- Solo lectura para Comercial y Técnica -->
+                    <group string="Estado de pago" col="2">
+                        <field name="estado_pago" readonly="1"/>
+                        <field name="periodo" readonly="1"/>
+                        <field name="monto_a_cobrar" readonly="1"/>
+                    </group>
+
+                    <field name="notas" string="Notas de cobranza" placeholder="Observaciones internas sobre este cobro..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SEARCH VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_pago_estado_search" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.search</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <search string="Buscar cobros">
+                <field name="partner_id" string="Cliente"/>
+                <field name="codigo_cliente" string="Código CF"/>
+                <field name="periodo" string="Período"/>
+                <field name="plan_id" string="Plan"/>
+                <separator/>
+                <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
+                <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
+                <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
+                <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
+                <separator/>
+                <filter name="mes_actual" string="Mes actual" domain="[
+                            ('mes', '=',
+                                '1' if context_today().month == 1 else
+                                '2' if context_today().month == 2 else
+                                '3' if context_today().month == 3 else
+                                '4' if context_today().month == 4 else
+                                '5' if context_today().month == 5 else
+                                '6' if context_today().month == 6 else
+                                '7' if context_today().month == 7 else
+                                '8' if context_today().month == 8 else
+                                '9' if context_today().month == 9 else
+                                '10' if context_today().month == 10 else
+                                '11' if context_today().month == 11 else
+                                '12'
+                            ),
+                            ('anio', '=', context_today().year)
+                        ]"/>
+                <filter name="suspender_hoy" string="Suspender hoy (mora mes anterior)" domain="[
+                            ('estado_pago','in',['pendiente','mora']), ('anio','=', (context_today() - relativedelta(months=1)).year if context_today().month > 1 else context_today().year - 1), ('mes','=',
+                                '1' if ((context_today().month - 2) % 12 + 1) == 1 else
+                                '2' if ((context_today().month - 2) % 12 + 1) == 2 else
+                                '3' if ((context_today().month - 2) % 12 + 1) == 3 else
+                                '4' if ((context_today().month - 2) % 12 + 1) == 4 else
+                                '5' if ((context_today().month - 2) % 12 + 1) == 5 else
+                                '6' if ((context_today().month - 2) % 12 + 1) == 6 else
+                                '7' if ((context_today().month - 2) % 12 + 1) == 7 else
+                                '8' if ((context_today().month - 2) % 12 + 1) == 8 else
+                                '9' if ((context_today().month - 2) % 12 + 1) == 9 else
+                                '10' if ((context_today().month - 2) % 12 + 1) == 10 else
+                                '11' if ((context_today().month - 2) % 12 + 1) == 11 else
+                                '12'
+                            )
+                        ]"/>
+                <separator/>
+                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by':'estado_pago'}"/>
+                <filter name="group_mes" string="Agrupar por Mes" context="{'group_by':'mes'}"/>
+                <filter name="group_plan" string="Agrupar por Plan" context="{'group_by':'plan_id'}"/>
+                <filter name="group_canal" string="Agrupar por Canal de pago" context="{'group_by':'canal_pago'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ACTIONS
+    ══════════════════════════════════════════════════════════ -->
+    <record id="action_pago_estado" model="ir.actions.act_window">
+        <field name="name">Registro de Cobros</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pago_estado_search"/>
+        <field name="context">{'search_default_mes_actual': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay registros de cobro para este período.
+            </p>
+            <p>Crea el primer registro de pago para un cliente.</p>
+        </field>
+    </record>
+
+    <!-- Vista: Clientes a Suspender Hoy -->
+    <record id="action_suspender_hoy" model="ir.actions.act_window">
+        <field name="name">Clientes a Suspender Hoy</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pago_estado_search"/>
+        <field name="context">{'search_default_suspender_hoy': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay clientes pendientes de suspensión. ¡Todo al día!
+            </p>
+        </field>
+    </record>
+
+    <!-- Vista: Mora general -->
+    <record id="action_mora" model="ir.actions.act_window">
+        <field name="name">Clientes en Mora</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_pago_estado_search"/>
+        <field name="context">{'search_default_mora': 1}</field>
+    </record>
+
+</odoo>

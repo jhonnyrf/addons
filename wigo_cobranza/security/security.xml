@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Grupo: Cobranza — escritura completa ───────────────── -->
+    <record id="group_cobranza" model="res.groups">
+        <field name="name">Cobranza</field>
+        <field name="comment">Área de cobranza (Dania). Puede registrar y modificar pagos, estados y gestiones de mora.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- ── Grupo: Contabilidad — escritura completa ───────────── -->
+    <record id="group_contabilidad" model="res.groups">
+        <field name="name">Contabilidad</field>
+        <field name="comment">Responsable de contabilidad. Acceso completo a cobranza, mora, bajas y reportes.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- ── Grupo: Solo lectura cobranza (Comercial / Técnica) ─── -->
+    <record id="group_cobranza_readonly" model="res.groups">
+        <field name="name">Cobranza Solo lectura</field>
+        <field name="comment">Acceso de solo lectura al estado de pago del cliente. Para Comercial y Técnica.</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+</odoo>

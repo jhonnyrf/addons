@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pago_estado_cobranza,wigo.pago.estado cobranza,model_wigo_pago_estado,wigo_cobranza.group_cobranza,1,1,1,1
+access_pago_estado_contabilidad,wigo.pago.estado contabilidad,model_wigo_pago_estado,wigo_cobranza.group_contabilidad,1,1,1,1
+access_pago_estado_readonly,wigo.pago.estado readonly,model_wigo_pago_estado,wigo_cobranza.group_cobranza_readonly,1,0,0,0
+access_pago_estado_admin,wigo.pago.estado admin,model_wigo_pago_estado,base.group_system,1,1,1,1
+access_pago_estado_user,wigo.pago.estado user,model_wigo_pago_estado,base.group_user,1,1,1,1

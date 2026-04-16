@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pago_estado_contract_list_new" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.contract.workspace.list</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <list string="Pagos mensuales por contrato" default_order="anio desc, mes desc" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'">
+                <field name="periodo"/>
+                <field name="monto_a_cobrar" string="A cobrar (Bs)"/>
+                <field name="monto_pagado" string="Pagado (Bs)"/>
+                <field name="diferencia" string="Diferencia (Bs)"/>
+                <field name="fecha_pago"/>
+                <field name="estado_pago" widget="badge"/>
+                <field name="canal_pago" optional="show"/>
+                <field name="registrado_por" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pago_estado_contract_form_new" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.contract.workspace.form</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <form string="Registro mensual de pago">
+                <header>
+                    <button name="action_registrar_pago" string="Confirmar pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
+                    <button name="action_marcar_mora" string="Marcar mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
+                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
+                    <widget name="web_ribbon" title="Al día" bg_color="text-bg-success" invisible="estado_pago != 'al_dia'"/>
+
+                    <group string="Contrato y periodo" col="2">
+                        <group>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="contract_id" readonly="1"/>
+                            <field name="plan_id" readonly="1"/>
+                            <field name="periodo_fecha" string="Periodo"/>
+                            <field name="mes" invisible="1"/>
+                            <field name="anio" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="monto_plan" readonly="1"/>
+                            <field name="monto_a_cobrar" readonly="1"/>
+                            <field name="monto_pagado"/>
+                            <field name="fecha_pago"/>
+                            <field name="canal_pago"/>
+                        </group>
+                    </group>
+
+                    <group string="Comprobante" col="2">
+                        <group>
+                            <field name="comprobante" placeholder="Nro. de referencia o transacción"/>
+                            <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Adjuntar imagen o PDF"/>
+                            <field name="comprobante_adjunto_fname" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto"/>
+                        </group>
+                    </group>
+
+                    <group string="Control" col="2">
+                        <field name="diferencia" readonly="1"/>
+                        <field name="registrado_por" readonly="1"/>
+                    </group>
+
+                    <field name="notas" placeholder="Observaciones de cobranza para este mes..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

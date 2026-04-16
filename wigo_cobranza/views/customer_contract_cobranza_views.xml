@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_customer_contract_form_cobranza_inherit" model="ir.ui.view">
+        <field name="active" eval="False"/>
+    </record>
+
+</odoo>
