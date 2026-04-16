@@ -37,11 +37,13 @@
 
     <menuitem id="menu_helpdesk_analytics_diagnosis" name="🔍 Por Diagnóstico" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_diagnosis" sequence="2"/>
 
-    <menuitem id="menu_helpdesk_analytics_solution" name="🔧 Por Solución" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_solution" sequence="3"/>
+    <menuitem id="menu_helpdesk_analytics_symptom" name="🧩 Por Síntoma" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_symptom" sequence="3"/>
 
-    <menuitem id="menu_helpdesk_analytics_month" name="📅 Por Mes" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_month" sequence="4"/>
+    <menuitem id="menu_helpdesk_analytics_solution" name="🔧 Por Solución" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_solution" sequence="4"/>
 
-    <menuitem id="menu_helpdesk_analytics_customers" name="👥 Top Clientes" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_customers" sequence="5"/>
+    <menuitem id="menu_helpdesk_analytics_month" name="📅 Por Mes" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_month" sequence="5"/>
+
+    <menuitem id="menu_helpdesk_analytics_customers" name="👥 Top Clientes" parent="menu_helpdesk_analytics" action="action_helpdesk_ticket_graph_customers" sequence="6"/>
 
     <!-- ── CONFIGURACIÓN ── -->
     <menuitem id="menu_helpdesk_config" name="⚙️ Configuración" parent="menu_helpdesk_root" groups="base.group_user" sequence="90"/>
@@ -52,11 +54,9 @@
 
     <menuitem id="menu_helpdesk_config_system" name="Sistema" parent="menu_helpdesk_config" groups="base.group_user" sequence="3"/>
 
-    <menuitem id="menu_helpdesk_config_stage" name="Etapas" parent="menu_helpdesk_config_catalogs" groups="base.group_user" action="action_helpdesk_stage" sequence="1"/>
-
     <menuitem id="menu_helpdesk_config_tag" name="Etiquetas" parent="menu_helpdesk_config_catalogs" groups="base.group_user" action="action_helpdesk_tag" sequence="3"/>
 
-    <menuitem id="menu_helpdesk_config_team" name="Áreas" parent="menu_helpdesk_config_catalogs" groups="base.group_user" action="action_helpdesk_team" sequence="4"/>
+    <menuitem id="menu_helpdesk_config_ticket_type" name="Tipos de Tickets" parent="menu_helpdesk_config_catalogs" groups="base.group_user" action="action_helpdesk_ticket_type" sequence="2"/>
 
     <menuitem id="menu_helpdesk_config_incident_type" name="Síntomas" parent="menu_helpdesk_config_catalogs" groups="base.group_user" action="action_helpdesk_incident_type" sequence="5"/>
 

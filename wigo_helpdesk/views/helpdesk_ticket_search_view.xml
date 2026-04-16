@@ -24,8 +24,8 @@
                                 <filter name="filter_open" string="Abiertos" domain="[('is_closed', '=', False)]"/>
                                 <filter name="filter_closed" string="Cerrados" domain="[('is_closed', '=', True)]"/>
                                 <separator/>
-                                <filter name="filter_incident" string="Reclamos / Incidentes" domain="[('ticket_type', '=', 'incident')]"/>
-                                <filter name="filter_request" string="Solicitudes" domain="[('ticket_type', '=', 'request')]"/>
+                                <filter name="filter_incident" string="Reclamos / Incidentes" domain="[('ticket_type_id.code', '=', 'incident')]"/>
+                                <filter name="filter_request" string="Solicitudes" domain="[('ticket_type_id.code', '=', 'request')]"/>
                                 <separator/>
                                 <filter name="filter_sla_danger" string="SLA Vencido" domain="[('sla_status', '=', 'danger'), ('is_closed', '=', False)]"/>
                                 <filter name="filter_sla_warning" string="SLA Próximo a vencer" domain="[('sla_status', '=', 'warning'), ('is_closed', '=', False)]"/>

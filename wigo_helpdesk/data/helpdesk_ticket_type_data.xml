@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="False">
+
+        <!-- Tipos de Tickets -->
+        <record id="helpdesk_ticket_type_incident" model="helpdesk.ticket.type">
+            <field name="name">Reclamo / Incidente</field>
+            <field name="code">incident</field>
+            <field name="sequence">10</field>
+            <field name="description">Reportes de problemas técnicos, reclamos y problemas operacionales</field>
+            <field name="active">True</field>
+            <field name="color">9</field>
+        </record>
+
+        <record id="helpdesk_ticket_type_request" model="helpdesk.ticket.type">
+            <field name="name">Solicitud</field>
+            <field name="code">request</field>
+            <field name="sequence">20</field>
+            <field name="description">Solicitudes de servicio, cambios de plan, etc.</field>
+            <field name="active">True</field>
+            <field name="color">3</field>
+        </record>
+
+    </data>
+</odoo>

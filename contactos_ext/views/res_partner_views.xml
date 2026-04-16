@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!-- LISTA INLINE - Planes dentro del formulario del contacto -->
     <record id="view_partner_plan_list_inline" model="ir.ui.view">
         <field name="name">partner.plan.list.inline</field>
         <field name="model">partner.plan</field>
@@ -22,7 +20,6 @@
         </field>
     </record>
 
-    <!-- FORM - Formulario completo de un plan -->
     <record id="view_partner_plan_form" model="ir.ui.view">
         <field name="name">partner.plan.form</field>
         <field name="model">partner.plan</field>
@@ -77,14 +74,11 @@
         </field>
     </record>
 
-    <!-- FORMULARIO res.partner — EXTENSIÓN PRINCIPAL -->
     <record id="view_partner_form_ext_clean" model="ir.ui.view">
         <field name="name">res.partner.form.ext.clean</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-
-            <!-- Ocultar campos no necesarios -->
             <xpath expr="//field[@name='function']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -100,8 +94,6 @@
             <xpath expr="//field[@name='lang']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
-
-            <!-- Ocultar dirección -->
             <xpath expr="//field[@name='street']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -114,28 +106,21 @@
             <xpath expr="//group[.//field[@name='street']]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
-
-            <!-- Quitar C.P. / Provincia / País -->
             <xpath expr="//field[@name='state_id']" position="replace"/>
             <xpath expr="//field[@name='zip']" position="replace"/>
             <xpath expr="//field[@name='country_id']" position="replace"/>
-
-            <!-- Celular, CI y Es empleado — encima del bloque de dirección,
-                 igual que en la versión inicial que funcionaba correctamente -->
             <xpath expr="//group[.//field[@name='street']]" position="before">
                 <group col="2">
-                    <field name="celular" string="Celular" placeholder="Celular" invisible="company_type == 'company'"/>
+                    <field name="celular" string="Celular" placeholder="Celular" invisible="is_company"/>
                     <field name="ci" string="CI" placeholder="CI" invisible="company_type != 'person'"/>
                 </group>
-                <group string="Dirección" col="2" invisible="company_type == 'company'">
+                <group string="Dirección" col="2" invisible="is_company">
                     <field name="zona_id" string="Zona?" placeholder="Seleccionar o crear zona" context="{'form_view_ref': 'wigo_crm.view_wigo_zone_form'}"/>
                     <field name="direccion" string="Dirección?" placeholder="Dirección exacta"/>
                     <field name="ubicacion" string="Ubicación?" widget="url" placeholder="Pegar enlace de Google Maps aquí"/>
                     <field name="coordenadas" string="Coordenadas?" placeholder="Ej. -17.783327, -63.182140"/>
                 </group>
             </xpath>
-
-            <!-- Ocultar pestañas originales de Odoo -->
             <xpath expr="//notebook/page[1]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
@@ -145,11 +130,7 @@
             <xpath expr="//notebook/page[3]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
-
-            <!-- Stat buttons -->
             <xpath expr="//div[@name='button_box']" position="inside">
-
-                <!-- Planes activos -->
                 <button name="action_view_plans" type="object" class="oe_stat_button" icon="fa-wifi" invisible="total_plan_count == 0">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
@@ -158,8 +139,14 @@
                         <span class="o_stat_text">Planes activos</span>
                     </div>
                 </button>
-
-                <!-- Referidos que hice — siempre visible para personas -->
+                <button name="action_view_helpdesk_tickets" type="object" class="oe_stat_button" icon="fa-ticket" invisible="helpdesk_ticket_count == 0">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="helpdesk_ticket_open_count"/>
+                        </span>
+                        <span class="o_stat_text">Tickets abiertos</span>
+                    </div>
+                </button>
                 <button name="action_view_referrals" type="object" class="oe_stat_button" icon="fa-users" invisible="is_company">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
@@ -168,16 +155,25 @@
                         <span class="o_stat_text">Referidos</span>
                     </div>
                 </button>
-
             </xpath>
-
-            <!-- Pestañas nuevas -->
             <xpath expr="//notebook" position="inside">
-
-                <!-- REFERIDOS: personas que YO recomendé -->
+                <page string="Notas" name="wigo_partner_notes">
+                    <field name="notes" nolabel="1" placeholder="Agregar notas internas sobre este cliente..."/>
+                </page>
+                <page string="Tickets" name="wigo_partner_tickets">
+                    <field name="all_helpdesk_ticket_ids" readonly="1" invisible="helpdesk_ticket_count == 0">
+                        <list string="Tickets de Soporte" decoration-success="is_closed" decoration-danger="not is_closed">
+                            <field name="name" string="Ticket"/>
+                            <field name="title" string="Descripción"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="stage_id" widget="badge"/>
+                            <field name="is_closed" invisible="1"/>
+                            <field name="create_date" string="Creado el"/>
+                            <field name="date_closed" string="Cerrado el" optional="show"/>
+                        </list>
+                    </field>
+                </page>
                 <page string="Referidos" name="wigo_referrals" invisible="company_type == 'company'">
-
-                    <!-- Bloque: quién me recomendó a MÍ (solo informativo, sin contador) -->
                     <field name="referral_as_referred_ids" readonly="1" invisible="not referral_as_referred_ids">
                         <list string="Fui recomendado por">
                             <field name="referrer_id" string="Me recomendó"/>
@@ -188,16 +184,9 @@
                     </field>
                     <div class="alert alert-info mb-3" invisible="not referral_as_referred_ids">
                         <i class="fa fa-info-circle"/>
- Fuiste recomendado por un cliente.
-                        Este registro es solo informativo y no suma al contador de referidos.
+ Fuiste recomendado por un cliente. Este registro es solo informativo y no suma al contador de referidos.
                     </div>
-
-                    <!-- Separador visual -->
-                    <div class="o_horizontal_separator mt-2 mb-2" invisible="not referral_as_referred_ids">
-                        Clientes que yo recomendé
-                    </div>
-
-                    <!-- Bloque: personas que YO recomendé (estas SÍ suman al contador) -->
+                    <div class="o_horizontal_separator mt-2 mb-2" invisible="not referral_as_referred_ids">Clientes que yo recomendé</div>
                     <field name="referral_as_referrer_ids" readonly="1">
                         <list string="Clientes que recomendé" decoration-success="state == 'rewarded'" decoration-info="state == 'valid'" decoration-warning="state == 'pending'" decoration-muted="state == 'cancelled'">
                             <field name="referred_id" string="Cliente referido"/>
@@ -207,25 +196,31 @@
                             <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state == 'valid'" decoration-primary="state == 'ready_for_reward'" decoration-success="state == 'rewarded'" decoration-danger="state == 'cancelled'"/>
                         </list>
                     </field>
-
                     <div class="mt-2 text-muted small" invisible="referral_count == 0">
                         Total referidos activos: <strong>
                         <field name="referral_count" readonly="1"/>
                     </strong>
                 </div>
                 <div class="mt-2 text-muted small" invisible="referral_count != 0">
-                        Aún no has recomendado a ningún cliente.
-                        Los referidos se registran en <b>Promociones → Referidos</b>.
+                        Aún no has recomendado a ningún cliente. Los referidos se registran en <b>Promociones Referidos</b>.
                 </div>
-
             </page>
-
         </xpath>
-
+        <xpath expr="//page[@name='wigo_contratos_cc']" position="before">
+            <xpath expr="//page[@name='wigo_partner_notes']" position="move"/>
+        </xpath>
+        <xpath expr="//page[@name='wigo_partner_notes']" position="after">
+            <xpath expr="//page[@name='wigo_contratos_cc']" position="move"/>
+        </xpath>
+        <xpath expr="//page[@name='wigo_contratos_cc']" position="after">
+            <xpath expr="//page[@name='wigo_partner_tickets']" position="move"/>
+        </xpath>
+        <xpath expr="//page[@name='wigo_partner_tickets']" position="after">
+            <xpath expr="//page[@name='wigo_referrals']" position="move"/>
+        </xpath>
     </field>
 </record>
 
-<!-- FILTROS Y BÚSQUEDA PERSONALIZADOS -->
 <record id="res_partner_search_filters_custom" model="ir.ui.view">
     <field name="name">res.partner.search.filters.custom</field>
     <field name="model">res.partner</field>
@@ -241,5 +236,4 @@
         </xpath>
     </field>
 </record>
-
 </odoo>

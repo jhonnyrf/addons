@@ -159,12 +159,18 @@ class HelpdeskTicket(models.Model):
             ('incident', 'Reclamo / Incidente'),
             ('request', 'Solicitud'),
         ],
-        string='Tipo de Ticket',
+        string='Tipo de Ticket (legacy)',
         default='incident',
         tracking=True,
         index=True,
-        required=True,
-        help='Indica si es un Reclamo/Incidente técnico o una Solicitud de servicio.',
+        help='DEPRECATED: usar ticket_type_id en su lugar',
+    )
+    ticket_type_id = fields.Many2one(
+        comodel_name='helpdesk.ticket.type',
+        string='Tipo de Ticket',
+        tracking=True,
+        index=True,
+        help='Tipo de ticket (Reclamo/Incidente o Solicitud)',
     )
     category_id = fields.Many2one(
         comodel_name='helpdesk.category', string='Categoría', tracking=True, index=True,
@@ -197,7 +203,7 @@ class HelpdeskTicket(models.Model):
         comodel_name='helpdesk.tag', relation='helpdesk_ticket_tag_rel',
         column1='ticket_id', column2='tag_id', string='Etiquetas',
     )
-    color = fields.Integer(string='Color', default=0)
+    color = fields.Integer(string='Color', default=0, aggregator=False)
 
 
     # =========================================================================
@@ -279,8 +285,9 @@ class HelpdeskTicket(models.Model):
     requires_visit = fields.Boolean(string='Requiere visita técnica', default=False, tracking=True)
     visit_date = fields.Datetime(string='Fecha de visita programada', tracking=True)
     technician_id = fields.Many2one(
-        comodel_name='res.users', string='Técnico asignado a visita',
-        domain="[('share', '=', False)]", tracking=True,
+        comodel_name='hr.employee', string='Técnico asignado a visita',
+        tracking=True,
+        help='Selecciona un técnico para la visita programada.'
     )
     visit_result = fields.Selection(
         selection=[
@@ -369,7 +376,25 @@ class HelpdeskTicket(models.Model):
     sla_badge_color = fields.Char(
         string='Color SLA', compute='_compute_sla_badge', store=False,
     )
-    resolution_hours = fields.Float(string='Horas de Resolución', compute='_compute_resolution_hours', store=True)
+    # Estado SLA ya notificado por cron para evitar repetir mensajes
+    sla_last_notified_status = fields.Selection(
+        selection=[
+            ('ok', 'En tiempo'),
+            ('warning', 'Próximo a vencer'),
+            ('danger', 'Vencido'),
+            ('closed', 'Cerrado'),
+        ],
+        string='Último estado SLA notificado',
+        copy=False,
+        tracking=False,
+        index=True,
+    )
+    sla_last_notified_at = fields.Datetime(
+        string='Última notificación SLA',
+        copy=False,
+        tracking=False,
+    )
+    resolution_hours = fields.Float(string='Horas de Resolución', compute='_compute_resolution_hours', store=True, aggregator=False)
 
     # =========================================================================
     # POSTVENTA / SATISFACCIÓN
@@ -378,6 +403,12 @@ class HelpdeskTicket(models.Model):
     postventa_date = fields.Date(string='Fecha de llamada postventa', tracking=True)
     postventa_user_id = fields.Many2one(
         comodel_name='res.users', string='Realizado por', domain="[('share', '=', False)]",
+    )
+    postventa_activity_id = fields.Many2one(
+        comodel_name='mail.activity',
+        string='Actividad de postventa',
+        readonly=True,
+        copy=False,
     )
     satisfaction = fields.Selection(
         selection=[
@@ -678,7 +709,11 @@ class HelpdeskTicket(models.Model):
         self.customer_address = contract.address or partner.street or ''
         self.customer_zone = getattr(lead, 'zona', False) or contract.address or partner.city or ''
         self.customer_plan_id = contract.plan_id.id
-        self._sync_ftth_service_from_partner(partner)
+        self._sync_ftth_service_from_partner(
+            partner=partner,
+            contract=contract,
+            customer_code=self.customer_code,
+        )
 
         # Compatibilidad con el campo legado selection
         speed = getattr(contract, 'plan_speed', False)
@@ -706,12 +741,55 @@ class HelpdeskTicket(models.Model):
             # Código CF desde referencia interna del partner
             if not self.customer_code and p.ref:
                 self.customer_code = p.ref
-            self._sync_ftth_service_from_partner(p)
+            self._sync_ftth_service_from_partner(
+                partner=p,
+                contract=False,
+                customer_code=self.customer_code,
+            )
 
-    def _sync_ftth_service_from_partner(self, partner):
-        service = self.env['wigo.ftth.client.service'].search([
-            ('partner_id', '=', partner.id),
-        ], order='fecha_instalacion desc, id desc', limit=1)
+    def _get_ftth_service_for_customer(self, partner=False, contract=False, customer_code=False):
+        """Encuentra la ficha FTTH priorizando contrato/codigo y luego partner."""
+        service_model = self.env['wigo.ftth.client.service']
+
+        # 1) Prioridad alta: servicio vinculado a un lead del mismo contrato
+        if contract:
+            by_contract = service_model.search([
+                ('lead_id.contract_id', '=', contract.id),
+            ], order='fecha_instalacion desc, id desc', limit=1)
+            if by_contract:
+                return by_contract
+
+        # 2) Prioridad media: coincidencia por codigo CF (contrato/codigo cliente)
+        code_candidates = []
+        if customer_code:
+            code_candidates.append(customer_code)
+        if contract and contract.name and contract.name not in code_candidates:
+            code_candidates.append(contract.name)
+        if partner and partner.ref and partner.ref not in code_candidates:
+            code_candidates.append(partner.ref)
+
+        for code in code_candidates:
+            domain = [('codigo_cliente', '=', code)]
+            if partner:
+                domain = [('codigo_cliente', '=', code), ('partner_id', '=', partner.id)]
+            by_code = service_model.search(domain, order='fecha_instalacion desc, id desc', limit=1)
+            if by_code:
+                return by_code
+
+        # 3) Fallback: ultimo servicio del partner
+        if partner:
+            return service_model.search([
+                ('partner_id', '=', partner.id),
+            ], order='fecha_instalacion desc, id desc', limit=1)
+
+        return service_model.browse()
+
+    def _sync_ftth_service_from_partner(self, partner=False, contract=False, customer_code=False):
+        service = self._get_ftth_service_for_customer(
+            partner=partner,
+            contract=contract,
+            customer_code=customer_code,
+        )
         if service:
             self.ftth_service_id = service
             self._onchange_ftth_service_id()
@@ -768,11 +846,13 @@ class HelpdeskTicket(models.Model):
         if team:
             self.team_id = team
 
-    @api.onchange('ticket_type')
-    def _onchange_ticket_type(self):
+    @api.onchange('ticket_type_id')
+    def _onchange_ticket_type_id(self):
         if not self.incident_type_id:
             return
-        if self.incident_type_id.ticket_type_scope in ('both', self.ticket_type):
+        # Comparar el código del ticket_type con el ticket_type_scope
+        ticket_type_code = self.ticket_type_id.code if self.ticket_type_id else None
+        if self.incident_type_id.ticket_type_scope in ('both', ticket_type_code):
             return
         self.incident_type_id = False
 
@@ -810,6 +890,13 @@ class HelpdeskTicket(models.Model):
             if ticket.visit_solution_id and not ticket.visit_solution:
                 ticket.visit_solution = ticket.visit_solution_id.name
 
+    @api.onchange('technician_id')
+    def _onchange_technician_id(self):
+        """Valida que el técnico asignado tenga usuario asociado."""
+        for ticket in self:
+            if ticket.technician_id and ticket.requires_visit and not ticket.technician_id.user_id:
+                ticket.technician_id = False
+
     @api.constrains('requires_visit', 'technician_id', 'visit_date')
     def _check_visit_assignment(self):
         for ticket in self:
@@ -843,7 +930,7 @@ class HelpdeskTicket(models.Model):
                 'activity_type_id': activity_type.id,
                 'summary': 'Visita tecnica programada',
                 'note': note,
-                'user_id': ticket.technician_id.id,
+                'user_id': ticket.technician_id.user_id.id if ticket.technician_id.user_id else None,
                 'date_deadline': fields.Date.to_date(ticket.visit_date),
                 'res_id': ticket.id,
                 'res_model_id': model_id,
@@ -852,7 +939,8 @@ class HelpdeskTicket(models.Model):
             if activities:
                 activities.write(vals)
             else:
-                self.env['mail.activity'].create(vals)
+                if vals.get('user_id'):
+                    self.env['mail.activity'].create(vals)
 
             if ticket.visit_result in ('done', 'cancelled'):
                 self.env['mail.activity'].search(domain).action_feedback(
@@ -870,6 +958,80 @@ class HelpdeskTicket(models.Model):
                 subtype_xmlid='mail.mt_note',
             )
 
+    def _prepare_postventa_activity_type_vals(self):
+        vals = {
+            'name': 'Postventa Helpdesk',
+            'summary': 'Llamada de seguimiento postventa',
+            'category': 'phonecall',
+        }
+        activity_type_model = self.env['mail.activity.type']
+        if 'res_model' in activity_type_model._fields:
+            vals['res_model'] = 'helpdesk.ticket'
+        elif 'res_model_id' in activity_type_model._fields:
+            vals['res_model_id'] = self.env['ir.model']._get_id('helpdesk.ticket')
+        return vals
+
+    def _get_postventa_activity_type(self):
+        activity_type_model = self.env['mail.activity.type']
+        domain = [('name', '=', 'Postventa Helpdesk')]
+        if 'res_model' in activity_type_model._fields:
+            domain.append(('res_model', '=', 'helpdesk.ticket'))
+        elif 'res_model_id' in activity_type_model._fields:
+            domain.append(('res_model_id.model', '=', 'helpdesk.ticket'))
+
+        activity_type = activity_type_model.search(domain, limit=1)
+        if activity_type:
+            return activity_type
+        return activity_type_model.create(self._prepare_postventa_activity_type_vals())
+
+    def _sync_postventa_activity(self):
+        model_id = self.env['ir.model']._get_id('helpdesk.ticket')
+        if not model_id:
+            return
+
+        activity_type = self._get_postventa_activity_type()
+        for ticket in self:
+            domain = [
+                ('res_model_id', '=', model_id),
+                ('res_id', '=', ticket.id),
+                ('activity_type_id', '=', activity_type.id),
+                ('summary', '=', 'Llamada de seguimiento postventa'),
+            ]
+            activities = self.env['mail.activity'].search(domain, order='id desc')
+            main_activity = activities[:1]
+
+            if ticket.postventa_done:
+                ticket.postventa_activity_id = False
+                continue
+
+            if not ticket.is_closed:
+                activities.unlink()
+                ticket.postventa_activity_id = False
+                continue
+
+            note = (
+                f"Ticket: {ticket.display_name}<br/>"
+                f"Cliente: {ticket.customer_name or '-'}<br/>"
+                f"Codigo cliente: {ticket.customer_code or '-'}"
+            )
+            vals = {
+                'activity_type_id': activity_type.id,
+                'summary': 'Llamada de seguimiento postventa',
+                'note': note,
+                'user_id': ticket.user_id.id or self.env.user.id,
+                'date_deadline': fields.Date.today(),
+                'res_id': ticket.id,
+                'res_model_id': model_id,
+            }
+
+            if main_activity:
+                main_activity.write(vals)
+                ticket.postventa_activity_id = main_activity.id
+                (activities - main_activity).unlink()
+            else:
+                created = self.env['mail.activity'].create(vals)
+                ticket.postventa_activity_id = created.id
+
     # =========================================================================
     # CRUD
     # =========================================================================
@@ -883,6 +1045,17 @@ class HelpdeskTicket(models.Model):
             '3': cfg.sla_hours_critical,
         }
         critical_types = {'no_signal', 'fiber_cut', 'onu_offline'}
+        
+        # Establecer el ticket_type_id por defecto si no está especificado
+        for vals in vals_list:
+            if not vals.get('ticket_type_id'):
+                # Buscar el tipo de ticket "incident" por défault
+                default_type = self.env['helpdesk.ticket.type'].search(
+                    [('code', '=', 'incident')], limit=1
+                )
+                if default_type:
+                    vals['ticket_type_id'] = default_type.id
+        
         for vals in vals_list:
             if vals.get('employee_id'):
                 employee = self.env['hr.employee'].browse(vals['employee_id'])
@@ -956,6 +1129,7 @@ class HelpdeskTicket(models.Model):
             if rec.create_date and not rec.sla_start_datetime:
                 rec.sla_start_datetime = rec.create_date
         records._sync_visit_activity()
+        records._sync_postventa_activity()
         return records
 
     def write(self, vals):
@@ -988,31 +1162,119 @@ class HelpdeskTicket(models.Model):
         res = super().write(vals)
         if any(k in vals for k in ('requires_visit', 'visit_date', 'technician_id', 'visit_result')):
             self._sync_visit_activity()
+        if any(k in vals for k in ('stage_id', 'postventa_done', 'postventa_date', 'postventa_user_id', 'satisfaction', 'postventa_notes', 'user_id')):
+            self._sync_postventa_activity()
         return res
+
+    def _get_runtime_sla_status(self, now=None, cfg=None):
+        """Calcula el estado SLA en tiempo real para un ticket."""
+        self.ensure_one()
+        now = now or fields.Datetime.now()
+        cfg = cfg or self.env['helpdesk.sla.config'].get_config()
+
+        if self.is_closed:
+            return 'closed', 0.0
+        if not self.sla_deadline:
+            return 'ok', 0.0
+
+        warn_pct = (cfg.warning_threshold_pct or 25.0) / 100.0
+        warn_abs = cfg.warning_threshold_hours or 0.0
+
+        start_dt = self.sla_start_datetime or self.date_open or self.create_date or now
+        total_hours = (self.sla_deadline - start_dt).total_seconds() / 3600.0
+        remaining = (self.sla_deadline - now).total_seconds() / 3600.0
+
+        if remaining < 0:
+            return 'danger', remaining
+
+        in_warning_pct = total_hours > 0 and (remaining / total_hours) < warn_pct
+        in_warning_abs = warn_abs > 0 and remaining < warn_abs
+        return ('warning' if (in_warning_pct or in_warning_abs) else 'ok'), remaining
+
+    def _build_sla_transition_message(self, status, remaining_hours, cfg):
+        """Arma el mensaje chatter cuando el semáforo SLA cambia de estado."""
+        self.ensure_one()
+        labels = {
+            'ok': cfg.ok_label or 'En tiempo',
+            'warning': cfg.warning_label or 'Próximo a vencer',
+            'danger': cfg.danger_label or 'SLA Vencido',
+            'closed': cfg.closed_label or 'Cerrado',
+        }
+        icons = {
+            'ok': '🟢',
+            'warning': '🟡',
+            'danger': '🔴',
+            'closed': '⚪',
+        }
+
+        if status == 'closed':
+            return _('%(icon)s <strong>SLA %(label)s.</strong> El ticket fue cerrado.') % {
+                'icon': icons[status],
+                'label': labels[status],
+            }
+
+        total_minutes = int(round(abs(remaining_hours or 0.0) * 60))
+        hours, minutes = divmod(total_minutes, 60)
+        if (remaining_hours or 0.0) < 0:
+            remaining_text = _('Vencido por %(h)s h %(m)02d min') % {'h': hours, 'm': minutes}
+        else:
+            remaining_text = _('Restan %(h)s h %(m)02d min') % {'h': hours, 'm': minutes}
+
+        return _('%(icon)s <strong>SLA %(label)s.</strong> %(remaining)s.') % {
+            'icon': icons.get(status, 'ℹ️'),
+            'label': labels.get(status, 'actualizado'),
+            'remaining': remaining_text,
+        }
 
     # =========================================================================
     # CRON — Cambio automático de etapa al vencer SLA
     # =========================================================================
     @api.model
     def _cron_check_sla_deadline(self):
-        """Detecta tickets con SLA vencido y los mueve a la etapa En Espera."""
+        """Notifica transiciones del semáforo SLA y escala tickets vencidos sin repetir avisos."""
         now = fields.Datetime.now()
+        cfg = self.env['helpdesk.sla.config'].get_config()
         tickets = self.search([
-            ('is_closed', '=', False),
+            '|',
             ('sla_deadline', '!=', False),
-            ('sla_deadline', '<', now),
-            ('sla_exceeded', '=', False),
+            ('sla_last_notified_status', '!=', False),
         ])
         if not tickets:
             return
+
         waiting_stage = self.env['helpdesk.stage'].search([('name', '=', 'En Espera')], limit=1)
+
         for ticket in tickets:
-            ticket.message_post(
-                body=_('⚠️ <strong>SLA vencido automáticamente.</strong> El plazo de atención ha expirado.'),
-                message_type='comment',
-                subtype_xmlid='mail.mt_note',
-            )
-            if waiting_stage and ticket.stage_id.id != waiting_stage.id:
+            runtime_status, remaining = ticket._get_runtime_sla_status(now=now, cfg=cfg)
+            previous_status = ticket.sla_last_notified_status
+
+            # Primera vez: inicializa estado base sin generar spam histórico.
+            if not previous_status:
+                ticket.with_context(tracking_disable=True).write({
+                    'sla_last_notified_status': runtime_status,
+                    'sla_last_notified_at': now,
+                })
+            elif previous_status != runtime_status:
+                should_notify = (runtime_status != 'warning') or bool(cfg.notify_on_warning)
+                if should_notify:
+                    ticket.message_post(
+                        body=ticket._build_sla_transition_message(runtime_status, remaining, cfg),
+                        message_type='comment',
+                        subtype_xmlid='mail.mt_note',
+                    )
+
+                ticket.with_context(tracking_disable=True).write({
+                    'sla_last_notified_status': runtime_status,
+                    'sla_last_notified_at': now,
+                })
+
+            if (
+                runtime_status == 'danger'
+                and cfg.escalate_on_expire
+                and waiting_stage
+                and not ticket.is_closed
+                and ticket.stage_id.id != waiting_stage.id
+            ):
                 ticket.write({'stage_id': waiting_stage.id})
 
     # =========================================================================
@@ -1062,13 +1324,40 @@ class HelpdeskTicket(models.Model):
         }
 
     def action_mark_postventa(self):
+        self.ensure_one()
+        model_id = self.env['ir.model']._get_id('helpdesk.ticket')
+        activity_type = self._get_postventa_activity_type()
+        activity = self.env['mail.activity'].search([
+            ('res_model_id', '=', model_id),
+            ('res_id', '=', self.id),
+            ('activity_type_id', '=', activity_type.id),
+            ('summary', '=', 'Llamada de seguimiento postventa'),
+        ], limit=1)
+
+        if not activity:
+            activity = self.env['mail.activity'].create({
+                'res_model_id': model_id,
+                'res_id': self.id,
+                'activity_type_id': activity_type.id,
+                'summary': 'Llamada de seguimiento postventa',
+                'date_deadline': fields.Date.today(),
+                'user_id': self.user_id.id or self.env.user.id,
+                'note': (
+                    f"Ticket: {self.display_name}<br/>"
+                    f"Cliente: {self.customer_name or '-'}<br/>"
+                    f"Codigo cliente: {self.customer_code or '-'}"
+                ),
+            })
+        self.postventa_activity_id = activity.id
+
         return {
-            'name': _('Registrar Llamada Postventa'),
+            'name': _('Actividad de Postventa'),
             'type': 'ir.actions.act_window',
-            'res_model': 'helpdesk.close.wizard',
+            'res_model': 'mail.activity',
             'view_mode': 'form',
+            'res_id': activity.id,
             'target': 'new',
-            'context': {'default_ticket_id': self.id},
+            'context': {'default_res_model_id': model_id, 'default_res_id': self.id},
         }
 
     def action_open_sla_advanced_wizard(self):

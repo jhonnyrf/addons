@@ -171,3 +171,64 @@ class ResPartner(models.Model):
         'crm.lead', 'partner_id',
         string='Oportunidades CRM',
     )
+
+    # ── Tickets WigoFast Helpdesk ─────────────────────────────────
+    helpdesk_ticket_ids = fields.One2many(
+        'helpdesk.ticket', 'partner_id',
+        string='Tickets de Soporte',
+    )
+    # Todos los tickets (directos e indirectos por contrato)
+    all_helpdesk_ticket_ids = fields.Many2many(
+        'helpdesk.ticket',
+        compute='_compute_all_helpdesk_tickets',
+        string='Todos los Tickets',
+        help='Tickets asociados directamente o a través de contrato',
+    )
+    
+    helpdesk_ticket_count = fields.Integer(
+        string='Tickets',
+        compute='_compute_helpdesk_ticket_count',
+        store=False,
+    )
+    helpdesk_ticket_open_count = fields.Integer(
+        string='Tickets abiertos',
+        compute='_compute_helpdesk_ticket_count',
+        store=False,
+    )
+
+    @api.depends('helpdesk_ticket_ids')
+    def _compute_all_helpdesk_tickets(self):
+        """Busca tickets asociados directamente O a través de contrato"""
+        for partner in self:
+            Ticket = self.env['helpdesk.ticket']
+            all_tickets = Ticket.search([
+                '|',
+                ('partner_id', '=', partner.id),
+                ('contract_id.partner_id', '=', partner.id),
+            ])
+            partner.all_helpdesk_ticket_ids = all_tickets
+
+    @api.depends('all_helpdesk_ticket_ids')
+    def _compute_helpdesk_ticket_count(self):
+        for partner in self:
+            all_tickets = partner.all_helpdesk_ticket_ids
+            partner.helpdesk_ticket_count = len(all_tickets)
+            partner.helpdesk_ticket_open_count = len(
+                all_tickets.filtered(lambda t: not t.is_closed)
+            )
+
+    def action_view_helpdesk_tickets(self):
+        """Abre los tickets de soporte asociados a este contacto."""
+        self.ensure_one()
+        tickets = self.all_helpdesk_ticket_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Tickets de {self.name}',
+            'res_model': 'helpdesk.ticket',
+            'view_mode': 'list,form,kanban',
+            'domain': [('id', 'in', tickets.ids)],
+            'context': {'default_partner_id': self.id},
+        }
+
+    # ── Notas del Cliente ────────────────────────────────────────
+    notes = fields.Text(string='Notas', help='Notas internas sobre este cliente')

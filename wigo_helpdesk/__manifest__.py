@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Helpdesk WigoFast',
-    'version': '19.0.5.0.0',
+    'version': '19.0.5.1.0',
     'category': 'Services/Helpdesk',
     'summary': 'Gestión de tickets de soporte para ISP WigoFast',
     'description': """
@@ -34,12 +34,14 @@
         'security/ir.model.access.csv',
         'data/helpdesk_stage_data.xml',
         'data/helpdesk_incident_type_data.xml',
+        'data/helpdesk_ticket_type_data.xml',
         'data/helpdesk_category_data.xml',
         'data/helpdesk_visit_type_data.xml',
         'data/helpdesk_sequence_data.xml',
         'data/helpdesk_cron_data.xml',
         'data/helpdesk_sla_config_data.xml',
         'views/helpdesk_incident_type_views.xml',
+        'views/helpdesk_ticket_type_views.xml',
         'views/helpdesk_ticket_views.xml',
         'views/helpdesk_ticket_search_view.xml',
         'views/helpdesk_stage_views.xml',
@@ -49,6 +51,7 @@
         'views/helpdesk_tag_views.xml',
         'views/helpdesk_knowledge_views.xml',
         'views/helpdesk_sla_config_views.xml',
+        'views/mail_activity_helpdesk_postventa_views.xml',
         'views/res_partner_views.xml',
         'views/helpdesk_menu.xml',
         'report/helpdesk_ticket_report.xml',

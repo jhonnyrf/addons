@@ -10,7 +10,7 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <notebook position="inside">
-                <page string="🎫 Tickets Helpdesk" name="helpdesk_tickets">
+                <page string="🎫 Tickets Helpdesk" name="helpdesk_tickets" invisible="1">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="fw-bold text-muted">Historial de tickets asociados a este contacto</span>
                     </div>

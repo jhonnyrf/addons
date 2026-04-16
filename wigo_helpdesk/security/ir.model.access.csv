@@ -1,5 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_helpdesk_stage_all,helpdesk.stage all,model_helpdesk_stage,,1,1,1,1
+access_helpdesk_ticket_type_all,helpdesk.ticket.type all,model_helpdesk_ticket_type,,1,1,1,1
 access_helpdesk_category_all,helpdesk.category all,model_helpdesk_category,,1,1,1,1
 access_helpdesk_tag_all,helpdesk.tag all,model_helpdesk_tag,,1,1,1,1
 access_helpdesk_team_all,helpdesk.team all,model_helpdesk_team,,1,1,1,1

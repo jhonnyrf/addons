@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_activity_view_form_popup_inherit_helpdesk_postventa" model="ir.ui.view">
+        <field name="name">mail.activity.form.popup.helpdesk.postventa</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form_popup"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='summary']" position="after">
+                <group string="Seguimiento Postventa Helpdesk" invisible="not is_helpdesk_postventa_activity" col="2">
+                    <field name="helpdesk_postventa_call_date"/>
+                    <field name="helpdesk_postventa_done_by"/>
+                    <field name="helpdesk_postventa_state"/>
+                    <field name="helpdesk_postventa_satisfaction" required="helpdesk_postventa_state == 'done'"/>
+                </group>
+                <group string="Comentarios del cliente" invisible="not is_helpdesk_postventa_activity">
+                    <field name="helpdesk_postventa_comment" placeholder="Detalle lo comentado por el cliente sobre el servicio..."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mail_activity_view_form_inherit_helpdesk_postventa" model="ir.ui.view">
+        <field name="name">mail.activity.form.helpdesk.postventa</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='summary']" position="after">
+                <group string="Seguimiento Postventa Helpdesk" invisible="not is_helpdesk_postventa_activity" col="2">
+                    <field name="helpdesk_postventa_call_date"/>
+                    <field name="helpdesk_postventa_done_by"/>
+                    <field name="helpdesk_postventa_state"/>
+                    <field name="helpdesk_postventa_satisfaction" required="helpdesk_postventa_state == 'done'"/>
+                </group>
+                <group string="Comentarios del cliente" invisible="not is_helpdesk_postventa_activity">
+                    <field name="helpdesk_postventa_comment"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

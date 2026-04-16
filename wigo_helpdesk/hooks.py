@@ -19,6 +19,9 @@ def post_init_hook(env_or_cr, registry=None):
         cr = env_or_cr
         env = api.Environment(cr, SUPERUSER_ID, {})
 
+    # =========================================================================
+    # Limpieza original del módulo
+    # =========================================================================
     escalated_stage = env.ref('wigo_helpdesk.stage_escalated', raise_if_not_found=False)
     waiting_stage = env['helpdesk.stage'].search([('name', '=', 'En Espera')], limit=1)
 
