@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Wigo Planes',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     'summary': 'Gestión de Planes de Internet y Promociones Wigo',
     'description': """
         Módulo unificado Wigo Planes.
@@ -13,7 +13,7 @@
     'author': 'Wigo',
     'category': 'Sales/CRM',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'sale', 'contacts'],
+    'depends': ['base', 'mail', 'contacts'],
     'application': True,
     'installable': True,
     'auto_install': False,
