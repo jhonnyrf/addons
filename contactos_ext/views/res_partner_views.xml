@@ -182,7 +182,7 @@
                             <field name="state" widget="badge" decoration-warning="state == 'pending'" decoration-info="state == 'valid'" decoration-success="state == 'rewarded'" decoration-danger="state == 'cancelled'"/>
                         </list>
                     </field>
-                    <div class="alert alert-info mb-3" invisible="not referral_as_referred_ids">
+                    <div class="alert alert-info mb-3" role="status" invisible="not referral_as_referred_ids">
                         <i class="fa fa-info-circle"/>
  Fuiste recomendado por un cliente. Este registro es solo informativo y no suma al contador de referidos.
                     </div>

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class ServiceCancellationWizard(models.TransientModel):
@@ -35,6 +35,31 @@ class ServiceCancellationWizard(models.TransientModel):
         readonly=True,
     )
 
+    # ─── Snapshot técnico FTTH (solo lectura, autocompletado) ───────────────
+    ftth_client_service_id = fields.Many2one(
+        'wigo.ftth.client.service',
+        string='Ficha técnica FTTH',
+        readonly=True,
+    )
+    ftth_estado_servicio = fields.Selection(
+        [
+            ('active', 'Activo'),
+            ('suspended', 'Suspendido'),
+            ('corte', 'En corte (mora)'),
+            ('baja', 'Dado de baja'),
+            ('cancelado', 'Cancelado'),
+        ],
+        string='Estado servicio FTTH',
+        readonly=True,
+    )
+    ftth_fecha_instalacion = fields.Date(string='Fecha instalación FTTH', readonly=True)
+    ftth_nodo = fields.Char(string='Nodo FTTH', readonly=True)
+    ftth_olt = fields.Char(string='OLT FTTH', readonly=True)
+    ftth_olt_port = fields.Char(string='Puerto OLT FTTH', readonly=True)
+    ftth_subinterface = fields.Char(string='Subinterfaz FTTH', readonly=True)
+    ftth_nap = fields.Char(string='NAP FTTH', readonly=True)
+    ftth_nap_port = fields.Char(string='Puerto NAP FTTH', readonly=True)
+
     @api.depends('contract_id')
     def _compute_contract_code(self):
         for rec in self:
@@ -54,6 +79,9 @@ class ServiceCancellationWizard(models.TransientModel):
     )
 
     # ─── Datos del ONU ───────────────────────────────────────────────────────
+    onu_equipo = fields.Char(string='Equipo', readonly=True)
+    onu_rotulo = fields.Char(string='Rótulo / Etiqueta')
+    onu_marca = fields.Char(string='Marca', readonly=True)
     onu_serial = fields.Char(string='N° de serie ONU')
     onu_mac = fields.Char(string='MAC ONU')
     onu_modelo = fields.Char(string='Modelo ONU')
@@ -73,6 +101,26 @@ class ServiceCancellationWizard(models.TransientModel):
         'res.currency',
         default=lambda self: self.env.company.currency_id,
     )
+    cobranza_estado_pago = fields.Selection(
+        [
+            ('al_dia', 'Al día'),
+            ('pendiente', 'Pendiente'),
+            ('mora', 'En mora'),
+            ('deuda_parcial', 'Deuda parcial'),
+            ('baja_definitiva', 'Baja definitiva'),
+        ],
+        string='Estado de pago cobranza',
+        readonly=True,
+    )
+    cobranza_ultimo_pago_fecha = fields.Date(string='Último pago registrado', readonly=True)
+    cobranza_meses_pendientes = fields.Integer(string='Meses pendientes cobranza', readonly=True)
+    cobranza_total_registros = fields.Integer(string='Registros de pago cobranza', readonly=True)
+    cobranza_monto_pendiente = fields.Monetary(
+        string='Monto pendiente cobranza',
+        currency_field='currency_id',
+        readonly=True,
+    )
+    cobranza_resumen = fields.Text(string='Resumen de deuda por períodos', readonly=True)
 
     # ─── Acción sobre contrato ────────────────────────────────────────────────
     terminar_contrato = fields.Boolean(
@@ -98,6 +146,138 @@ class ServiceCancellationWizard(models.TransientModel):
         for rec in self:
             if rec.fecha_baja and rec.fecha_baja > fields.Date.today():
                 raise ValidationError('La fecha de baja no puede ser una fecha futura.')
+
+    @api.model
+    def default_get(self, fields_list):
+        values = super().default_get(fields_list)
+        if values.get('partner_id') or values.get('contract_id') or values.get('lead_id'):
+            temp = self.new(values)
+            temp._sync_ftth_and_cobranza_snapshot()
+            values.update(temp._convert_to_write(temp._cache))
+        return values
+
+    @api.onchange('partner_id', 'contract_id', 'lead_id')
+    def _onchange_autofill_ftth_cobranza(self):
+        self._sync_ftth_and_cobranza_snapshot()
+
+    def _find_client_service(self):
+        self.ensure_one()
+        ClientService = self.env['wigo.ftth.client.service']
+
+        if self.contract_id and self.contract_id.lead_id:
+            service = ClientService.search([('lead_id', '=', self.contract_id.lead_id.id)], limit=1)
+            if service:
+                return service
+
+        if self.lead_id:
+            service = ClientService.search([('lead_id', '=', self.lead_id.id)], limit=1)
+            if service:
+                return service
+
+        if self.contract_id and self.contract_id.name:
+            service = ClientService.search([('codigo_cliente', '=', self.contract_id.name)], limit=1)
+            if service:
+                return service
+
+        if self.partner_id:
+            service = ClientService.search([
+                ('partner_id', '=', self.partner_id.id),
+            ], order='write_date desc, id desc', limit=1)
+            if service:
+                return service
+        return False
+
+    def _build_cobranza_snapshot(self, service):
+        self.ensure_one()
+        Payment = self.env['wigo.pago.estado']
+        records = Payment.browse()
+
+        if service:
+            records |= Payment.search([('client_service_id', '=', service.id)])
+        if self.contract_id:
+            records |= Payment.search([('contract_id', '=', self.contract_id.id)])
+        if not records and self.partner_id:
+            records |= Payment.search([('partner_id', '=', self.partner_id.id)])
+
+        unpaid_states = ('pendiente', 'deuda_parcial', 'mora')
+        unpaid = records.filtered(lambda p: p.estado_pago in unpaid_states)
+
+        saldo_total = 0.0
+        for pay in unpaid:
+            saldo = max((pay.monto_a_cobrar or 0.0) - (pay.monto_pagado or 0.0), 0.0)
+            saldo_total += saldo
+
+        ordered_unpaid = unpaid.sorted(key=lambda p: ((p.anio or 0), int(p.mes or 0), p.id or 0))
+        resumen_lineas = []
+        for pay in ordered_unpaid:
+            resumen_lineas.append(
+                f"- {pay.periodo or (str(pay.mes) + '/' + str(pay.anio))}: "
+                f"{pay.estado_pago} | saldo {max((pay.monto_a_cobrar or 0.0) - (pay.monto_pagado or 0.0), 0.0):.2f}"
+            )
+
+        last_paid = records.filtered(lambda p: p.estado_pago == 'al_dia' and p.fecha_pago)
+        latest_paid_date = max(last_paid.mapped('fecha_pago')) if last_paid else False
+
+        if service and service.estado_pago:
+            estado_actual = service.estado_pago
+        elif records:
+            estado_actual = records.sorted(key=lambda p: ((p.anio or 0), int(p.mes or 0), p.id or 0), reverse=True)[0].estado_pago
+        else:
+            estado_actual = False
+
+        return {
+            'cobranza_estado_pago': estado_actual,
+            'cobranza_ultimo_pago_fecha': latest_paid_date,
+            'cobranza_meses_pendientes': len(unpaid),
+            'cobranza_total_registros': len(records),
+            'cobranza_monto_pendiente': saldo_total,
+            'cobranza_resumen': '\n'.join(resumen_lineas) if resumen_lineas else '',
+            'meses_deuda': len(unpaid),
+            'monto_deuda': saldo_total,
+        }
+
+    def _sync_ftth_and_cobranza_snapshot(self):
+        for wizard in self:
+            service = wizard._find_client_service()
+            wizard.ftth_client_service_id = service
+            wizard.ftth_estado_servicio = service.estado_servicio if service else False
+            wizard.ftth_fecha_instalacion = service.fecha_instalacion if service else False
+            wizard.ftth_nodo = service.nodo_id.name if service and service.nodo_id else False
+            wizard.ftth_olt = service.olt_id.display_name if service and service.olt_id else False
+            wizard.ftth_olt_port = (
+                service.olt_port_id.interface_port
+                or (f"Puerto {service.olt_port_id.port_number}" if service.olt_port_id.port_number else False)
+            ) if service and service.olt_port_id else False
+            wizard.ftth_subinterface = (
+                service.subinterface_id.code
+                or service.subinterface_id.display_name
+            ) if service and service.subinterface_id else False
+            wizard.ftth_nap = (
+                getattr(service.box_id, 'identifier', False)
+                or getattr(service.box_id, 'identificador', False)
+                or service.box_id.display_name
+            ) if service and service.box_id else False
+            wizard.ftth_nap_port = (
+                str(getattr(service.box_port_id, 'port_number', False) or getattr(service.box_port_id, 'numero_puerto', False))
+                if service and service.box_port_id and (getattr(service.box_port_id, 'port_number', False) or getattr(service.box_port_id, 'numero_puerto', False))
+                else False
+            )
+
+            onu = False
+            if service:
+                onu = service.onu_id or (service.subinterface_id.onu_id if service.subinterface_id else False)
+
+            if onu:
+                wizard.onu_equipo = 'ONU/ONT'
+                wizard.onu_rotulo = onu.rotulo or wizard.onu_rotulo
+                wizard.onu_marca = onu.marca or (onu.marca_id.name if onu.marca_id else wizard.onu_marca)
+                wizard.onu_serial = onu.serial_number or wizard.onu_serial
+                wizard.onu_modelo = onu.modelo or (onu.modelo_id.name if onu.modelo_id else wizard.onu_modelo)
+            else:
+                wizard.onu_equipo = wizard.onu_equipo or 'ONU/ONT'
+
+            cobranza_vals = wizard._build_cobranza_snapshot(service)
+            wizard.update(cobranza_vals)
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
     def _get_or_create_baja_stage(self):
@@ -202,11 +382,29 @@ class ServiceCancellationWizard(models.TransientModel):
             'reason_id':                      self.reason_id.id,
             'motivo_detalle':                 self.motivo_detalle or '',
             'fecha_baja':                     self.fecha_baja,
+            'ftth_client_service_id':         self.ftth_client_service_id.id if self.ftth_client_service_id else False,
+            'ftth_estado_servicio':           self.ftth_estado_servicio or False,
+            'ftth_fecha_instalacion':         self.ftth_fecha_instalacion or False,
+            'ftth_nodo':                      self.ftth_nodo or '',
+            'ftth_olt':                       self.ftth_olt or '',
+            'ftth_olt_port':                  self.ftth_olt_port or '',
+            'ftth_subinterface':              self.ftth_subinterface or '',
+            'ftth_nap':                       self.ftth_nap or '',
+            'ftth_nap_port':                  self.ftth_nap_port or '',
+            'onu_equipo':                     self.onu_equipo or '',
+            'onu_rotulo':                     self.onu_rotulo or '',
+            'onu_marca':                      self.onu_marca or '',
             'onu_serial':                     self.onu_serial or '',
             'onu_mac':                        self.onu_mac or '',
             'onu_modelo':                     self.onu_modelo or '',
             'meses_deuda':                    self.meses_deuda,
             'monto_deuda':                    self.monto_deuda if self.meses_deuda > 0 else 0.0,
+            'cobranza_estado_pago':           self.cobranza_estado_pago or False,
+            'cobranza_ultimo_pago_fecha':     self.cobranza_ultimo_pago_fecha or False,
+            'cobranza_meses_pendientes':      self.cobranza_meses_pendientes,
+            'cobranza_total_registros':       self.cobranza_total_registros,
+            'cobranza_monto_pendiente':       self.cobranza_monto_pendiente or 0.0,
+            'cobranza_resumen':               self.cobranza_resumen or '',
             'contrato_terminado':             self.terminar_contrato,
             'contract_state_at_cancellation': contract_state_label,
             'notas':                          self.notas or '',
@@ -261,3 +459,70 @@ class ServiceCancellationWizard(models.TransientModel):
 
     def action_cancel(self):
         return {'type': 'ir.actions.act_window_close'}
+
+    def action_open_ftth_service(self):
+        self.ensure_one()
+        if not self.ftth_client_service_id:
+            raise UserError('No se encontró una ficha técnica FTTH para este cliente.')
+        self._save_wizard_progress()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Ficha Técnica FTTH',
+            'res_model': 'wigo.ftth.client.service',
+            'view_mode': 'form',
+            'res_id': self.ftth_client_service_id.id,
+            'target': 'current',
+        }
+
+    def action_open_cobranza_payments(self):
+        self.ensure_one()
+        domain = []
+        if self.ftth_client_service_id:
+            domain = [('client_service_id', '=', self.ftth_client_service_id.id)]
+        elif self.contract_id:
+            domain = [('contract_id', '=', self.contract_id.id)]
+        elif self.partner_id:
+            domain = [('partner_id', '=', self.partner_id.id)]
+
+        if not domain:
+            raise UserError('No hay referencia de cliente/contrato/servicio para abrir pagos de cobranza.')
+
+        self._save_wizard_progress()
+
+        list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        views = []
+        if list_view:
+            views.append((list_view.id, 'list'))
+        if form_view:
+            views.append((form_view.id, 'form'))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Cobranza - {self.partner_id.name}',
+            'res_model': 'wigo.pago.estado',
+            'view_mode': 'list,form',
+            'views': views or False,
+            'domain': domain,
+            'context': {
+                'default_partner_id': self.partner_id.id,
+                'default_contract_id': self.contract_id.id if self.contract_id else False,
+                'default_client_service_id': self.ftth_client_service_id.id if self.ftth_client_service_id else False,
+            },
+            'target': 'current',
+        }
+
+    def _save_wizard_progress(self):
+        """Persist user-entered fields so browser back restores the latest wizard state."""
+        self.ensure_one()
+        self.write({
+            'reason_id': self.reason_id.id if self.reason_id else False,
+            'motivo_detalle': self.motivo_detalle or False,
+            'fecha_baja': self.fecha_baja or False,
+            'onu_rotulo': self.onu_rotulo or False,
+            'onu_serial': self.onu_serial or False,
+            'onu_mac': self.onu_mac or False,
+            'onu_modelo': self.onu_modelo or False,
+            'notas': self.notas or False,
+            'terminar_contrato': bool(self.terminar_contrato),
+        })

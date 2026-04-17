@@ -7,12 +7,15 @@
         <field name="arch" type="xml">
             <form string="Baja de Servicio">
 
+                <header>
+                    <button name="action_open_ftth_service" type="object" string="Ver ficha técnica" class="btn-secondary" icon="fa-wifi" invisible="not ftth_client_service_id"/>
+                </header>
+
                 <!-- ═══ Datos del cliente (readonly, autorellenados) ═══ -->
                 <group string="Cliente">
                     <group>
                         <field name="partner_id" readonly="1"/>
                         <field name="ci_cliente" readonly="1" string="Carnet de identidad"/>
-                        <field name="codigo_cliente" readonly="1"/>
                     </group>
                     <group>
                         <field name="contract_code" readonly="1" string="Código de contrato"/>
@@ -20,6 +23,7 @@
                         <field name="plan_id" readonly="1"/>
                         <field name="contract_id" invisible="1"/>
                         <field name="lead_id" invisible="1"/>
+                        <field name="ftth_client_service_id" invisible="1"/>
                         <field name="currency_id" invisible="1"/>
                     </group>
                 </group>
@@ -36,18 +40,35 @@
                 <!-- ═══ Datos del ONU ═══ -->
                 <group string="Equipo ONU">
                     <group>
+                        <field name="onu_equipo" readonly="1"/>
+                        <field name="onu_rotulo" placeholder="Ej. ONT-23"/>
+                        <field name="onu_marca" readonly="1"/>
                         <field name="onu_serial" placeholder="Ej. HWTC1A2B3C4D"/>
-                        <field name="onu_mac" placeholder="Ej. 48:A7:2E:1F:00:01"/>
                         <field name="onu_modelo" placeholder="Ej. HG8310M"/>
+                        <field name="onu_mac" invisible="1"/>
                     </group>
+                </group>
+
+                <group string="Cobranza">
+                    <group>
+                        <field name="cobranza_estado_pago" widget="badge" readonly="1"/>
+                        <field name="cobranza_ultimo_pago_fecha" readonly="1"/>
+                        <field name="cobranza_total_registros" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="cobranza_meses_pendientes" readonly="1"/>
+                        <field name="cobranza_monto_pendiente" readonly="1"/>
+                        <button name="action_open_cobranza_payments" type="object" string="Ver pagos" class="btn-link" icon="fa-external-link" invisible="not partner_id"/>
+                    </group>
+                    <field name="cobranza_resumen" nolabel="1" readonly="1" placeholder="No hay períodos pendientes."/>
                 </group>
 
                 <!-- ═══ Contrato y deuda (sección propia) ═══ -->
                 <group string="Contrato y deuda">
                     <group>
                         <field name="terminar_contrato" invisible="not contract_code"/>
-                        <field name="meses_deuda" help="0 = sin deuda. Se completará automáticamente con integración de facturación."/>
-                        <field name="monto_deuda" invisible="meses_deuda == 0" required="meses_deuda &gt; 0"/>
+                        <field name="meses_deuda" invisible="1"/>
+                        <field name="monto_deuda" invisible="1"/>
                     </group>
                 </group>
 

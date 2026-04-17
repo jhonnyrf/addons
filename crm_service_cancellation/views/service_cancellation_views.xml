@@ -13,6 +13,8 @@
                 <field name="codigo_cliente"/>
                 <field name="plan_id"/>
                 <field name="reason_id"/>
+                <field name="ftth_estado_servicio" optional="show"/>
+                <field name="cobranza_estado_pago" optional="show"/>
                 <field name="meses_deuda"/>
                 <field name="monto_deuda" optional="show"/>
                 <field name="contrato_terminado" optional="show"/>
@@ -29,6 +31,8 @@
         <field name="arch" type="xml">
             <form string="Baja de Servicio">
                 <header>
+                    <button name="action_open_ftth_service" type="object" string="Ver ficha FTTH" class="btn-primary" icon="fa-wifi" invisible="not ftth_client_service_id"/>
+                    <button name="action_open_cobranza_payments" type="object" string="Ver pagos cobranza" class="btn-secondary" icon="fa-money" invisible="not partner_id"/>
                     <field name="registrado_reporte" widget="boolean_toggle" string="Registrado en reporte semanal"/>
                 </header>
                 <sheet>
@@ -62,13 +66,43 @@
 
                     <group string="Equipo ONU">
                         <group>
+                            <field name="onu_equipo"/>
+                            <field name="onu_rotulo"/>
+                            <field name="onu_marca"/>
                             <field name="onu_serial"/>
-                            <field name="onu_mac"/>
                             <field name="onu_modelo"/>
+                            <field name="onu_mac" invisible="1"/>
                         </group>
                         <group>
                             <field name="contrato_terminado"/>
                         </group>
+                    </group>
+
+                    <group string="Datos técnicos FTTH">
+                        <group>
+                            <field name="ftth_client_service_id" readonly="1"/>
+                            <field name="ftth_estado_servicio" readonly="1" widget="badge"/>
+                            <field name="ftth_fecha_instalacion" readonly="1"/>
+                            <field name="ftth_nodo" readonly="1"/>
+                            <field name="ftth_olt" readonly="1"/>
+                            <field name="ftth_olt_port" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="ftth_subinterface" readonly="1"/>
+                            <field name="ftth_nap" readonly="1"/>
+                            <field name="ftth_nap_port" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Cobranza">
+                        <group>
+                            <field name="cobranza_estado_pago" readonly="1" widget="badge"/>
+                            <field name="cobranza_ultimo_pago_fecha" readonly="1"/>
+                            <field name="cobranza_total_registros" readonly="1"/>
+                            <field name="cobranza_meses_pendientes" readonly="1"/>
+                            <field name="cobranza_monto_pendiente" readonly="1"/>
+                        </group>
+                        <field name="cobranza_resumen" nolabel="1" readonly="1"/>
                     </group>
 
                     <group string="Deuda">

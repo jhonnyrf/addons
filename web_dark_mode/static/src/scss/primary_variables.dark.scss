@@ -1,0 +1,35 @@
+$o-webclient-color-scheme: dark !default;
+
+$o-white: #000000 !default;
+$o-black: #ffffff !default;
+
+$o-gray-100: #181818 !default;
+$o-gray-200: #1f1f1f !default;
+$o-gray-300: #303030 !default;
+$o-gray-400: #4a4a4a !default;
+$o-gray-500: #696969 !default;
+$o-gray-600: #8b8b8b !default;
+$o-gray-700: #aeaeae !default;
+$o-gray-800: #c0c0c0 !default;
+$o-gray-900: #c8c8c8 !default;
+
+$o-community-color: $o-gray-200 !default;
+$o-enterprise-color: #71639e !default;
+$o-enterprise-action-color: #00c7c7 !default;
+
+$o-brand-odoo: $o-enterprise-color !default;
+$o-brand-primary: $o-enterprise-color !default;
+$o-brand-secondary: $o-gray-900 !default;
+
+$o-action: $o-enterprise-action-color !default;
+
+$o-main-link-color: $o-enterprise-action-color !default;
+
+$o-view-background-color: $o-gray-200 !default;
+$o-shadow-color: $o-gray-100 !default;
+$o-form-lightsecondary: $o-gray-500 !default;
+$o-webclient-background-color: $o-gray-100 !default;
+$o-list-group-active-bg: $o-gray-300 !default;
+
+$o-btns-bs-override: () !default;
+$o-btns-bs-outline-override: () !default;

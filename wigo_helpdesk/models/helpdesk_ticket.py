@@ -271,12 +271,10 @@ class HelpdeskTicket(models.Model):
     resolution_diagnosis_detail = fields.Text(
         string='Detalle de Diagnóstico',
         tracking=True,
-        placeholder='Describe el diagnóstico técnico detallado...',
     )
     resolution_solution_detail = fields.Text(
         string='Detalle de Solución',
         tracking=True,
-        placeholder='Describe la solución aplicada paso a paso...',
     )
 
     # =========================================================================
@@ -361,7 +359,7 @@ class HelpdeskTicket(models.Model):
         string='Estado SLA', compute='_compute_sla_status', store=True, index=True,
     )
     sla_hours_remaining = fields.Float(
-        string='Horas restantes SLA', compute='_compute_sla_status', store=False,
+        string='Horas restantes SLA', compute='_compute_sla_hours_remaining', store=False,
     )
     sla_hours_remaining_display = fields.Char(
         string='Tiempo restante SLA', compute='_compute_sla_hours_remaining_display', store=False,
@@ -527,16 +525,13 @@ class HelpdeskTicket(models.Model):
         for ticket in self:
             if ticket.is_closed:
                 ticket.sla_status = 'closed'
-                ticket.sla_hours_remaining = 0.0
                 continue
             if not ticket.sla_deadline:
                 ticket.sla_status = 'ok'
-                ticket.sla_hours_remaining = 0.0
                 continue
             start_dt = ticket.sla_start_datetime or ticket.date_open or ticket.create_date or now
             total_hours = (ticket.sla_deadline - start_dt).total_seconds() / 3600.0
             remaining = (ticket.sla_deadline - now).total_seconds() / 3600.0
-            ticket.sla_hours_remaining = remaining
             if remaining < 0:
                 ticket.sla_status = 'danger'
             else:
@@ -544,6 +539,15 @@ class HelpdeskTicket(models.Model):
                 in_warning_pct = total_hours > 0 and (remaining / total_hours) < warn_pct
                 in_warning_abs = warn_abs > 0 and remaining < warn_abs
                 ticket.sla_status = 'warning' if (in_warning_pct or in_warning_abs) else 'ok'
+
+    @api.depends('sla_deadline', 'is_closed')
+    def _compute_sla_hours_remaining(self):
+        now = fields.Datetime.now()
+        for ticket in self:
+            if ticket.is_closed or not ticket.sla_deadline:
+                ticket.sla_hours_remaining = 0.0
+                continue
+            ticket.sla_hours_remaining = (ticket.sla_deadline - now).total_seconds() / 3600.0
 
     @api.depends('sla_status')
     def _compute_sla_badge(self):

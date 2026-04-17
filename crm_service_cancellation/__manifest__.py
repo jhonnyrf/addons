@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'CRM - Baja de Servicio',
-    'version': '19.0.2.0.0',
+    'version': '19.0.3.0.0',
     'summary': 'Gestión de bajas de servicio desde el CRM',
     'description': """
         Módulo técnico que extiende el CRM de Wigo para registrar bajas de clientes.
@@ -16,7 +16,7 @@
     'author': 'Wigo',
     'category': 'Sales',
     'license': 'LGPL-3',
-    'depends': ['crm', 'wigo_crm', 'customer_contract'],
+    'depends': ['crm', 'wigo_crm', 'customer_contract', 'wigo_ftth', 'wigo_cobranza'],
     'data': [
         'security/ir.model.access.csv',
         'views/cancellation_reason_views.xml',

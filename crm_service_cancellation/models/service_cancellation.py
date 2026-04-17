@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 
 class ServiceCancellation(models.Model):
@@ -53,10 +54,60 @@ class ServiceCancellation(models.Model):
     )
     fecha_baja = fields.Date(string='Fecha de baja', required=True, tracking=True)
 
-    # ─── Datos del ONU (estáticos, sin conexión aún) ─────────────────────────
+    # ─── Datos técnicos FTTH (snapshot al momento de la baja) ────────────────
+    ftth_client_service_id = fields.Many2one(
+        'wigo.ftth.client.service',
+        string='Ficha técnica FTTH',
+        readonly=True,
+        tracking=True,
+    )
+    ftth_estado_servicio = fields.Selection(
+        [
+            ('active', 'Activo'),
+            ('suspended', 'Suspendido'),
+            ('corte', 'En corte (mora)'),
+            ('baja', 'Dado de baja'),
+            ('cancelado', 'Cancelado'),
+        ],
+        string='Estado servicio FTTH',
+        tracking=True,
+    )
+    ftth_fecha_instalacion = fields.Date(string='Fecha instalación FTTH')
+    ftth_nodo = fields.Char(string='Nodo FTTH')
+    ftth_olt = fields.Char(string='OLT FTTH')
+    ftth_olt_port = fields.Char(string='Puerto OLT FTTH')
+    ftth_subinterface = fields.Char(string='Subinterfaz FTTH')
+    ftth_nap = fields.Char(string='NAP FTTH')
+    ftth_nap_port = fields.Char(string='Puerto NAP FTTH')
+
+    # ─── Datos del ONU (autocompletados desde FTTH) ──────────────────────────
+    onu_equipo = fields.Char(string='Equipo')
+    onu_rotulo = fields.Char(string='Rótulo / Etiqueta')
+    onu_marca = fields.Char(string='Marca')
     onu_serial = fields.Char(string='N° de serie ONU')
     onu_mac = fields.Char(string='MAC ONU')
     onu_modelo = fields.Char(string='Modelo ONU')
+
+    # ─── Cobranza (snapshot al momento de la baja) ───────────────────────────
+    cobranza_estado_pago = fields.Selection(
+        [
+            ('al_dia', 'Al día'),
+            ('pendiente', 'Pendiente'),
+            ('mora', 'En mora'),
+            ('deuda_parcial', 'Deuda parcial'),
+            ('baja_definitiva', 'Baja definitiva'),
+        ],
+        string='Estado de pago cobranza',
+        tracking=True,
+    )
+    cobranza_ultimo_pago_fecha = fields.Date(string='Último pago registrado')
+    cobranza_meses_pendientes = fields.Integer(string='Meses pendientes cobranza', default=0)
+    cobranza_total_registros = fields.Integer(string='Registros de pago cobranza', default=0)
+    cobranza_monto_pendiente = fields.Monetary(
+        string='Monto pendiente cobranza',
+        currency_field='currency_id',
+    )
+    cobranza_resumen = fields.Text(string='Resumen de deuda por períodos')
 
     # ─── Deuda ───────────────────────────────────────────────────────────────
     meses_deuda = fields.Integer(string='Meses de deuda', default=0)
@@ -109,3 +160,54 @@ class ServiceCancellation(models.Model):
             if rec.fecha_baja:
                 parts.append(rec.fecha_baja.strftime('%d/%m/%Y'))
             rec.display_name = ' - '.join(parts) if parts else 'Baja sin nombre'
+
+    def action_open_ftth_service(self):
+        self.ensure_one()
+        service = self.ftth_client_service_id
+        if not service:
+            raise UserError('No hay ficha FTTH vinculada a esta baja.')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Ficha FTTH - {service.codigo_cliente or service.partner_id.name}',
+            'res_model': 'wigo.ftth.client.service',
+            'view_mode': 'form',
+            'res_id': service.id,
+            'target': 'current',
+        }
+
+    def action_open_cobranza_payments(self):
+        self.ensure_one()
+        domain = []
+        if self.ftth_client_service_id:
+            domain = [('client_service_id', '=', self.ftth_client_service_id.id)]
+        elif self.contract_id:
+            domain = [('contract_id', '=', self.contract_id.id)]
+        elif self.partner_id:
+            domain = [('partner_id', '=', self.partner_id.id)]
+
+        if not domain:
+            raise UserError('No hay referencia de cliente/contrato/servicio para abrir pagos de cobranza.')
+
+        list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        views = []
+        if list_view:
+            views.append((list_view.id, 'list'))
+        if form_view:
+            views.append((form_view.id, 'form'))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Cobranza - {self.partner_id.name}',
+            'res_model': 'wigo.pago.estado',
+            'view_mode': 'list,form',
+            'views': views or False,
+            'domain': domain,
+            'context': {
+                'default_partner_id': self.partner_id.id,
+                'default_contract_id': self.contract_id.id if self.contract_id else False,
+                'default_client_service_id': self.ftth_client_service_id.id if self.ftth_client_service_id else False,
+                'search_default_filter_mora': 0,
+            },
+            'target': 'current',
+        }

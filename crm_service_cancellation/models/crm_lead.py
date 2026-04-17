@@ -46,7 +46,7 @@ class CrmLead(models.Model):
             'name': 'Baja de Servicio',
             'res_model': 'service.cancellation.wizard',
             'view_mode': 'form',
-            'target': 'new',
+            'target': 'current',
             'context': {
                 'default_lead_id':        self.id,
                 'default_partner_id':     self.partner_id.id if self.partner_id else False,
