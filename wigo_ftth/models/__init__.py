@@ -5,5 +5,6 @@ from . import ftth_brand
 from . import ftth_model
 from . import ftth_onu
 from . import ftth_installer
+from . import ftth_additional_equipment
 from . import ftth_work_order
 from . import ftth_client_service

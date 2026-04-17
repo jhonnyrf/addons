@@ -30,36 +30,40 @@
             </field>
 
             <!-- 4. Bloque Cobranza dentro del formulario -->
-            <xpath expr="//sheet" position="inside">
-                <group string="Cobranza">
-                    <group string="Estado de pago" col="2">
-                        <group>
-                            <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" readonly="1"/>
-                            <field name="ultimo_pago_fecha" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="monto_prorrateo_primer_mes" readonly="1"/>
+            <xpath expr="//notebook" position="inside">
+                <page string="Cobranza">
+
+                    <group>
+                        <group string="Estado de pago" col="2">
+                            <group>
+                                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" readonly="1"/>
+                                <field name="ultimo_pago_fecha" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="monto_prorrateo_primer_mes" readonly="1"/>
+                            </group>
                         </group>
                     </group>
 
-                    <!-- Botón para registrar pago rápido (solo cobranza/contabilidad) -->
                     <div class="mb-3">
                         <button name="action_crear_pago_mes" type="object" string="+ Registrar Pago del Mes" class="btn-primary"/>
                     </div>
 
-                    <!-- Historial de pagos -->
                     <field name="pago_ids" nolabel="1" readonly="1" context="{'default_client_service_id': id, 'default_partner_id': partner_id}">
+
                         <list string="Historial de pagos" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" editable="bottom">
+
                             <field name="periodo"/>
-                            <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
-                            <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_a_cobrar" widget="monetary"/>
+                            <field name="monto_pagado" widget="monetary"/>
                             <field name="fecha_pago"/>
                             <field name="canal_pago"/>
                             <field name="comprobante"/>
                             <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'"/>
                         </list>
                     </field>
-                </group>
+
+                </page>
             </xpath>
 
         </field>

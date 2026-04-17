@@ -5,7 +5,7 @@
         <field name="name">wigo.ftth.client.service.list</field>
         <field name="model">wigo.ftth.client.service</field>
         <field name="arch" type="xml">
-            <list string="Fichas Técnicas de Clientes" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio in ['suspended','corte']" decoration-muted="estado_servicio in ['baja','cancelado']">
+            <list string="Fichas Técnicas de Clientes" create="false" edit="true" delete="true" decoration-success="estado_servicio == 'active'" decoration-warning="estado_servicio in ['suspended','corte']" decoration-muted="estado_servicio in ['baja','cancelado']">
                 <field name="codigo_cliente"/>
                 <field name="partner_id"/>
                 <field name="plan_id"/>
@@ -143,21 +143,18 @@
                         </page>
 
                         <page string="Equipos adicionales" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
-                            <group col="4">
-                                <group string="Equipo adicional 1" colspan="2">
-                                    <field name="equipo_adicional_1" placeholder="Ej: Cámara IP 1"/>
-                                    <field name="equipo_adicional_1_marca"/>
-                                    <field name="equipo_adicional_1_rotulo"/>
-                                    <field name="equipo_adicional_1_sn"/>
-                                </group>
 
-                                <group string="Equipo adicional 2" colspan="2">
-                                    <field name="equipo_adicional_2" placeholder="Ej: Cámara IP 2"/>
-                                    <field name="equipo_adicional_2_marca"/>
-                                    <field name="equipo_adicional_2_rotulo"/>
-                                    <field name="equipo_adicional_2_sn"/>
-                                </group>
-                            </group>
+                            <field name="additional_equipment_ids" context="{'default_state': 'assigned'}">
+                                <list create="true" edit="false" delete="true">
+                                    <field name="name"/>
+                                    <field name="marca"/>
+                                    <field name="rotulo"/>
+                                    <field name="serial_number" string="S/N"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="notes" optional="hide"/>
+                                </list>
+                            </field>
+
                         </page>
 
                         <page string="Observaciones" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">

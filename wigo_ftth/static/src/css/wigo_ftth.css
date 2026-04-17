@@ -20,3 +20,17 @@
     font-weight: 600;
     color: #1a56db;
 }
+
+/* OT FTTH — unificar color de campos no editables (readonly) */
+.wigo_ftth_work_order_form .o_field_widget.o_readonly_modifier,
+.wigo_ftth_work_order_form .o_field_widget.o_readonly_modifier .o_input,
+.wigo_ftth_work_order_form .o_field_widget.o_readonly_modifier a,
+.wigo_ftth_work_order_form.o_form_readonly .o_field_widget,
+.wigo_ftth_work_order_form.o_form_readonly .o_field_widget a {
+    color: var(--bs-body-color) !important;
+}
+
+.wigo_ftth_work_order_form .o_field_widget.o_readonly_modifier a,
+.wigo_ftth_work_order_form.o_form_readonly .o_field_widget a {
+    text-decoration: none;
+}

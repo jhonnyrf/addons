@@ -5,10 +5,82 @@
         <field name="name">wigo.zone.tree</field>
         <field name="model">wigo.zone</field>
         <field name="arch" type="xml">
-            <list string="Zonas">
+            <list string="Zonas" class="wigo_zone_list" decoration-success="coverage_status == 'available'" decoration-warning="coverage_status == 'warning'" decoration-danger="coverage_status == 'saturated'" decoration-muted="coverage_status == 'no_coverage'">
+
+                <!-- Estado primero: escaneable tipo dashboard -->
+                <field name="coverage_status" widget="badge" decoration-success="coverage_status == 'available'" decoration-warning="coverage_status == 'warning'" decoration-danger="coverage_status == 'saturated'" decoration-muted="coverage_status == 'no_coverage'"/>
+
                 <field name="name"/>
-                <field name="active"/>
+
+                <!-- Capacidad end-to-end (rápido para decisiones) -->
+                <field name="free_box_ports" string="Puertos NAP disponibles" optional="show"/>
+                <field name="free_subinterfaces" string="Subinterfaces disponibles" optional="show"/>
+                <field name="total_ports" string="Total Puertos NAP" optional="hide"/>
+
+                <!-- Info secundaria (ocultable) -->
+                <field name="has_coverage" optional="hide"/>
+                <field name="active" optional="hide"/>
             </list>
+        </field>
+    </record>
+
+    <!-- Vista búsqueda (filtros/agrupaciones) para Zonas. -->
+    <record id="view_wigo_zone_search" model="ir.ui.view">
+        <field name="name">wigo.zone.search</field>
+        <field name="model">wigo.zone</field>
+        <field name="arch" type="xml">
+            <search string="Zonas">
+
+                <!-- Búsqueda rápida -->
+                <field name="name"/>
+
+                <separator/>
+
+                <!-- =========================
+                     ESTADO DE COBERTURA
+                ========================== -->
+
+                <filter name="filter_zone_available" string="Disponibles" domain="[('coverage_status', '=', 'available')]"/>
+                <filter name="filter_zone_warning" string="En riesgo" domain="[('coverage_status', '=', 'warning')]"/>
+                <filter name="filter_zone_saturated" string="Saturadas" domain="[('coverage_status', '=', 'saturated')]"/>
+                <filter name="filter_zone_no_coverage" string="Sin cobertura" domain="[('coverage_status', '=', 'no_coverage')]"/>
+
+                <separator/>
+
+                <!-- =========================
+                     COBERTURA REAL / CAPACIDAD
+                ========================== -->
+
+                <filter name="filter_zone_has_coverage" string="Con cobertura real" domain="[('has_coverage', '=', True)]"/>
+                <filter name="filter_zone_no_real_coverage" string="Sin cobertura real" domain="[('has_coverage', '=', False)]"/>
+
+                <separator/>
+
+                <filter name="filter_zone_nap_capacity" string="Con NAP disponible" domain="[('free_box_ports', '>', 0)]"/>
+                <filter name="filter_zone_subif_capacity" string="Con subinterfaces disponibles" domain="[('free_subinterfaces', '>', 0)]"/>
+                <filter name="filter_zone_end_to_end" string="Capacidad end-to-end" domain="[('free_box_ports', '>', 0), ('free_subinterfaces', '>', 0)]"/>
+
+                <separator/>
+
+                <!-- =========================
+                     ACTIVAS / ARCHIVADAS
+                ========================== -->
+
+                <filter name="filter_zone_active" string="Activas" domain="[('active', '=', True)]"/>
+                <filter name="filter_zone_inactive" string="Archivadas" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <!-- =========================
+                     AGRUPACIONES
+                ========================== -->
+
+                <group>
+                    <filter name="group_by_active" string="Activo" context="{'group_by': 'active'}"/>
+                </group>
+
+
+            </search>
         </field>
     </record>
 
@@ -33,6 +105,8 @@
         <field name="name">Zonas</field>
         <field name="res_model">wigo.zone</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_wigo_zone_search"/>
+        <field name="context">{'active_test': False}</field>
     </record>
 
     <!-- Accion URL que redirige al menu raiz del modulo de planes desde CRM. -->

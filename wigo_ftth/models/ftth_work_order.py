@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class FtthWorkOrder(models.Model):
     _name = 'wigo.ftth.work.order'
@@ -379,6 +380,8 @@ class FtthWorkOrder(models.Model):
         # Usamos sudo() para poder leerlos durante la activación aunque el usuario no sea técnico.
         onu = self.onu_id.sudo() if self.onu_id else False
         lead = self.lead_id.sudo() if self.lead_id else False
+        sub = self.subinterface_id.sudo() if self.subinterface_id else False
+        _logger.info(f"Preparando vals para ficha técnica desde OT {self.name} (ONU: {onu}, Subinterface: {sub.vlan_id})")
         return {
             'partner_id': self.partner_id.id,
             'codigo_cliente': self.customer_code,
@@ -410,6 +413,7 @@ class FtthWorkOrder(models.Model):
             'observaciones': self.notes or False,
 
             # Config / WiFi (si viene en la ONU seleccionada)
+            'vlan': str(sub.vlan_id) if sub and sub.vlan_id else False,
             'tcont': onu.tcont if onu else False,
             'gemport': onu.gemport if onu else False,
             'vport': onu.vport if onu else False,

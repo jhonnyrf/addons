@@ -492,7 +492,7 @@
             <form string="Puerto PON">
                 <!-- Header -->
                 <header>
-                    <button name="action_generate_subinterfaces" type="object" string="Generar Subinterfaces" class="btn-primary" confirm="¿Desea generar subinterfaces hasta la capacidad máxima?" invisible="id == False" />
+                    <button name="action_open_generate_subinterfaces_wizard" type="object" string="Generar Subinterfaces" class="btn-primary" invisible="id == False" />
                 </header>
                 <sheet>
 
@@ -1199,6 +1199,7 @@
                 <field name="code" string="Subinterfaz"/>
                 <field name="olt_id" string="OLT"/>
                 <field name="olt_port_id"/>
+                <field name="vlan_text" string="VLAN"/>
                 <field name="state" widget="badge" decoration-muted="state == 'free'" decoration-primary="state == 'occupied'" decoration-info="state == 'allocated'" decoration-warning="state == 'reserved'" decoration-success="state == 'active'"/>
                 <field name="client_service_id" string="Cliente"/>
                 <field name="onu_id" string="ONU"/>
@@ -1234,6 +1235,7 @@
                         <group string="Puerto OLT">
                             <field name="olt_port_id" required="1"/>
                             <field name="subinterface_number"/>
+                            <field name="vlan_text"/>
                             <field name="active"/>
                         </group>
 
@@ -1275,6 +1277,7 @@
                 <!-- Búsqueda rápida -->
                 <field name="code"/>
                 <field name="subinterface_number"/>
+                <field name="vlan_id"/>
                 <field name="olt_port_id"/>
                 <field name="olt_id"/>
                 <field name="box_group_id"/>

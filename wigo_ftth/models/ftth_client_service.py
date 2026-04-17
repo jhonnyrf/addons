@@ -92,6 +92,14 @@ class FtthClientService(models.Model):
     wifi_pass = fields.Char(string='WiFi Password', groups='wigo_ftth.group_ftth_tech,base.group_erp_manager')
 
     # ── Equipos adicionales (cámaras, routers, etc.) ─────────────
+    additional_equipment_ids = fields.One2many(
+        'wigo.ftth.additional.equipment',
+        'client_service_id',
+        string='Equipos adicionales',
+        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
+    )
+
+    # Campos legacy (manuales). Se mantienen para compatibilidad/histórico.
     equipo_adicional_1 = fields.Char(
         string='Equipo adicional 1',
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',

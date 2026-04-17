@@ -12,3 +12,65 @@ button[name="action_crm_iap_mine"],
 .o_cp_buttons button.o_button_generate_leads {
     display: none !important;
 }
+
+/* ================================================================
+ * Zonas (wigo.zone) — Cobertura FTTH
+ * Objetivo UX: filas con fondos pastel + badge consistente.
+ * Se limita con .wigo_zone_list para no afectar otras listas.
+ * ================================================================ */
+
+/* Evitar que decoration-* oscurezca el texto (solo queremos el highlight) */
+.wigo_zone_list .o_data_row.text-success,
+.wigo_zone_list .o_data_row.text-warning,
+.wigo_zone_list .o_data_row.text-danger,
+.wigo_zone_list .o_data_row.text-muted {
+    color: var(--bs-body-color) !important;
+}
+
+/* Fondos pastel + barra lateral para reconocimiento rápido */
+.wigo_zone_list .o_data_row.text-success {
+    background: rgba(25, 135, 84, 0.10) !important;
+    box-shadow: inset 4px 0 0 rgba(25, 135, 84, 0.55);
+}
+
+.wigo_zone_list .o_data_row.text-warning {
+    background: rgba(255, 193, 7, 0.14) !important;
+    box-shadow: inset 4px 0 0 rgba(255, 193, 7, 0.70);
+}
+
+.wigo_zone_list .o_data_row.text-danger {
+    background: rgba(220, 53, 69, 0.10) !important;
+    box-shadow: inset 4px 0 0 rgba(220, 53, 69, 0.55);
+}
+
+.wigo_zone_list .o_data_row.text-muted {
+    background: rgba(108, 117, 125, 0.10) !important;
+    box-shadow: inset 4px 0 0 rgba(108, 117, 125, 0.45);
+}
+
+/* Badge: convertir el estado en un chip limpio y consistente */
+.wigo_zone_list .o_badge {
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.wigo_zone_list .o_badge.text-success {
+    color: #146c43 !important;
+    background: rgba(25, 135, 84, 0.18) !important;
+}
+
+.wigo_zone_list .o_badge.text-warning {
+    color: #8a6d00 !important;
+    background: rgba(255, 193, 7, 0.20) !important;
+}
+
+.wigo_zone_list .o_badge.text-danger {
+    color: #b02a37 !important;
+    background: rgba(220, 53, 69, 0.18) !important;
+}
+
+.wigo_zone_list .o_badge.text-muted {
+    color: #495057 !important;
+    background: rgba(108, 117, 125, 0.18) !important;
+}
