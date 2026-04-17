@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Wigo Cobranza',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.4',
     'summary': 'Gestión de cobranza, estado de pago y flujo de mora/suspensión — Área Contabilidad',
     'description': """
         Módulo de cobranza para Wigo Fast.

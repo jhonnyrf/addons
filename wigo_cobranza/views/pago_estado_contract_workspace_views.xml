@@ -37,44 +37,51 @@
                             <field name="partner_id" readonly="1"/>
                             <field name="contract_id" readonly="1"/>
                             <field name="plan_id" readonly="1"/>
-                            <field name="periodo_fecha" string="Periodo" widget="date" options="{'numeric': true}"/>
-                            <field name="mes" invisible="1"/>
-                            <field name="anio" invisible="1"/>
+                            <field name="mes"/>
+                            <field name="anio"/>
+                            <field name="periodo" readonly="1"/>
                         </group>
                         <group>
                             <field name="monto_plan" readonly="1"/>
-                            <field name="monto_a_cobrar" readonly="1"/>
-                            <field name="monto_pagado"/>
-                            <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
-                            <field name="canal_pago"/>
+                            <field name="es_primer_mes" readonly="1"/>
+                            <field name="monto_prorrateo" readonly="1" invisible="not es_primer_mes"/>
                         </group>
                     </group>
 
-                    <group string="Comprobante" col="2">
-                        <group>
-                            <field name="comprobante" placeholder="Nro. de referencia o transacción"/>
-                            <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Adjuntar imagen o PDF"/>
-                            <field name="comprobante_adjunto_fname" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="comprobante_adjunto" widget="image" invisible="not comprobante_adjunto_is_image"/>
-                            <group string="Documento PDF adjunto" invisible="not comprobante_adjunto_is_pdf">
-                                <div role="alert" class="alert alert-success"
-                                     style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
-                                    <i class="fa fa-file-pdf-o fa-2x text-danger"/>
-                                    <div>
-                                        <strong>Archivo PDF cargado correctamente.</strong><br/>
-                                        Usa el botón de descarga junto al nombre del archivo.
-                                    </div>
-                                </div>
+                    <notebook>
+                        <page string="Pago y Control">
+                            <group string="Datos del pago" col="2">
+                                <group>
+                                    <field name="monto_pagado"/>
+                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
+                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
+                                </group>
+                                <group>
+                                    <field name="registrado_por" readonly="1"/>
+                                    <field name="diferencia" readonly="1"/>
+                                </group>
                             </group>
-                        </group>
-                    </group>
+                        </page>
 
-                    <group string="Control" col="2">
-                        <field name="diferencia" readonly="1"/>
-                        <field name="registrado_por" readonly="1"/>
-                    </group>
+                        <page string="Comprobante">
+                            <group string="Adjunto de respaldo" col="2">
+                                <group>
+                                    <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Adjuntar imagen o PDF"/>
+                                </group>
+                                <group>
+                                    <field name="comprobante_adjunto" widget="image" class="oe_avatar" options="{'size': [1024, 1024]}" readonly="1" invisible="not comprobante_adjunto_is_image"/>
+                                    <div class="alert alert-info" invisible="not comprobante_adjunto_is_pdf" style="margin-bottom: 12px;">
+                                        <strong>Comprobante PDF cargado.</strong>
+                                        <div>Usa los botones para ver en grande o descargar.</div>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap" invisible="not comprobante_adjunto">
+                                        <button name="action_ver_comprobante" type="object" string="Ver en grande" class="btn btn-outline-primary"/>
+                                        <button name="action_descargar_comprobante" type="object" string="Descargar" class="btn btn-primary"/>
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
 
                     <field name="notas" placeholder="Observaciones de cobranza para este mes..."/>
                 </sheet>

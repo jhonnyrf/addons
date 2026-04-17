@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import calendar
+import base64
 from datetime import date
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
@@ -65,7 +66,6 @@ class WigoPagoEstado(models.Model):
     # ── Período ───────────────────────────────────────────────────
     anio = fields.Integer(
         string='Año', required=True,
-        default=lambda self: date.today().year,
     )
     mes = fields.Selection(
         [(str(i), name) for i, name in enumerate([
@@ -73,16 +73,9 @@ class WigoPagoEstado(models.Model):
             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
         ], start=0) if i > 0],
         string='Mes', required=True,
-        default=lambda self: str(date.today().month),
     )
     periodo = fields.Char(
         string='Período', compute='_compute_periodo', store=True,
-    )
-    periodo_fecha = fields.Date(
-        string='Periodo (Mes/Año)',
-        compute='_compute_periodo_fecha',
-        inverse='_inverse_periodo_fecha',
-        store=False,
     )
 
     # ── Montos ────────────────────────────────────────────────────
@@ -173,9 +166,13 @@ class WigoPagoEstado(models.Model):
                 domain.append(('client_service_id', '=', rec.client_service_id.id))
             duplicado = self.search(domain, limit=1)
             if duplicado:
+                periodo_txt = rec.periodo or (
+                    f"{dict(self._fields['mes'].selection).get(rec.mes, '')} {rec.anio}".strip()
+                    if rec.mes and rec.anio else ''
+                )
                 raise ValidationError(
                     f'Ya existe un registro de pago para {rec.codigo_cliente} '
-                    f'en el periodo {rec.periodo}.'
+                    f'en el periodo {periodo_txt}.'
                 )
 
     @api.constrains('partner_id')
@@ -200,28 +197,90 @@ class WigoPagoEstado(models.Model):
     def _compute_periodo(self):
         for rec in self:
             if rec.mes and rec.anio:
-                month = int(rec.mes)
-                year = str(rec.anio)[-2:]
-                rec.periodo = f"1/{month:02}/{year}"
+                month_name = dict(self._fields['mes'].selection).get(rec.mes, '')
+                rec.periodo = f"{month_name} {rec.anio}".strip()
             else:
                 rec.periodo = ''
 
-    @api.depends('mes', 'anio')
-    def _compute_periodo_fecha(self):
-        for rec in self:
-            if rec.mes and rec.anio:
-                try:
-                    rec.periodo_fecha = date(int(rec.anio), int(rec.mes), 1)
-                except Exception:
-                    rec.periodo_fecha = False
-            else:
-                rec.periodo_fecha = False
+    def _suggest_next_period_values(self, contract=None, client_service=None, partner=None):
+        domain = []
+        if contract:
+            domain.append(('contract_id', '=', contract.id))
+        elif client_service:
+            domain.append(('client_service_id', '=', client_service.id))
+        elif partner:
+            domain.append(('partner_id', '=', partner.id))
 
-    def _inverse_periodo_fecha(self):
+        if not domain:
+            return str(date.today().month), date.today().year
+
+        records = self.search(domain)
+        if not records:
+            return str(date.today().month), date.today().year
+
+        last_record = max(
+            records,
+            key=lambda rec: (int(rec.anio or 0), int(rec.mes or 0), rec.id or 0),
+        )
+        mes_actual = int(last_record.mes or date.today().month)
+        anio_actual = int(last_record.anio or date.today().year)
+        if mes_actual >= 12:
+            return '1', anio_actual + 1
+        return str(mes_actual + 1), anio_actual
+
+    def _apply_next_period_for_new_record(self):
         for rec in self:
-            if rec.periodo_fecha:
-                rec.mes = str(rec.periodo_fecha.month)
-                rec.anio = rec.periodo_fecha.year
+            if rec.id:
+                continue
+            mes_sugerido, anio_sugerido = rec._suggest_next_period_values(
+                contract=rec.contract_id,
+                client_service=rec.client_service_id,
+                partner=rec.partner_id,
+            )
+            rec.mes = mes_sugerido
+            rec.anio = anio_sugerido
+
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+
+        contract_id = res.get('contract_id') or self.env.context.get('default_contract_id')
+        service_id = res.get('client_service_id') or self.env.context.get('default_client_service_id')
+        partner_id = res.get('partner_id') or self.env.context.get('default_partner_id')
+
+        if not contract_id and partner_id:
+            partner = self.env['res.partner'].browse(partner_id)
+            contract = self._get_preferred_contract(partner)
+            if contract:
+                contract_id = contract.id
+                if 'contract_id' in fields_list:
+                    res['contract_id'] = contract.id
+
+        if (not service_id) and contract_id:
+            contract = self.env['customer.contract'].browse(contract_id)
+            service = self._find_client_service_for_contract(contract)
+            if service:
+                service_id = service.id
+                if 'client_service_id' in fields_list:
+                    res['client_service_id'] = service.id
+
+        if ('mes' in fields_list and not res.get('mes')) or ('anio' in fields_list and not res.get('anio')):
+            mes_sugerido, anio_sugerido = self._suggest_next_period_values(
+                contract=self.env['customer.contract'].browse(contract_id) if contract_id else None,
+                client_service=self.env['wigo.ftth.client.service'].browse(service_id) if service_id else None,
+                partner=self.env['res.partner'].browse(partner_id) if partner_id else None,
+            )
+            if 'mes' in fields_list and not res.get('mes'):
+                res['mes'] = mes_sugerido
+            if 'anio' in fields_list and not res.get('anio'):
+                res['anio'] = anio_sugerido
+
+        return res
+
+    def _sync_payment_defaults(self):
+        for rec in self:
+            if rec.monto_a_cobrar and not rec.monto_pagado:
+                rec.monto_pagado = rec.monto_a_cobrar
 
     def _compute_eligible_partner_ids(self):
         Contract = self.env['customer.contract']
@@ -293,12 +352,33 @@ class WigoPagoEstado(models.Model):
         for rec in self:
             rec.diferencia = rec.monto_pagado - rec.monto_a_cobrar
 
-    @api.depends('comprobante_adjunto_fname')
+    @api.depends('comprobante_adjunto', 'comprobante_adjunto_fname')
     def _compute_comprobante_adjunto_type(self):
         for rec in self:
             name = (rec.comprobante_adjunto_fname or '').lower()
-            rec.comprobante_adjunto_is_image = bool(name.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')))
-            rec.comprobante_adjunto_is_pdf = name.endswith('.pdf')
+            is_image = bool(name.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')))
+            is_pdf = name.endswith('.pdf')
+
+            # Fallback when filename is missing: detect by file signature in base64 payload.
+            if rec.comprobante_adjunto and not (is_image or is_pdf):
+                try:
+                    raw = base64.b64decode(rec.comprobante_adjunto)
+                    if raw.startswith(b'%PDF'):
+                        is_pdf = True
+                    elif (
+                        raw.startswith(b'\xff\xd8\xff') or
+                        raw.startswith(b'\x89PNG\r\n\x1a\n') or
+                        raw.startswith(b'GIF87a') or
+                        raw.startswith(b'GIF89a') or
+                        raw.startswith(b'RIFF')
+                    ):
+                        is_image = True
+                except Exception:
+                    # Keep both flags false if payload cannot be decoded.
+                    pass
+
+            rec.comprobante_adjunto_is_image = is_image
+            rec.comprobante_adjunto_is_pdf = is_pdf
 
     @api.depends('partner_id', 'periodo')
     def _compute_display_name(self):
@@ -338,12 +418,20 @@ class WigoPagoEstado(models.Model):
         if not self.client_service_id or self.client_service_id.partner_id != self.partner_id:
             self.client_service_id = self._find_client_service_for_contract(self.contract_id)
 
+        self._apply_next_period_for_new_record()
+
+        self._sync_payment_defaults()
+
     @api.onchange('contract_id')
     def _onchange_contract_id(self):
         if not self.contract_id:
             return
         self.partner_id = self.contract_id.partner_id
         self.client_service_id = self._find_client_service_for_contract(self.contract_id) or False
+
+        self._apply_next_period_for_new_record()
+
+        self._sync_payment_defaults()
 
     @api.onchange('monto_a_cobrar')
     def _onchange_monto_a_cobrar(self):
@@ -358,6 +446,10 @@ class WigoPagoEstado(models.Model):
         self.partner_id = self.client_service_id.partner_id
         if not self.contract_id or self.contract_id.partner_id != self.partner_id:
             self.contract_id = self._find_contract_for_service(self.client_service_id)
+
+        self._apply_next_period_for_new_record()
+
+        self._sync_payment_defaults()
 
     def _get_preferred_contract(self, partner):
         Contract = self.env['customer.contract']
@@ -447,20 +539,29 @@ class WigoPagoEstado(models.Model):
                 service = ClientService.browse(service_id)
                 vals['partner_id'] = service.partner_id.id
 
+            if not vals.get('mes') or not vals.get('anio'):
+                mes_sugerido, anio_sugerido = self._suggest_next_period_values(
+                    contract=Contract.browse(contract_id) if contract_id else None,
+                    client_service=ClientService.browse(service_id) if service_id else None,
+                    partner=self.env['res.partner'].browse(partner_id) if partner_id else None,
+                )
+                vals.setdefault('mes', mes_sugerido)
+                vals.setdefault('anio', anio_sugerido)
+
             if not vals.get('fecha_pago'):
                 vals['fecha_pago'] = fields.Date.context_today(self)
 
-            if 'monto_pagado' not in vals:
-                monto = 0.0
-                if contract_id:
-                    contract = Contract.browse(contract_id)
-                    monto = contract.plan_id.price if contract.plan_id else 0.0
-                elif service_id:
-                    service = ClientService.browse(service_id)
-                    monto = service.plan_id.price if service.plan_id else 0.0
-                vals['monto_pagado'] = monto
+            if not vals.get('mes') or not vals.get('anio'):
+                mes_sugerido, anio_sugerido = self._suggest_next_period_values(
+                    contract=Contract.browse(contract_id) if contract_id else None,
+                    client_service=ClientService.browse(service_id) if service_id else None,
+                    partner=self.env['res.partner'].browse(partner_id) if partner_id else None,
+                )
+                vals['mes'] = mes_sugerido
+                vals['anio'] = anio_sugerido
 
         records = super().create(vals_list)
+        records._sync_payment_defaults()
         records._recompute_contract_mora()
         return records
 
@@ -626,6 +727,33 @@ class WigoPagoEstado(models.Model):
         if not group:
             return []
         return group.users.mapped('partner_id').ids
+
+    def _get_comprobante_url(self, download=False):
+        self.ensure_one()
+        if not self.comprobante_adjunto:
+            raise UserError('No hay comprobante adjunto para mostrar.')
+
+        return (
+            f"/web/content?model=wigo.pago.estado&id={self.id}"
+            f"&field=comprobante_adjunto&filename_field=comprobante_adjunto_fname"
+            f"&download={'true' if download else 'false'}"
+        )
+
+    def action_ver_comprobante(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self._get_comprobante_url(download=False),
+            'target': 'new',
+        }
+
+    def action_descargar_comprobante(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self._get_comprobante_url(download=True),
+            'target': 'self',
+        }
 
     # ─────────────────────────────────────────────────────────────
     # Cron actions
