@@ -69,12 +69,10 @@ class ServiceCancellationWizard(models.TransientModel):
     reason_id = fields.Many2one(
         'crm.cancellation.reason',
         string='Motivo de baja',
-        required=True,
     )
     motivo_detalle = fields.Text(string='Detalle del motivo')
     fecha_baja = fields.Date(
         string='Fecha de baja',
-        required=True,
         default=fields.Date.today,
     )
 
@@ -365,6 +363,11 @@ class ServiceCancellationWizard(models.TransientModel):
     def action_confirm_cancellation(self):
         self.ensure_one()
 
+        if not self.reason_id:
+            raise ValidationError('Debe seleccionar un motivo de baja antes de confirmar.')
+        if not self.fecha_baja:
+            raise ValidationError('Debe indicar la fecha de baja antes de confirmar.')
+
         # Estado del contrato antes de terminarlo
         contract_state_label = ''
         if self.contract_id:
@@ -458,6 +461,16 @@ class ServiceCancellationWizard(models.TransientModel):
         }
 
     def action_cancel(self):
+        self.ensure_one()
+        if self.lead_id:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Oportunidad',
+                'res_model': 'crm.lead',
+                'view_mode': 'form',
+                'res_id': self.lead_id.id,
+                'target': 'current',
+            }
         return {'type': 'ir.actions.act_window_close'}
 
     def action_open_ftth_service(self):

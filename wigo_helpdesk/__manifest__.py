@@ -27,6 +27,7 @@
     """,
     'author': 'WigoFast',
     'license': 'LGPL-3',
+    'icon': '/wigo_helpdesk/static/description/icon.png',
     'depends': ['base', 'mail', 'web', 'hr', 'customer_contract', 'wigo_ftth'],
     'post_init_hook': 'post_init_hook',
     'data': [

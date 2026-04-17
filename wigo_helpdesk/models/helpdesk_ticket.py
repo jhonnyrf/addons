@@ -38,11 +38,11 @@ class HelpdeskTicket(models.Model):
     )
     ftth_service_id = fields.Many2one(
         comodel_name='wigo.ftth.client.service',
-        string='Ficha técnica FTTH',
+        string='Ficha técnica',
         tracking=True,
         index=True,
         domain="[('partner_id', '=', partner_id)]",
-        help='Vincula la ficha técnica FTTH del cliente para heredar datos de red y equipo.',
+        help='Este es el enlace para ver mas detalle tecnico del servicio del cliente.',
     )
     customer_code = fields.Char(string='Código Cliente', tracking=True, index=True)
     customer_name = fields.Char(string='Nombre completo', required=True, tracking=True)
@@ -170,7 +170,7 @@ class HelpdeskTicket(models.Model):
         string='Tipo de Ticket',
         tracking=True,
         index=True,
-        help='Tipo de ticket (Reclamo/Incidente o Solicitud)',
+        help='Seleccione el tipo de ticket para clasificar correctamente la atencion.',
     )
     category_id = fields.Many2one(
         comodel_name='helpdesk.category', string='Categoría', tracking=True, index=True,
@@ -180,7 +180,7 @@ class HelpdeskTicket(models.Model):
         string='Sintoma',
         tracking=True,
         index=True,
-        help='Selecciona el tipo. Puedes crear nuevos desde Configuración > Tipos de Incidencia.',
+        help='Seleccione sintoma/incidencia y complete la informacion relacionada para guiar la atencion.',
     )
     symptom_priority = fields.Selection(
         related='incident_type_id.priority_suggestion',
@@ -438,7 +438,7 @@ class HelpdeskTicket(models.Model):
         critical_types = {'no_signal', 'fiber_cut', 'onu_offline'}
         for ticket in self:
             now_dt = fields.Datetime.now()
-            base = ticket.sla_start_datetime or ticket.create_date or now_dt
+            base = ticket.sla_start_datetime or ticket.date_open or ticket.create_date or now_dt
 
             if ticket.sla_mode == 'advanced':
                 if ticket.sla_end_datetime:
@@ -447,8 +447,7 @@ class HelpdeskTicket(models.Model):
 
             # Modo rapido por dias (1-7) tiene prioridad para facilitar carga operativa
             if ticket.sla_quick_days:
-                # En modo simple siempre recalcular desde "ahora" para evitar arrastrar fechas antiguas.
-                base = now_dt
+                # Mantener la fecha de inicio guardada; si no existe, usar apertura del ticket.
                 ticket.sla_start_datetime = base
                 ticket.sla_deadline = base + timedelta(days=int(ticket.sla_quick_days))
                 ticket.sla_end_datetime = ticket.sla_deadline
@@ -474,7 +473,8 @@ class HelpdeskTicket(models.Model):
                 if not ticket.sla_end_datetime and ticket.sla_deadline:
                     ticket.sla_end_datetime = ticket.sla_deadline
             else:
-                ticket.sla_start_datetime = fields.Datetime.now()
+                if not ticket.sla_start_datetime:
+                    ticket.sla_start_datetime = ticket.date_open or ticket.create_date or fields.Datetime.now()
                 if not ticket.sla_quick_days:
                     ticket.sla_quick_days = str(self.env['helpdesk.sla.config'].get_default_ticket_sla_days())
 
@@ -803,6 +803,28 @@ class HelpdeskTicket(models.Model):
             self.olt_interface = False
             self.customer_box = False
 
+    def _get_subinterface_code(self, subinterface):
+        """Return the best available code/identifier for a FTTH subinterface."""
+        if not subinterface:
+            return ''
+        return (
+            getattr(subinterface, 'code', False)
+            or getattr(subinterface, 'codigo', False)
+            or subinterface.display_name
+            or ''
+        )
+
+    def _get_box_identifier(self, box):
+        """Return the best available identifier for a FTTH NAP box."""
+        if not box:
+            return ''
+        return (
+            getattr(box, 'identifier', False)
+            or getattr(box, 'identificador', False)
+            or box.display_name
+            or ''
+        )
+
     @api.onchange('ftth_service_id')
     def _onchange_ftth_service_id(self):
         if not self.ftth_service_id:
@@ -813,9 +835,9 @@ class HelpdeskTicket(models.Model):
         if service.onu_id and not self.onu_serial:
             self.onu_serial = service.onu_id.serial_number or ''
         if service.subinterface_id and not self.olt_interface:
-            self.olt_interface = service.subinterface_id.codigo or ''
+            self.olt_interface = self._get_subinterface_code(service.subinterface_id)
         if service.box_id and not self.customer_box:
-            self.customer_box = service.box_id.identificador or ''
+            self.customer_box = self._get_box_identifier(service.box_id)
 
     @api.onchange('incident_type_id')
     def _onchange_incident_type(self):
@@ -1074,9 +1096,9 @@ class HelpdeskTicket(models.Model):
                 if service.onu_id and not vals.get('onu_serial'):
                     vals['onu_serial'] = service.onu_id.serial_number or ''
                 if service.subinterface_id and not vals.get('olt_interface'):
-                    vals['olt_interface'] = service.subinterface_id.codigo or ''
+                    vals['olt_interface'] = self._get_subinterface_code(service.subinterface_id)
                 if service.box_id and not vals.get('customer_box'):
-                    vals['customer_box'] = service.box_id.identificador or ''
+                    vals['customer_box'] = self._get_box_identifier(service.box_id)
             now_dt = fields.Datetime.now()
             if vals.get('name', '/') == '/':
                 vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.ticket') or '/'
@@ -1150,9 +1172,9 @@ class HelpdeskTicket(models.Model):
             if service.onu_id and not vals.get('onu_serial'):
                 vals['onu_serial'] = service.onu_id.serial_number or ''
             if service.subinterface_id and not vals.get('olt_interface'):
-                vals['olt_interface'] = service.subinterface_id.codigo or ''
+                vals['olt_interface'] = self._get_subinterface_code(service.subinterface_id)
             if service.box_id and not vals.get('customer_box'):
-                vals['customer_box'] = service.box_id.identificador or ''
+                vals['customer_box'] = self._get_box_identifier(service.box_id)
         if 'stage_id' in vals:
             stage = self.env['helpdesk.stage'].browse(vals['stage_id'])
             now = fields.Datetime.now()

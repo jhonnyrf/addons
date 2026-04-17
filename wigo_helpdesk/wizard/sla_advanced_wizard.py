@@ -21,6 +21,9 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
     sla_hours_remaining_current_display = fields.Char(
         string='Tiempo restante actual', compute='_compute_current_sla', readonly=True,
     )
+    sla_start_datetime_current = fields.Datetime(
+        string='Inicio actual', compute='_compute_current_sla', readonly=True,
+    )
 
     # Vista previa según selección del wizard
     sla_deadline_preview = fields.Datetime(
@@ -31,6 +34,9 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
     )
     sla_hours_remaining_preview_display = fields.Char(
         string='Tiempo restante previsto', compute='_compute_sla_preview', readonly=True,
+    )
+    sla_start_datetime_preview = fields.Datetime(
+        string='Inicio previsto', compute='_compute_sla_preview', readonly=True,
     )
 
     # Modo de configuracion
@@ -62,12 +68,13 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
             return f'Vencido por {hours} h {minutes:02d} min'
         return f'{hours} h {minutes:02d} min'
 
-    @api.depends('ticket_id', 'ticket_id.sla_deadline', 'ticket_id.is_closed', 'ticket_id.date_closed')
+    @api.depends('ticket_id', 'ticket_id.sla_deadline', 'ticket_id.is_closed', 'ticket_id.date_closed', 'ticket_id.sla_start_datetime')
     def _compute_current_sla(self):
         now = fields.Datetime.now()
         for wizard in self:
             deadline = wizard.ticket_id.sla_deadline
             wizard.sla_deadline_current = deadline
+            wizard.sla_start_datetime_current = wizard.ticket_id.sla_start_datetime
             if deadline and not wizard.ticket_id.is_closed:
                 wizard.sla_hours_remaining_current = (deadline - now).total_seconds() / 3600.0
                 wizard.sla_hours_remaining_current_display = wizard._format_hours_display(wizard.sla_hours_remaining_current)
@@ -79,18 +86,26 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
     def _compute_sla_preview(self):
         now = fields.Datetime.now()
         for wizard in self:
-            base = wizard.sla_start_datetime or wizard.ticket_id.date_open or wizard.ticket_id.create_date or now
+            base = (
+                wizard.sla_start_datetime
+                or wizard.ticket_id.sla_start_datetime
+                or wizard.ticket_id.date_open
+                or wizard.ticket_id.create_date
+                or now
+            )
             deadline = False
+            preview_start = base
 
             if wizard.sla_mode == 'quick':
-                base = now
-                wizard.sla_start_datetime = base
+                preview_start = base
                 if wizard.sla_quick_days:
                     deadline = base + timedelta(days=int(wizard.sla_quick_days))
             else:
                 deadline = wizard.sla_end_datetime or False
+                preview_start = wizard.sla_start_datetime or base
 
             wizard.sla_deadline_preview = deadline
+            wizard.sla_start_datetime_preview = preview_start
             wizard.sla_hours_remaining_preview = (
                 (deadline - now).total_seconds() / 3600.0 if deadline else 0.0
             )
@@ -109,9 +124,9 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
             vals.setdefault('sla_mode', mode)
             vals.setdefault('sla_quick_days', ticket.sla_quick_days or '2')
             if mode == 'quick':
-                vals.setdefault('sla_start_datetime', fields.Datetime.now())
+                vals.setdefault('sla_start_datetime', ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now())
             else:
-                vals.setdefault('sla_start_datetime', ticket.sla_start_datetime or ticket.date_open or fields.Datetime.now())
+                vals.setdefault('sla_start_datetime', ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now())
             vals.setdefault('sla_end_datetime', ticket.sla_end_datetime or ticket.sla_deadline or fields.Datetime.now())
         return vals
 
@@ -121,7 +136,9 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
 
         if self.sla_mode == 'quick':
             days = int(self.sla_quick_days or 2)
-            base = fields.Datetime.now()
+            base = ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now()
+            if days <= 0:
+                raise ValidationError('La duración SLA debe ser al menos de 1 día.')
             deadline = base + timedelta(days=days)
             ticket.write({
                 'sla_mode': 'quick',

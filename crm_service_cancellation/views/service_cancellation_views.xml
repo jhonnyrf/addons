@@ -6,7 +6,7 @@
         <field name="name">service.cancellation.list</field>
         <field name="model">service.cancellation</field>
         <field name="arch" type="xml">
-            <list string="Bajas de servicio" decoration-danger="meses_deuda &gt; 0" decoration-muted="registrado_reporte == True">
+            <list string="Bajas de servicio" create="0" decoration-danger="meses_deuda &gt; 0" decoration-muted="registrado_reporte == True">
                 <field name="fecha_baja"/>
                 <field name="partner_id"/>
                 <field name="ci_cliente"/>
@@ -29,7 +29,7 @@
         <field name="name">service.cancellation.form</field>
         <field name="model">service.cancellation</field>
         <field name="arch" type="xml">
-            <form string="Baja de Servicio">
+            <form string="Baja de Servicio" create="0">
                 <header>
                     <button name="action_open_ftth_service" type="object" string="Ver ficha FTTH" class="btn-primary" icon="fa-wifi" invisible="not ftth_client_service_id"/>
                     <button name="action_open_cobranza_payments" type="object" string="Ver pagos cobranza" class="btn-secondary" icon="fa-money" invisible="not partner_id"/>
@@ -78,22 +78,6 @@
                         </group>
                     </group>
 
-                    <group string="Datos técnicos FTTH">
-                        <group>
-                            <field name="ftth_client_service_id" readonly="1"/>
-                            <field name="ftth_estado_servicio" readonly="1" widget="badge"/>
-                            <field name="ftth_fecha_instalacion" readonly="1"/>
-                            <field name="ftth_nodo" readonly="1"/>
-                            <field name="ftth_olt" readonly="1"/>
-                            <field name="ftth_olt_port" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="ftth_subinterface" readonly="1"/>
-                            <field name="ftth_nap" readonly="1"/>
-                            <field name="ftth_nap_port" readonly="1"/>
-                        </group>
-                    </group>
-
                     <group string="Cobranza">
                         <group>
                             <field name="cobranza_estado_pago" readonly="1" widget="badge"/>
@@ -103,15 +87,6 @@
                             <field name="cobranza_monto_pendiente" readonly="1"/>
                         </group>
                         <field name="cobranza_resumen" nolabel="1" readonly="1"/>
-                    </group>
-
-                    <group string="Deuda">
-                        <group>
-                            <field name="meses_deuda"/>
-                            <field name="monto_deuda" invisible="meses_deuda == 0"/>
-                            <field name="currency_id" invisible="1"/>
-                            <field name="deuda_pendiente" invisible="1"/>
-                        </group>
                     </group>
 
                     <group string="Notas internas">

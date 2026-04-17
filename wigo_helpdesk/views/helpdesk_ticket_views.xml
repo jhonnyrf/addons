@@ -34,8 +34,8 @@
 
                     <group>
                         <group string="Clasificación">
-                            <field name="ticket_type_id" options="{'no_create': True}" help="Selecciona el tipo de ticket. Puedes crear más tipos desde Configuración > Tipos de Tickets."/>
-                            <field name="incident_type_id" string="Síntoma" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_incident_type_form'}" domain="[('active', '=', True)]"/>
+                            <field name="ticket_type_id" options="{'no_create': True}" help="Seleccione el tipo de ticket para clasificar correctamente la atencion."/>
+                            <field name="incident_type_id" string="Síntoma" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_incident_type_form'}" domain="[('active', '=', True)]" help="Seleccione sintoma/incidencia y complete la informacion relacionada para guiar la atencion."/>
                             <field name="symptom_priority" readonly="1"/>
                             <field name="channel"/>
                             <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
@@ -56,24 +56,43 @@
                         </group>
                     </group>
 
-                    <group string="⏱ Fechas y SLA" class="wigo_sla_block">
-                        <div class="wigo_sla_summary d-flex flex-column gap-2">
-                            <div class="wigo_sla_top_row d-flex align-items-center gap-2 flex-wrap">
-                                <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
-                                <button name="action_open_sla_advanced_wizard" type="object" string="⚙ Configurar SLA" class="btn btn-sm btn-secondary"/>
+                    <div class="wigo_sla_section card-body p-3">
+                        <!-- Título con Estado a la derecha -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">⏱ Fechas y SLA</h6>
+                            <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
+                        </div>
+
+                        <!-- Botón Configurar SLA -->
+                        <div class="mb-2">
+                            <button name="action_open_sla_advanced_wizard" type="object" string="⚙ Configurar SLA" class="btn btn-sm btn-secondary" invisible="sla_start_datetime or sla_deadline"/>
+                            <button name="action_open_sla_advanced_wizard" type="object" string="✏ Editar SLA" class="btn btn-sm btn-secondary" invisible="not sla_start_datetime and not sla_deadline"/>
+                        </div>
+
+                        <!-- Fila: Inicio (izquierda) y Límite (derecha) -->
+                        <div class="d-flex gap-3 mb-2">
+                            <div class="flex-grow-1">
+                                <span invisible="not sla_start_datetime">
+                                    <strong>Inicio:</strong>
+                                    <field name="sla_start_datetime" nolabel="1" readonly="1"/>
+                                </span>
                             </div>
-                            <div class="wigo_sla_data_row d-flex align-items-center gap-3 flex-wrap">
+                            <div class="flex-grow-1 text-end">
                                 <span invisible="not sla_deadline">
                                     <strong>Límite:</strong>
                                     <field name="sla_deadline" nolabel="1" readonly="1"/>
                                 </span>
-                                <span invisible="is_closed or not sla_deadline">
-                                    <strong>Horas restantes:</strong>
-                                    <field name="sla_hours_remaining_display" nolabel="1" readonly="1"/>
-                                </span>
                             </div>
                         </div>
-                    </group>
+
+                        <!-- Fila: Horas restantes -->
+                        <div class="d-flex">
+                            <span invisible="is_closed or not sla_deadline">
+                                <strong>Horas restantes:</strong>
+                                <field name="sla_hours_remaining_display" nolabel="1" readonly="1"/>
+                            </span>
+                        </div>
+                    </div>
 
                     <notebook>
                         <page string="👤 Cliente WigoFast" name="customer">
@@ -95,8 +114,7 @@
                         <page string="📡 Datos Técnicos" name="technical">
                             <group col="2">
                                 <group string="Origen FTTH">
-                                    <field name="ftth_service_id" options="{'no_create': True}"/>
-                                    <field name="ruta_ftth" readonly="1"/>
+                                    <field name="ftth_service_id" options="{'no_create': True}" help="Este es el enlace para ver mas detalle del servicio. Presiona para abrir la ficha tecnica."/>
                                 </group>
                                 <group string="Topología FTTH">
                                     <field name="nodo_id" readonly="1"/>

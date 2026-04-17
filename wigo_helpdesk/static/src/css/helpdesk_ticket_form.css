@@ -1,30 +1,28 @@
 .o_form_view .wigo_sla_block {
-    border: 1px solid #d4deea;
+    border: 1px solid var(--o-border-color, #d4deea);
+    border-left: 4px solid var(--o-border-color, #d4deea);
     border-radius: 12px;
     padding: 12px 14px 8px;
-    background: linear-gradient(180deg, #fbfdff 0%, #f8fbff 100%);
+    background: transparent;
     box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
     margin-top: 6px;
+    color: inherit;
 }
 
 .o_form_view .wigo_sla_block_ok {
-    background: linear-gradient(180deg, #edf9f1 0%, #e5f6ec 100%);
-    border-color: #bfe3cc;
+    border-left-color: rgb(var(--bs-success-rgb, 25, 135, 84));
 }
 
 .o_form_view .wigo_sla_block_warning {
-    background: linear-gradient(180deg, #fff8e8 0%, #fff3d8 100%);
-    border-color: #efd59b;
+    border-left-color: rgb(var(--bs-warning-rgb, 255, 193, 7));
 }
 
 .o_form_view .wigo_sla_block_danger {
-    background: linear-gradient(180deg, #fdeeee 0%, #fce3e3 100%);
-    border-color: #eab6b6;
+    border-left-color: rgb(var(--bs-danger-rgb, 220, 53, 69));
 }
 
 .o_form_view .wigo_sla_block_closed {
-    background: linear-gradient(180deg, #f2f4f7 0%, #eaedf2 100%);
-    border-color: #d2d8e1;
+    border-left-color: rgb(var(--bs-secondary-rgb, 108, 117, 125));
 }
 
 .o_form_view .wigo_sla_block .o_inner_group {
@@ -56,9 +54,10 @@
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_end_datetime"],
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_deadline"],
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_quick_days"] {
-    background: #ffffff;
-    border: 1px solid #e6edf5;
+    background: transparent;
+    border: 1px solid var(--o-border-color, #e6edf5);
     border-radius: 8px;
+    color: inherit;
 }
 
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_status"] {
@@ -88,11 +87,12 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    color: inherit;
 }
 
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_hours_remaining"] {
     font-weight: 600;
-    color: #1f2937;
+    color: inherit;
 }
 
 .o_form_view .wigo_resolution_block {
@@ -160,6 +160,44 @@
     border-radius: 8px;
 }
 
+/* SLA wizard (modal): keep status rows clean and non-overlapping in all themes */
+.o_dialog .wigo_sla_wizard_status {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.o_dialog .wigo_sla_wizard_header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.o_dialog .wigo_sla_wizard_row {
+    display: grid;
+    grid-template-columns: 120px minmax(220px, 1fr) minmax(220px, 1fr);
+    gap: 10px 14px;
+    align-items: center;
+}
+
+.o_dialog .wigo_sla_wizard_label {
+    font-weight: 600;
+}
+
+.o_dialog .wigo_sla_wizard_col {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.o_dialog .wigo_sla_wizard_col .o_field_widget,
+.o_dialog .wigo_sla_wizard_col .o_field_widget .o_input {
+    min-width: 0;
+}
+
 @media (max-width: 992px) {
     .o_form_view .wigo_sla_block .wigo_sla_col_left,
     .o_form_view .wigo_sla_block .wigo_sla_col_right {
@@ -169,4 +207,10 @@
     .o_form_view .wigo_resolution_block .wigo_resolution_card {
         min-width: 100%;
     }
+
+    .o_dialog .wigo_sla_wizard_row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
 }
+

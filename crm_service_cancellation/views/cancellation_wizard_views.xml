@@ -8,6 +8,8 @@
             <form string="Baja de Servicio">
 
                 <header>
+                    <button name="action_confirm_cancellation" type="object" string="Finalizar baja" class="btn-danger" data-hotkey="q"/>
+                    <button name="action_cancel" type="object" string="Cancelar" class="btn-secondary"/>
                     <button name="action_open_ftth_service" type="object" string="Ver ficha técnica" class="btn-secondary" icon="fa-wifi" invisible="not ftth_client_service_id"/>
                 </header>
 
@@ -31,8 +33,8 @@
                 <!-- ═══ Motivo de baja ═══ -->
                 <group string="Motivo de baja">
                     <group>
-                        <field name="reason_id" required="1" options="{'no_create_edit': False}" placeholder="Seleccionar o crear motivo..."/>
-                        <field name="fecha_baja" required="1"/>
+                        <field name="reason_id" options="{'no_create_edit': False}" placeholder="Seleccionar o crear motivo..."/>
+                        <field name="fecha_baja"/>
                     </group>
                     <field name="motivo_detalle" placeholder="Describe con más detalle el motivo si es necesario..."/>
                 </group>
