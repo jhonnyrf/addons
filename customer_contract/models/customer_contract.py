@@ -57,6 +57,7 @@ class CustomerContract(models.Model):
         'res.partner',
         string='Cliente / Empresa',
         required=True,
+        ondelete='cascade',
         tracking=True,
     )
     contact_partner_id = fields.Many2one(
@@ -279,9 +280,11 @@ class CustomerContract(models.Model):
             self.phone        = self.partner_id.phone or ''
             self.mobile       = _get_partner_mobile(self.partner_id)
             self.email        = self.partner_id.email  or ''
-            self.address      = self.partner_id.street or ''
+            self.address      = self.partner_id.direccion or ''
             self.ci           = self.partner_id.ci     or ''
             self.vat          = self.partner_id.vat    or ''
+            self.location_link = self.partner_id.ubicacion or ''
+            self.coordinates   = self.partner_id.coordenadas or ''
 
     @api.onchange('contact_partner_id')
     def _onchange_contact_partner(self):
@@ -331,9 +334,11 @@ class CustomerContract(models.Model):
         vals.setdefault('phone',        partner.phone  or '')
         vals.setdefault('mobile',       _get_partner_mobile(partner))
         vals.setdefault('email',        partner.email  or '')
-        vals.setdefault('address',      partner.street or '')
+        vals.setdefault('address',      partner.direccion or '')
         vals.setdefault('ci',           partner.ci     or '')
         vals.setdefault('vat',          partner.vat    or '')
+        vals.setdefault('location_link', partner.ubicacion or '')
+        vals.setdefault('coordinates',   partner.coordenadas or '')
 
     def _prefill_contact_fields(self, vals):
         contact_id = vals.get('contact_partner_id')
