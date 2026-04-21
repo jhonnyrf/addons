@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MARCAS FTTH
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_ftth_brand_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.brand.list</field>
+        <field name="model">wigo.ftth.brand</field>
+        <field name="arch" type="xml">
+            <list string="Marcas FTTH" create="true" edit="true" delete="true">
+                <field name="name"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_brand_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.brand.form</field>
+        <field name="model">wigo.ftth.brand</field>
+        <field name="arch" type="xml">
+            <form string="Marca FTTH">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre de la marca..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Notas" name="notes">
+                            <field name="notes" nolabel="1" placeholder="Observaciones sobre la marca..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_brand_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.brand.search</field>
+        <field name="model">wigo.ftth.brand</field>
+        <field name="arch" type="xml">
+            <search string="Marcas FTTH">
+                <field name="name"/>
+                <field name="notes"/>
+                <separator/>
+                <filter string="Activas" name="brand_active" domain="[('active', '=', True)]"/>
+                <filter string="Archivadas" name="brand_inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Agrupar por activo" name="brand_group_active" context="{'group_by': 'active'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_brand" model="ir.actions.act_window">
+        <field name="name">Marcas FTTH</field>
+        <field name="res_model">wigo.ftth.brand</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_brand_search"/>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea la primera marca FTTH</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MODELOS FTTH
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_ftth_model_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.model.list</field>
+        <field name="model">wigo.ftth.model</field>
+        <field name="arch" type="xml">
+            <list string="Modelos FTTH" create="true" edit="true" delete="true">
+                <field name="name"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="notes" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_model_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.model.form</field>
+        <field name="model">wigo.ftth.model</field>
+        <field name="arch" type="xml">
+            <form string="Modelo FTTH">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre del modelo..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Notas" name="notes">
+                            <field name="notes" nolabel="1" placeholder="Observaciones sobre el modelo..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_model_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.model.search</field>
+        <field name="model">wigo.ftth.model</field>
+        <field name="arch" type="xml">
+            <search string="Modelos FTTH">
+                <field name="name"/>
+                <field name="notes"/>
+                <separator/>
+                <filter string="Activos" name="model_active" domain="[('active', '=', True)]"/>
+                <filter string="Archivados" name="model_inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Agrupar por activo" name="model_group_active" context="{'group_by': 'active'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_model" model="ir.actions.act_window">
+        <field name="name">Modelos FTTH</field>
+        <field name="res_model">wigo.ftth.model</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_model_search"/>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea el primer modelo FTTH</p>
+        </field>
+    </record>
+
+</odoo>

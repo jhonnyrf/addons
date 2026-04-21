@@ -33,6 +33,7 @@
         'views/onu_views.xml',
         'views/installer_views.xml',
         'views/additional_equipment_views.xml',
+        'views/ftth_catalog_views.xml',
         'views/work_order_views.xml',
         'views/client_service_views.xml',
         'views/capacity_views.xml',

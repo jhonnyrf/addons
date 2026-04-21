@@ -97,41 +97,7 @@ class FtthClientService(models.Model):
         'client_service_id',
         string='Equipos adicionales',
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-
-    # Campos legacy (manuales). Se mantienen para compatibilidad/histórico.
-    equipo_adicional_1 = fields.Char(
-        string='Equipo adicional 1',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_1_marca = fields.Char(
-        string='Marca eq. 1',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_1_rotulo = fields.Char(
-        string='Rótulo eq. 1',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_1_sn = fields.Char(
-        string='S/N eq. 1',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_2 = fields.Char(
-        string='Equipo adicional 2',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_2_marca = fields.Char(
-        string='Marca eq. 2',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_2_rotulo = fields.Char(
-        string='Rótulo eq. 2',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
-    equipo_adicional_2_sn = fields.Char(
-        string='S/N eq. 2',
-        groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
-    )
+    )   
 
     # ── Instalador ────────────────────────────────────────────────
     installer_id = fields.Many2one(

@@ -29,9 +29,14 @@
     <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
 
     <!-- Submenús para ordenar la configuración -->
+    <menuitem id="menu_ftth_config_catalogs" name="Catálogos FTTH" parent="menu_ftth_config_root" sequence="5"/>
     <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10"/>
     <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20"/>
     <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30"/>
+
+    <!-- Catálogos FTTH -->
+    <menuitem id="menu_ftth_config_brand" name="Marcas" parent="menu_ftth_config_catalogs" action="action_ftth_brand" sequence="10"/>
+    <menuitem id="menu_ftth_config_model" name="Modelos" parent="menu_ftth_config_catalogs" action="action_ftth_model" sequence="20"/>
 
     <!-- Ubicación y segmentación -->
     <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_location" action="action_ftth_regional" sequence="10"/>
