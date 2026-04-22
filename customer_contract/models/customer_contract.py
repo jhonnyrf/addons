@@ -42,11 +42,10 @@ class CustomerContract(models.Model):
     _inherit     = ['mail.thread', 'mail.activity.mixin']
     _rec_name    = 'name'
 
-    # Un contrato no puede repetir su número de contrato.
-    _name_unique = models.Constraint(
-        'unique(name)',
-        'El número de contrato debe ser único.',
-    )
+    # Nota:
+    # El código de contrato puede repetirse entre versiones históricas cuando
+    # se hace cambio de plan. Se controla por constrains Python que solo exista
+    # una versión no reemplazada por código.
 
     # =========================================================
     # CLIENTE / CONTACTO
@@ -167,6 +166,14 @@ class CustomerContract(models.Model):
         copy=False,
         ondelete='set null',
         help='Nuevo contrato generado al cambiar el plan de este contrato.',
+    )
+    updated_contract_id = fields.Many2one(
+        'customer.contract',
+        string='Contrato actualizado',
+        related='next_contract_id',
+        store=True,
+        readonly=True,
+        help='Referencia directa al contrato nuevo generado por cambio de plan.',
     )
     contract_history_ids = fields.One2many(
         'customer.contract',
@@ -494,7 +501,7 @@ class CustomerContract(models.Model):
             'context': {'default_contract_id': self.id},
         }
 
-    def action_apply_plan_change(self, new_plan_id, note=''):
+    def action_apply_plan_change(self, new_plan_id, note='', contrato=False, contrato_filename='', contract_attachment_ids=None):
         """
         Ejecuta el cambio de plan:
         1. Marca el contrato actual como reemplazado (terminated + is_superseded)
@@ -503,8 +510,23 @@ class CustomerContract(models.Model):
         4. Si tiene partner_plan_id, actualiza también el partner.plan
         """
         self.ensure_one()
+        if self.state != 'active':
+            raise ValidationError('Solo se puede cambiar el plan de un contrato activo.')
+
         today = fields.Date.context_today(self)
         new_plan = self.env['internet.plan'].browse(new_plan_id)
+        if not new_plan.exists() or not new_plan.active:
+            raise ValidationError('Debes seleccionar un plan activo y válido.')
+        if self.plan_id and self.plan_id.id == new_plan.id:
+            raise ValidationError('Selecciona un plan diferente al actual.')
+
+        attachment_ids = contract_attachment_ids or []
+        attachments = self.env['ir.attachment'].browse(attachment_ids)
+
+        if contrato:
+            self._validate_binary_contract_file(contrato, contrato_filename)
+        if attachments:
+            self._validate_attachment_recordset(attachments)
 
         # 1. Terminar el contrato actual marcándolo como reemplazado
         self.write({
@@ -517,9 +539,9 @@ class CustomerContract(models.Model):
                  + (f" Motivo: {note}" if note else ""),
         )
 
-        # 2. Crear nuevo contrato con el nuevo plan
-        new_contract = self.copy({
-            'name': 'Nuevo',
+        # 2. Crear nuevo contrato con el nuevo plan (conservando código)
+        new_contract_vals = {
+            'name': self.name,
             'plan_id': new_plan.id,
             'state': 'active',
             'contract_date': today,
@@ -530,10 +552,18 @@ class CustomerContract(models.Model):
             'previous_contract_id': self.id,
             'next_contract_id': False,
             'partner_plan_id': self.partner_plan_id if self.partner_plan_id else 0,
+        }
+        if contrato:
+            new_contract_vals.update({
+                'contrato': contrato,
+                'contrato_filename': contrato_filename or '',
+            })
+        if attachment_ids:
+            new_contract_vals['contract_attachment_ids'] = [(6, 0, attachment_ids)]
+
+        new_contract = self.copy({
+            **new_contract_vals,
         })
-        # Asignar nombre de secuencia
-        seq = self.env['ir.sequence'].next_by_code('customer.contract') or 'CF-00001'
-        new_contract.name = self._normalize_contract_code(seq)
 
         # 3. Vincular contrato actual → nuevo
         self.write({'next_contract_id': new_contract.id})
@@ -555,6 +585,18 @@ class CustomerContract(models.Model):
             'name': 'Nuevo contrato',
             'res_model': 'customer.contract',
             'res_id': new_contract.id,
+            'view_mode': 'form',
+        }
+
+    def action_open_updated_contract(self):
+        self.ensure_one()
+        if not self.updated_contract_id:
+            raise UserError('Este contrato no tiene un contrato actualizado vinculado.')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Contrato actualizado',
+            'res_model': 'customer.contract',
+            'res_id': self.updated_contract_id.id,
             'view_mode': 'form',
         }
 
@@ -592,14 +634,26 @@ class CustomerContract(models.Model):
                         "a la fecha de contrato."
                     )
 
+    @api.constrains('name', 'is_superseded')
+    def _check_unique_current_contract_code(self):
+        for record in self:
+            if not record.name or record.is_superseded:
+                continue
+            duplicate = self.search([
+                ('id', '!=', record.id),
+                ('name', '=', record.name),
+                ('is_superseded', '=', False),
+            ], limit=1)
+            if duplicate:
+                raise ValidationError(
+                    "Ya existe un contrato vigente con el mismo número de contrato."
+                )
+
     @api.constrains('contrato', 'contrato_filename', 'contract_attachment_ids')
     def _check_contrato_file(self):
         for record in self:
-            if not record.contrato:
-                record._validate_attachment_files()
-                continue
-            record._validate_file_format()
-            record._validate_file_size()
+            if record.contrato:
+                record._validate_binary_contract_file(record.contrato, record.contrato_filename)
             record._validate_attachment_files()
 
     # =========================================================
@@ -672,31 +726,40 @@ class CustomerContract(models.Model):
             )
 
     def _validate_file_format(self):
-        filename = (self.contrato_filename or '').strip()
+        self._validate_binary_contract_file(self.contrato, self.contrato_filename, check_size=False)
+
+    def _validate_binary_contract_file(self, contrato_binary, contrato_filename, check_size=True):
+        if not contrato_binary:
+            return
+
+        filename = (contrato_filename or '').strip()
         if not filename:
             _logger.warning(
                 "Contrato ID %s: archivo subido sin nombre; "
                 "no se puede verificar el tipo MIME.", self.id
             )
-            return
-        ext = os.path.splitext(filename.lower())[1]
-        mime, _ = mimetypes.guess_type(filename.lower())
-        if ext and ext not in ALLOWED_EXTENSIONS:
-            raise ValidationError(
-                f"Formato de archivo no permitido: '{ext}'.\n"
-                "Solo se aceptan archivos PDF, JPG o PNG."
-            )
-        if mime and mime not in ALLOWED_MIME_TYPES:
-            raise ValidationError(
-                f"Tipo de archivo no permitido (MIME: {mime}).\n"
-                "Solo se aceptan PDF, JPG o PNG."
-            )
+        else:
+            ext = os.path.splitext(filename.lower())[1]
+            mime, _ = mimetypes.guess_type(filename.lower())
+            if ext and ext not in ALLOWED_EXTENSIONS:
+                raise ValidationError(
+                    f"Formato de archivo no permitido: '{ext}'.\n"
+                    "Solo se aceptan archivos PDF, JPG o PNG."
+                )
+            if mime and mime not in ALLOWED_MIME_TYPES:
+                raise ValidationError(
+                    f"Tipo de archivo no permitido (MIME: {mime}).\n"
+                    "Solo se aceptan PDF, JPG o PNG."
+                )
 
-    def _validate_file_size(self):
-        if not self.contrato:
+        if check_size:
+            self._validate_binary_contract_size(contrato_binary)
+
+    def _validate_binary_contract_size(self, contrato_binary):
+        if not contrato_binary:
             return
         try:
-            file_bytes = base64.b64decode(self.contrato)
+            file_bytes = base64.b64decode(contrato_binary)
             size = len(file_bytes)
         except Exception:
             _logger.warning(
@@ -711,8 +774,14 @@ class CustomerContract(models.Model):
                 f"(tamaño actual: {size_mb:.2f} MB)."
             )
 
+    def _validate_file_size(self):
+        self._validate_binary_contract_size(self.contrato)
+
     def _validate_attachment_files(self):
-        for attachment in self.contract_attachment_ids:
+        self._validate_attachment_recordset(self.contract_attachment_ids)
+
+    def _validate_attachment_recordset(self, attachments):
+        for attachment in attachments:
             if attachment.type and attachment.type != 'binary':
                 raise ValidationError(
                     f"El archivo '{attachment.name}' no es un adjunto binario válido."
@@ -882,14 +951,36 @@ class CustomerContractPlanWizard(models.TransientModel):
         readonly=True,
     )
     note = fields.Text(string='Motivo del cambio')
+    contrato = fields.Binary(
+        string='Archivo del Contrato',
+        attachment=True,
+    )
+    contrato_filename = fields.Char(string='Nombre del archivo')
+    contract_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'customer_contract_plan_wizard_attachment_rel',
+        'wizard_id',
+        'attachment_id',
+        string='Archivos de contrato',
+        help='Permite adjuntar múltiples archivos del contrato (PDF/JPG/PNG).',
+    )
 
     def action_confirm(self):
         self.ensure_one()
         if self.new_plan_id == self.current_plan_id:
             raise ValidationError('Selecciona un plan diferente al actual.')
+
+        if self.contrato:
+            self.contract_id._validate_binary_contract_file(self.contrato, self.contrato_filename)
+        if self.contract_attachment_ids:
+            self.contract_id._validate_attachment_recordset(self.contract_attachment_ids)
+
         return self.contract_id.action_apply_plan_change(
             new_plan_id=self.new_plan_id.id,
             note=self.note or '',
+            contrato=self.contrato,
+            contrato_filename=self.contrato_filename or '',
+            contract_attachment_ids=self.contract_attachment_ids.ids,
         )
 
 

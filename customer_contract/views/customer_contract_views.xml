@@ -19,12 +19,15 @@
 
                     <button name="action_change_plan_wizard" string="Cambiar plan" type="object" class="btn-primary" invisible="state != 'active' or is_superseded" confirm="Se creará un nuevo contrato con el nuevo plan. ¿Continuar?"/>
 
+                    <button name="action_open_updated_contract" string="Ver contrato actualizado" type="object" class="btn-info" invisible="not updated_contract_id"/>
+
                     <button name="action_terminate" string="Terminar Contrato" type="object" class="btn-secondary" confirm="¿Estás seguro de que deseas terminar este contrato?" invisible="state != 'active'"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,pending,signed,active,terminated"/>
                 </header>
 
                 <sheet>
+                    <field name="updated_contract_id" invisible="1"/>
 
                     <!-- Ribbon si fue reemplazado -->
                     <widget name="web_ribbon" title="Reemplazado" bg_color="text-bg-secondary" invisible="not is_superseded"/>

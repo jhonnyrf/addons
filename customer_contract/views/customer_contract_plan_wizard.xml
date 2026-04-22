@@ -18,6 +18,13 @@
                     <group string="Motivo del cambio">
                         <field name="note" nolabel="1" placeholder="Describe el motivo: aumento/reducción de velocidad, solicitud del cliente, etc."/>
                     </group>
+
+                    <group string="Documentos del nuevo contrato">
+                        <field name="contrato" invisible="1"/>
+                        <field name="contrato_filename" invisible="1"/>
+                        <field name="contract_attachment_ids" widget="many2many_binary" string="Archivo(s) del contrato" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
+                    </group>
+
                     <div class="alert alert-warning" role="alert">
                         <i class="fa fa-exclamation-triangle"/>
                         Este contrato quedará como <strong>Finalizado (reemplazado)</strong> y se creará
