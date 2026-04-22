@@ -21,6 +21,7 @@
                 <filter string="En campo" name="filter_in_field" domain="[('state','=','in_field')]"/>
                 <filter string="Activas" name="filter_active" domain="[('state','=','active')]"/>
                 <filter string="Con incidencia" name="filter_incident" domain="[('state','=','incident')]"/>
+                <filter string="Canceladas" name="filter_cancelled" domain="[('state','=','cancelled')]"/>
 
                 <!-- Type filters -->
                 <filter string="Instalaciones" name="filter_installation" domain="[('work_type','=','installation')]"/>
@@ -55,7 +56,7 @@
                 <templates>
                     <t t-name="card">
                         <div class="fw-bold">
-                            <field name="name"/>
+                            <field name="name" readonly="1"/>
                         </div>
 
                         <div class="text-muted small">
@@ -92,7 +93,7 @@
         <field name="name">wigo.ftth.work.order.list</field>
         <field name="model">wigo.ftth.work.order</field>
         <field name="arch" type="xml">
-            <list string="Órdenes de Trabajo" decoration-success="state == 'active'" decoration-warning="state in ['assigned','in_field','installed']" decoration-danger="state == 'incident'" decoration-muted="state == 'deactivation_executed'">
+            <list string="Órdenes de Trabajo" decoration-success="state == 'active'" decoration-warning="state in ['assigned','in_field','installed']" decoration-danger="state == 'incident'" decoration-muted="state in ['deactivation_executed','cancelled']">
 
                 <field name="name"/>
                 <field name="work_type" widget="badge"/>
@@ -102,7 +103,7 @@
                 <field name="installer_id"/>
                 <field name="scheduled_date"/>
 
-                <field name="state" widget="badge" decoration-muted="state in ['pending','deactivation_executed']" decoration-warning="state == 'assigned'" decoration-info="state == 'in_field'" decoration-primary="state == 'installed'" decoration-success="state == 'active'" decoration-danger="state == 'incident'"/>
+                <field name="state" widget="badge" decoration-muted="state in ['pending','deactivation_executed','cancelled']" decoration-warning="state == 'assigned'" decoration-info="state == 'in_field'" decoration-primary="state == 'installed'" decoration-success="state == 'active'" decoration-danger="state == 'incident'"/>
             </list>
         </field>
     </record>
@@ -114,7 +115,7 @@
         <field name="name">wigo.ftth.work.order.form</field>
         <field name="model">wigo.ftth.work.order</field>
         <field name="arch" type="xml">
-            <form string="Orden de Trabajo FTTH" readonly="state == 'active'" class="wigo_ftth_work_order_form">
+            <form string="Orden de Trabajo FTTH" readonly="state in ['active', 'cancelled']" class="wigo_ftth_work_order_form">
 
                 <!-- HEADER -->
                 <header>
@@ -126,11 +127,13 @@
 
                     <button name="action_activate" type="object" string="✓ Activar cliente" class="btn-success" invisible="state != 'installed'" confirm="¿Confirmar activación? Se creará la ficha técnica del cliente."/>
 
-                    <button name="action_incident" type="object" string="Registrar incidencia" class="btn-warning" invisible="state in ['pending','active','deactivation_executed','incident']"/>
+                    <button name="action_incident" type="object" string="Registrar incidencia" class="btn-warning" invisible="state in ['pending','active','deactivation_executed','incident','cancelled']"/>
 
-                    <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state == 'deactivation_executed'" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
+                    <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state in ['deactivation_executed','cancelled']" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active" readonly="state == 'active'"/>
+                    <button name="action_cancel" type="object" string="Cancelar OT" class="btn-secondary" invisible="state in ['active','deactivation_executed','cancelled']" confirm="¿Cancelar esta orden de trabajo? Se liberarán los recursos asociados (subinterfaz, puerto de caja, ONU)."/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active" readonly="state in ['active', 'cancelled']"/>
                 </header>
 
                 <sheet readonly="state == 'active'">
@@ -139,6 +142,8 @@
                     <widget name="web_ribbon" title="Con incidencia" bg_color="text-bg-warning" invisible="state != 'incident'"/>
 
                     <widget name="web_ribbon" title="Baja ejecutada" bg_color="text-bg-danger" invisible="state != 'deactivation_executed'"/>
+
+                    <widget name="web_ribbon" title="Cancelada" bg_color="text-bg-secondary" invisible="state != 'cancelled'"/>
 
                     <!-- ACTION BUTTON -->
                     <div class="oe_button_box" name="button_box">
@@ -216,7 +221,7 @@
                         <page string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
                             <group col="4">
                                 <group string="Selección" colspan="2">
-                                    <field name="onu_id" domain="[('state','=','available')]" readonly="state == 'active'"/>
+                                    <field name="onu_id"/>
                                 </group>
 
                                 <group string="Detalle" colspan="2" invisible="not onu_id">
@@ -243,6 +248,9 @@
                                 <group string="Observaciones">
                                     <field name="notes" nolabel="1"/>
                                 </group>
+                            </group>
+                            <group string="Cancelación" invisible="state != 'cancelled'">
+                                <field name="cancellation_reason" nolabel="1" readonly="1"/>
                             </group>
                         </page>
                     </notebook>

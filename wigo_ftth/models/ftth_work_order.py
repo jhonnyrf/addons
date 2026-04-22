@@ -29,6 +29,7 @@ class FtthWorkOrder(models.Model):
         ('active', 'Configurado — Activo'),
         ('incident', 'Con incidencia'),
         ('deactivation_executed', 'Baja ejecutada'),
+        ('cancelled', 'Cancelada'),
     ], string='Estado', default='pending', required=True, tracking=True)
 
     # ==========================================================================
@@ -128,6 +129,7 @@ class FtthWorkOrder(models.Model):
     # ==========================================================================
     accessories = fields.Text(string='Accesorios entregados')
     notes = fields.Text(string='Observaciones')
+    cancellation_reason = fields.Text(string='Motivo de cancelación', tracking=True)
 
     client_service_id = fields.Many2one(
         'wigo.ftth.client.service',
@@ -316,6 +318,39 @@ class FtthWorkOrder(models.Model):
         for record in self:
             record._release_resources()
             record.write({'state': 'deactivation_executed'})
+
+    def action_cancel(self):
+        """Cancelar la OT y liberar los recursos asociados."""
+        for record in self:
+            record._release_resources_on_cancel()
+            record.write({'state': 'cancelled'})
+
+    def _release_resources_on_cancel(self):
+        """Liberar subinterfaz, puerto de caja y ONU al cancelar la OT.
+
+        A diferencia de una baja, aquí se devuelven los recursos a
+        infraestructura sin afectar la ficha técnica (que no debería
+        existir si la OT no llegó a activarse).
+        """
+        self.ensure_one()
+
+        if self.subinterface_id:
+            self.subinterface_id.sudo().write({
+                'state': 'occupied',
+                'client_service_id': False,
+                'onu_id': False,
+            })
+
+        if self.box_port_id:
+            self.box_port_id.sudo().write({'state': 'occupied'})
+
+        if self.onu_id:
+            self.onu_id.sudo().write({
+                'state': 'available',
+                'client_service_id': False,
+                'subinterface_id': False,
+                'installer_id': False,
+            })
 
     def _release_resources(self):
         # Volver a estado de infraestructura (sin cliente), manteniendo el enlace

@@ -41,6 +41,13 @@ class GenerateSubinterfacesWizard(models.TransientModel):
         help='VLAN que se asignará a las subinterfaces creadas (rango: 1-4094).'
     )
 
+    prefix = fields.Char(
+        string='Prefijo',
+        required=True,
+        default='gpon-olt',
+        help='Prefijo para el nombre de subinterfaz. Ej: gpon-olt'
+    )
+
     # UI helper: keep a plain string representation (no thousands separators like 4.000).
     vlan_text = fields.Char(
         string='VLAN',
@@ -62,8 +69,11 @@ class GenerateSubinterfacesWizard(models.TransientModel):
             port = self.env['wigo.ftth.olt.port'].browse(port_id)
             if port.exists():
                 res['target_capacity'] = port.capacity_max
+                if 'prefix' in fields_list and not res.get('prefix'):
+                    res['prefix'] = port.prefix or 'gpon-olt'
 
         res.setdefault('vlan_id', 1)
+        res.setdefault('prefix', 'gpon-olt')
         return res
 
     @api.depends('olt_port_id')
@@ -139,6 +149,7 @@ class GenerateSubinterfacesWizard(models.TransientModel):
                     'olt_port_id': port.id,
                     'subinterface_number': num,
                     'vlan_id': self.vlan_id,
+                    'prefix': self.prefix or 'gpon-olt',
                 })
 
         if vals_list:

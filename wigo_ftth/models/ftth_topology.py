@@ -477,6 +477,9 @@ class FtthOltPort(models.Model):
     _description = 'Puerto PON de OLT'
     _rec_name = 'interface_port'
 
+    # Estados considerados como ocupación real (asignación a cliente/proceso comercial)
+    OCCUPIED_STATES = ('allocated', 'reserved', 'active')
+
     # =========================
     # Fields
     # =========================
@@ -586,10 +589,10 @@ class FtthOltPort(models.Model):
     @api.constrains('subinterface_ids', 'capacity_max')
     def _check_capacity(self):
         for rec in self:
-            occupied = len(rec.subinterface_ids.filtered(lambda s: s.state == 'occupied'))
+            occupied = len(rec.subinterface_ids.filtered(lambda s: s.state in self.OCCUPIED_STATES))
             if occupied > rec.capacity_max:
                 raise ValidationError(
-                    f"Capacidad excedida en puerto {rec.port_number} de {rec.olt_id.codigo_olt}\n\n"
+                    f"Capacidad excedida en puerto {rec.port_number} de {rec.olt_id.olt_code}\n\n"
                     f"Ocupadas: {occupied} | Máxima: {rec.capacity_max}\n(RN-01)"
                 )
 
@@ -599,7 +602,7 @@ class FtthOltPort(models.Model):
     @api.depends('subinterface_ids.state', 'capacity_max')
     def _compute_occupancy(self):
         for rec in self:
-            used = len(rec.subinterface_ids.filtered(lambda s: s.state == 'occupied'))
+            used = len(rec.subinterface_ids.filtered(lambda s: s.state in self.OCCUPIED_STATES))
             rec.used_subinterfaces = used
             rec.free_subinterfaces = rec.capacity_max - used
             rec.occupancy_percent = (used / rec.capacity_max * 100) if rec.capacity_max else 0
@@ -648,7 +651,7 @@ class FtthOltPort(models.Model):
     # =========================
     def name_get(self):
         return [
-            (rec.id, f'{rec.olt_id.codigo_olt} / Puerto {rec.port_number}')
+            (rec.id, f'{rec.olt_id.olt_code} / Puerto {rec.port_number}')
             for rec in self
         ]
 
@@ -665,6 +668,7 @@ class FtthOltPort(models.Model):
                 'default_olt_port_id': self.id,
                 'default_target_capacity': self.capacity_max,
                 'default_vlan_id': 1,
+                'default_prefix': self.prefix or 'gpon-olt',
             },
         }
 
@@ -681,6 +685,7 @@ class FtthOltPort(models.Model):
                         'olt_port_id': port.id,
                         'subinterface_number': next_num,
                         'vlan_id': 1,
+                        'prefix': port.prefix or 'gpon-olt',
                     })
                     existing.add(next_num)
                 next_num += 1
@@ -751,6 +756,14 @@ class FtthOdn(models.Model):
         required=True,
         ondelete='restrict'
     )
+    regional_id = fields.Many2one(
+        'wigo.ftth.regional',
+        string='Regional',
+        compute='_compute_regional_id',
+        store=True,
+        index=True,
+        help='Regional asociada a la ODN (obtenida desde la OLT).'
+    )
     node_name = fields.Char(
         string='Nombre del Nodo (desde OLT)',
         compute='_compute_node_name',
@@ -787,6 +800,75 @@ class FtthOdn(models.Model):
         'Esta OLT ya tiene una ODN asociada. Solo se permite una ODN por OLT.'
     )
 
+    def init(self):
+        """Limpia datos históricos para evitar fallos en actualización.
+
+        - Elimina constraint SQL legado que puede romper la recomputación de `regional_id`.
+        - Normaliza `odn_number` y resuelve duplicados por regional de forma determinística.
+        """
+        self.env.cr.execute(
+            'ALTER TABLE wigo_ftth_odn '
+            'DROP CONSTRAINT IF EXISTS wigo_ftth_odn_odn_number_regional_unique'
+        )
+
+        self.env.cr.execute(
+            """
+            SELECT
+                o.id,
+                r.id AS regional_id,
+                o.odn_number
+            FROM wigo_ftth_odn o
+            LEFT JOIN wigo_ftth_olt olt ON olt.id = o.olt_id
+            LEFT JOIN wigo_ftth_nodo n ON n.id = olt.node_id
+            LEFT JOIN wigo_ftth_regional r ON r.id = n.regional_id
+            ORDER BY r.id NULLS LAST, o.id
+            """
+        )
+        rows = self.env.cr.fetchall()
+
+        rows_by_regional = {}
+        for odn_id, regional_id, odn_number in rows:
+            rows_by_regional.setdefault(regional_id, []).append((odn_id, odn_number))
+
+        updates = []
+        for regional_id, regional_rows in rows_by_regional.items():
+            if not regional_id:
+                continue
+
+            used_numbers = set()
+            pending_ids = []
+
+            for odn_id, odn_number in regional_rows:
+                text = str(odn_number).strip() if odn_number not in (False, None) else ''
+                normalized = None
+                if text.isdigit():
+                    value = int(text)
+                    if value > 0:
+                        normalized = str(value)
+
+                if normalized and normalized not in used_numbers:
+                    used_numbers.add(normalized)
+                    if text != normalized:
+                        updates.append((normalized, odn_id))
+                else:
+                    pending_ids.append(odn_id)
+
+            i = 1
+            for odn_id in pending_ids:
+                while str(i) in used_numbers:
+                    i += 1
+                new_number = str(i)
+                used_numbers.add(new_number)
+                updates.append((new_number, odn_id))
+                i += 1
+
+        if updates:
+            for new_number, odn_id in updates:
+                self.env.cr.execute(
+                    'UPDATE wigo_ftth_odn SET odn_number = %s WHERE id = %s',
+                    (new_number, odn_id)
+                )
+
     # =========================
     # Constraints
     # =========================
@@ -811,6 +893,26 @@ class FtthOdn(models.Model):
         for record in self:
             self._validate_number(record.odf_port)
 
+    @api.constrains('odn_number', 'olt_id')
+    def _check_odn_number_unique_by_regional(self):
+        if self.env.context.get('install_mode'):
+            return
+
+        for record in self:
+            if not record.odn_number or not record.regional_id:
+                continue
+
+            normalized = self._normalize_odn_number(record.odn_number)
+            duplicates = self.search([
+                ('id', '!=', record.id),
+                ('regional_id', '=', record.regional_id.id),
+                ('odn_number', '!=', False),
+            ])
+            if any(self._normalize_odn_number(dup.odn_number) == normalized for dup in duplicates):
+                raise ValidationError(
+                    'El N° ODN debe ser único dentro de la misma regional.'
+                )
+
     # =========================
     # Display
     # =========================
@@ -827,20 +929,33 @@ class FtthOdn(models.Model):
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
 
-        if 'odn_number' in fields_list:
-            res['odn_number'] = self._get_next_odn_number()
+        if 'odn_number' in fields_list and not res.get('odn_number'):
+            regional_id = self._get_regional_id_from_vals(res)
+            if regional_id:
+                res['odn_number'] = self._get_next_odn_number(regional_id=regional_id)
 
         return res
 
     @api.model_create_multi
     def create(self, vals_list):
-        next_number = self._get_next_odn_number_int()
+        next_number_by_regional = {}
 
         for vals in vals_list:
             _logger.info(f"Creando ODN con valores: {vals}")
+            if vals.get('odn_number'):
+                vals['odn_number'] = self._normalize_odn_number(vals['odn_number'])
+                continue
+
+            regional_id = self._get_regional_id_from_vals(vals)
+            if not regional_id:
+                continue
+
+            if regional_id not in next_number_by_regional:
+                next_number_by_regional[regional_id] = self._get_next_odn_number_int(regional_id)
+
             if not vals.get('odn_number'):
-                vals['odn_number'] = self._format_number(next_number)
-                next_number += 1  
+                vals['odn_number'] = self._format_number(next_number_by_regional[regional_id])
+                next_number_by_regional[regional_id] += 1
 
         records = super().create(vals_list)
 
@@ -849,6 +964,8 @@ class FtthOdn(models.Model):
 
         return records
     def write(self, vals):
+        if vals.get('odn_number'):
+            vals['odn_number'] = self._normalize_odn_number(vals['odn_number'])
         
         old_olts = self.mapped('olt_id')
         res = super().write(vals)        
@@ -871,6 +988,11 @@ class FtthOdn(models.Model):
     # Compute Methods
     # ═════════════════════════════════════════════════════════════════════════════
 
+    @api.depends('olt_id', 'olt_id.node_id', 'olt_id.node_id.regional_id')
+    def _compute_regional_id(self):
+        for record in self:
+            record.regional_id = record.olt_id.node_id.regional_id if record.olt_id else False
+
     @api.depends('olt_id')
     def _compute_node_name(self):
         for record in self:
@@ -883,8 +1005,10 @@ class FtthOdn(models.Model):
     @api.onchange('olt_id')
     def _onchange_olt_id(self):
         if self.olt_id:
-            self.odn_number = self._get_next_odn_number()
-            self.name = self._build_odn_name(self.odn_number)
+            if not self.odn_number:
+                self.odn_number = self._get_next_odn_number(regional_id=self.olt_id.node_id.regional_id.id)
+            if not self.name:
+                self.name = self._build_odn_name(self.odn_number)
     # =========================
     # Private Methods
     # =========================    
@@ -928,26 +1052,46 @@ class FtthOdn(models.Model):
          
             
                 
-    def _get_next_odn_number(self):
-        if self.olt_id:
-           return self.olt_id.olt_number if self.olt_id else '01'
-        else:
-            return self._format_number(self._get_next_odn_number_int())
+    def _get_next_odn_number(self, regional_id=None):
+        next_number = self._get_next_odn_number_int(regional_id)
+        return self._format_number(next_number)
 
-    def _get_next_odn_number_int(self):
-        odns = self.search([('odn_number', '!=', False)])
+    def _get_next_odn_number_int(self, regional_id=None):
+        domain = [('odn_number', '!=', False)]
+        if regional_id:
+            domain.append(('olt_id.node_id.regional_id', '=', regional_id))
+
+        odns = self.search(domain)
 
         numbers = {
-            int(o.odn_number)
+            int(str(o.odn_number))
             for o in odns
-            if o.odn_number and o.odn_number.isdigit()
+            if o.odn_number and str(o.odn_number).isdigit()
         }
 
         return (max(numbers) if numbers else 0) + 1
 
+    @api.model
+    def _get_regional_id_from_vals(self, vals):
+        olt_id = vals.get('olt_id') or self.env.context.get('default_olt_id')
+        if not olt_id:
+            return False
+
+        olt = self.env['wigo.ftth.olt'].browse(olt_id)
+        return olt.node_id.regional_id.id if olt and olt.node_id and olt.node_id.regional_id else False
+
+    @api.model
+    def _normalize_odn_number(self, number):
+        text = str(number).strip() if number not in (False, None) else ''
+        if not text:
+            return False
+        if not text.isdigit():
+            raise ValidationError('El N° ODN debe ser numérico.')
+        return str(int(text))
+
     @staticmethod
     def _format_number(number):
-        return str(number).zfill(2)
+        return str(int(number))
 
 class FtthBoxGroup(models.Model):
     _name = 'wigo.ftth.box.group'
@@ -1236,6 +1380,7 @@ class FtthBox(models.Model):
     ]
     FIRST_LETTER = 'A'
     STATE_FREE = 'free'
+    NON_OCCUPIED_PORT_STATES = ('free', 'occupied')
 
     # ═════════════════════════════════════════════════════════════════════════════
     # Fields
@@ -1251,6 +1396,22 @@ class FtthBox(models.Model):
         string='Grupo',
         required=True,
         ondelete='cascade'
+    )
+
+    olt_id = fields.Many2one(
+        'wigo.ftth.olt',
+        string='OLT',
+        related='box_group_id.olt_id',
+        store=True,
+        readonly=True,
+    )
+
+    olt_port_id = fields.Many2one(
+        'wigo.ftth.olt.port',
+        string='Puerto OLT',
+        related='box_group_id.olt_port_id',
+        store=True,
+        readonly=True,
     )
 
     port_capacity = fields.Selection(
@@ -1283,7 +1444,7 @@ class FtthBox(models.Model):
     def _compute_free_ports(self):      
         for record in self:
             record.free_ports = len(
-                record.port_ids.filtered(lambda port: port.state == self.STATE_FREE)
+                record.port_ids.filtered(lambda port: port.state in self.NON_OCCUPIED_PORT_STATES)
             )
 
     # ═════════════════════════════════════════════════════════════════════════════
@@ -1515,6 +1676,105 @@ class FtthBox(models.Model):
 
         self.env['wigo.ftth.box.port'].create(port_values)
 
+    @api.model
+    def search_panel_select_range(self, field_name, **kwargs):
+        if field_name == 'olt_id':
+            domain = kwargs.get('search_domain', [])
+
+            records = self.search(domain + [('olt_id', '!=', False)])
+
+            grouped = {}
+
+            for rec in records:
+                olt = rec.olt_id
+                if not olt:
+                    continue
+
+                name = olt.olt_code or olt.display_name or f'OLT {olt.id}'
+
+                if name not in grouped:
+                    grouped[name] = {
+                        'ids': set(),
+                        'count': 0,
+                    }
+
+                grouped[name]['ids'].add(olt.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': list(data['ids'])[0],  # 🔥 ID real
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('olt_id', 'in', list(data['ids']))],  # 🔥 clave
+                })
+
+            return {
+                'parent_field': None,
+                'values': values,
+            }
+
+        if field_name == 'olt_port_id':
+            domain = kwargs.get('search_domain', [])
+            records = self.search(domain + [('olt_port_id', '!=', False)])
+
+            grouped = {}
+            for rec in records:
+                port = rec.olt_port_id
+                if not port:
+                    continue
+
+                name = port.interface_port or f'Puerto {port.port_number}'
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(port.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('olt_port_id', 'in', list(data['ids']))],
+                })
+
+            return {
+                'parent_field': None,
+                'values': values,
+            }
+
+        if field_name == 'box_group_id':
+            domain = kwargs.get('search_domain', [])
+            records = self.search(domain + [('box_group_id', '!=', False)])
+
+            grouped = {}
+            for rec in records:
+                group = rec.box_group_id
+                if not group:
+                    continue
+
+                name = group.group_number or group.display_name
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(group.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('box_group_id', 'in', list(data['ids']))],
+                })
+
+            return {
+                'parent_field': None,
+                'values': values,
+            }
+
+        return super().search_panel_select_range(field_name, **kwargs)
+
 
 
 class FtthBoxPort(models.Model):
@@ -1527,6 +1787,7 @@ class FtthBoxPort(models.Model):
 
     _SYNC_CONTEXT_KEY = 'skip_sync'
     _SYNC_FIELDS = ('subinterface_id', 'state')
+    _RELEASE_STATES_ON_UNLINK = ('occupied', 'allocated', 'reserved', 'active')
 
     box_id = fields.Many2one('wigo.ftth.box', string='Caja NAP', required=True, ondelete='cascade')
     port_number = fields.Char(string='Nº Puerto', required=True)
@@ -1541,6 +1802,12 @@ class FtthBoxPort(models.Model):
         'wigo.ftth.olt.port',
         string='Puerto OLT',
         compute='_compute_olt_port_id',
+        store=True
+    )
+    box_group_id = fields.Many2one(
+        'wigo.ftth.box.group',
+        string='Grupo de Caja',
+        compute='_compute_box_group_id',
         store=True
     )
     state = fields.Selection([
@@ -1569,6 +1836,11 @@ class FtthBoxPort(models.Model):
                 if record.box_id and record.box_id.box_group_id
                 else False
             )
+
+    @api.depends('box_id', 'box_id.box_group_id')
+    def _compute_box_group_id(self):
+        for record in self:
+            record.box_group_id = record.box_id.box_group_id if record.box_id else False
 
     @api.depends('box_id', 'box_id.box_group_id', 'box_id.box_group_id.odn_id', 'box_id.box_group_id.odn_id.olt_id')
     def _compute_olt_id(self):
@@ -1612,6 +1884,33 @@ class FtthBoxPort(models.Model):
                 self._sync_link(subinterface, record)
 
         return records
+
+    def unlink(self):
+        if self.env.context.get(self._SYNC_CONTEXT_KEY):
+            return super().unlink()
+
+        linked_subinterfaces = self.mapped('subinterface_id').filtered(lambda s: s)
+        if linked_subinterfaces:
+            releasable_subinterfaces = linked_subinterfaces.filtered(
+                lambda s: s.state in self._RELEASE_STATES_ON_UNLINK
+            )
+            if releasable_subinterfaces:
+                releasable_subinterfaces.with_context(skip_sync=True).write({
+                    'box_port_id': False,
+                    'box_id': False,
+                    'box_group_id': False,
+                    'state': 'free',
+                })
+
+            remaining_subinterfaces = linked_subinterfaces - releasable_subinterfaces
+            if remaining_subinterfaces:
+                remaining_subinterfaces.with_context(skip_sync=True).write({
+                    'box_port_id': False,
+                    'box_id': False,
+                    'box_group_id': False,
+                })
+
+        return super().unlink()
 
     # =========================
     # Onchange
@@ -1680,7 +1979,7 @@ class FtthBoxPort(models.Model):
     def _validate_subinterface_available(self, subinterface, box_port):
         if subinterface.box_port_id and subinterface.box_port_id.id != box_port.id:
             raise ValidationError(
-                f"La subinterfaz {subinterface.codigo} ya está asignada "
+                f"La subinterfaz {subinterface.code} ya está asignada "
                 f"al puerto {subinterface.box_port_id.port_number}."
             )
 
@@ -1697,12 +1996,119 @@ class FtthBoxPort(models.Model):
         numbers = [int(row['port_number']) for row in rows if row.get('port_number')]
         return (max(numbers) + 1) if numbers else 1
 
+    @api.model
+    def search_panel_select_range(self, field_name, **kwargs):
+        domain = kwargs.get('search_domain', [])
+
+        if field_name == 'olt_id':
+            records = self.env['wigo.ftth.box.port'].search(domain + [('olt_id', '!=', False)])
+            grouped = {}
+
+            for rec in records:
+                olt = rec.olt_id
+                if not olt:
+                    continue
+
+                name = olt.olt_code or olt.display_name or f'OLT {olt.id}'
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(olt.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('olt_id', 'in', list(data['ids']))],
+                })
+
+            return {'parent_field': None, 'values': values}
+
+        if field_name == 'olt_port_id':
+            records = self.env['wigo.ftth.box.port'].search(domain + [('olt_port_id', '!=', False)])
+            grouped = {}
+
+            for rec in records:
+                port = rec.olt_port_id
+                if not port:
+                    continue
+
+                name = port.interface_port or f'Puerto {port.port_number}'
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(port.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('olt_port_id', 'in', list(data['ids']))],
+                })
+
+            return {'parent_field': None, 'values': values}
+
+        if field_name == 'box_id':
+            records = self.env['wigo.ftth.box.port'].search(domain + [('box_id', '!=', False)])
+            grouped = {}
+
+            for rec in records:
+                box = rec.box_id
+                if not box or not box.identifier:
+                    continue
+
+                name = box.identifier
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(box.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('box_id', 'in', list(data['ids']))],
+                })
+
+            return {'parent_field': None, 'values': values}
+
+        if field_name == 'box_group_id':
+            records = self.env['wigo.ftth.box.port'].search(domain + [('box_group_id', '!=', False)])
+            grouped = {}
+
+            for rec in records:
+                box_group = rec.box_group_id
+                if not box_group:
+                    continue
+
+                name = box_group.group_number
+                grouped.setdefault(name, {'ids': set(), 'count': 0})
+                grouped[name]['ids'].add(box_group.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': name,
+                    'display_name': name,
+                    'count': data['count'],
+                    '__domain': [('box_group_id', 'in', list(data['ids']))],
+                })
+
+            return {'parent_field': None, 'values': values}
+
+        return super().search_panel_select_range(field_name, **kwargs)
+
 
 class FtthSubinterface(models.Model):
     _name = 'wigo.ftth.subinterface'
     _inherit = ['wigo.ftth.sync.mixin']
     _description = 'Subinterfaz OLT'
     _order = 'olt_port_id, subinterface_number'
+    _RELEASE_STATES_ON_UNLINK = ('occupied', 'allocated', 'reserved', 'active')
 
     _vlan_range_check = models.Constraint(
         'CHECK (vlan_id BETWEEN 1 AND 4094)',
@@ -1737,6 +2143,20 @@ class FtthSubinterface(models.Model):
     )
 
     subinterface_number = fields.Integer(string='Nº Subinterfaz', required=True)
+
+    prefix = fields.Char(
+        string='Prefijo',
+        required=True,
+        default='gpon-olt',
+        help='Prefijo editable del nombre de la subinterfaz. Ej: gpon-olt'
+    )
+
+    port_identifier = fields.Char(
+        string='Identificador de puerto',
+        compute='_compute_port_identifier',
+        store=True,
+        help='Identificador del puerto (ej: 1/1/1), derivado de la interfaz del puerto OLT.'
+    )
 
     # IEEE 802.1Q VLAN identifier associated to this subinterface.
     vlan_id = fields.Integer(
@@ -1790,10 +2210,17 @@ class FtthSubinterface(models.Model):
     # ─────────────────────────────────────────────────────────────
     # COMPUTE METHODS
     # ─────────────────────────────────────────────────────────────
-    @api.depends('olt_port_id', 'subinterface_number')
+    @api.depends('prefix', 'port_identifier', 'olt_port_id', 'olt_port_id.interface_port', 'subinterface_number')
     def _compute_code(self):
         for rec in self:
             rec.code = self._build_code(rec)
+
+    @api.depends('olt_port_id', 'olt_port_id.interface_port')
+    def _compute_port_identifier(self):
+        for rec in self:
+            rec.port_identifier = rec._extract_port_identifier(
+                rec.olt_port_id.interface_port if rec.olt_port_id else False
+            )
 
     @api.depends('olt_port_id')
     def _compute_olt_id(self):
@@ -1820,9 +2247,19 @@ class FtthSubinterface(models.Model):
             rec.vlan_id = int(normalized)
 
     def _build_code(self, rec):
-        if rec.olt_port_id and rec.subinterface_number:
+        if rec.subinterface_number and rec.prefix and rec.port_identifier:
+            return f"{rec.prefix}_{rec.port_identifier}:{rec.subinterface_number}"
+        if rec.olt_port_id and rec.subinterface_number and rec.olt_port_id.interface_port:
             return f"{rec.olt_port_id.interface_port}:{rec.subinterface_number}"
         return ''
+
+    def _extract_port_identifier(self, interface_port):
+        if not interface_port:
+            return False
+        text = str(interface_port)
+        if '_' in text:
+            return text.split('_', 1)[1]
+        return text
 
     # ─────────────────────────────────────────────────────────────
     # CONSTRAINTS
@@ -1843,6 +2280,22 @@ class FtthSubinterface(models.Model):
                 raise ValidationError('VLAN ID is required.')
             if rec.vlan_id < 1 or rec.vlan_id > 4094:
                 raise ValidationError('VLAN ID must be between 1 and 4094.')
+
+    @api.constrains('code', 'olt_id', 'olt_port_id')
+    def _check_unique_code(self):
+        for rec in self:
+            if not rec.code or not rec.olt_id or not rec.olt_port_id:
+                continue
+            duplicate = self.search([
+                ('id', '!=', rec.id),
+                ('olt_id', '=', rec.olt_id.id),
+                ('olt_port_id', '=', rec.olt_port_id.id),
+                ('code', '=', rec.code),
+            ], limit=1)
+            if duplicate:
+                raise ValidationError(
+                    f"La subinterfaz '{rec.code}' ya existe para la OLT y puerto PON seleccionados."
+                )
 
     def _exists_duplicate(self, rec):
         return self.search([
@@ -1874,6 +2327,14 @@ class FtthSubinterface(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('prefix'):
+                if vals.get('olt_port_id'):
+                    port = self.env['wigo.ftth.olt.port'].browse(vals['olt_port_id'])
+                    vals['prefix'] = port.prefix or 'gpon-olt'
+                else:
+                    vals['prefix'] = 'gpon-olt'
+
         records = super().create(vals_list)
         BoxPort = self.env['wigo.ftth.box.port']
 
@@ -1883,6 +2344,29 @@ class FtthSubinterface(models.Model):
                 self._sync_link(rec, box_port)
 
         return records
+
+    def unlink(self):
+        if self.env.context.get('skip_sync'):
+            return super().unlink()
+
+        linked_box_ports = self.mapped('box_port_id').filtered(lambda p: p)
+        if linked_box_ports:
+            releasable_ports = linked_box_ports.filtered(
+                lambda p: p.state in self._RELEASE_STATES_ON_UNLINK
+            )
+            if releasable_ports:
+                releasable_ports.with_context(skip_sync=True).write({
+                    'subinterface_id': False,
+                    'state': 'free',
+                })
+
+            remaining_ports = linked_box_ports - releasable_ports
+            if remaining_ports:
+                remaining_ports.with_context(skip_sync=True).write({
+                    'subinterface_id': False,
+                })
+
+        return super().unlink()
 
     # ─────────────────────────────────────────────────────────────
     # SYNC LOGIC
@@ -1931,10 +2415,14 @@ class FtthSubinterface(models.Model):
         if not self.olt_port_id:
             self.subinterface_number = False
             self.code = False
+            self.port_identifier = False
             return
 
         next_number = self._get_next_subinterface_number(self.olt_port_id.id)
         self.subinterface_number = next_number
+        if not self.prefix:
+            self.prefix = self.olt_port_id.prefix or 'gpon-olt'
+        self.port_identifier = self._extract_port_identifier(self.olt_port_id.interface_port)
         self.code = self._build_onchange_code(next_number)
 
         self._reset_box_related_fields()
@@ -1948,6 +2436,11 @@ class FtthSubinterface(models.Model):
     def _onchange_box(self):
         self.box_port_id = False
 
+    @api.onchange('prefix', 'subinterface_number', 'olt_port_id')
+    def _onchange_name_parts(self):
+        if self.olt_port_id and self.subinterface_number:
+            self.code = self._build_onchange_code(self.subinterface_number)
+
     # ─────────────────────────────────────────────────────────────
     # HELPERS
     # ─────────────────────────────────────────────────────────────
@@ -1960,11 +2453,117 @@ class FtthSubinterface(models.Model):
         return (max(numbers) + 1) if numbers else 1
 
     def _build_onchange_code(self, number):
+        identifier = self._extract_port_identifier(self.olt_port_id.interface_port)
+        if self.prefix and identifier:
+            return f"{self.prefix}_{identifier}:{number}"
         if self.olt_port_id.interface_port:
             return f"{self.olt_port_id.interface_port}:{number}"
-        return f"{self.olt_port_id.port_number}:{number}"
+        return f"{self.prefix or 'gpon-olt'}_{self.olt_port_id.port_number}:{number}"
 
     def _reset_box_related_fields(self):
         self.box_group_id = False
         self.box_id = False
         self.box_port_id = False
+    
+    @api.model
+    def search_panel_select_range(self, field_name, **kwargs):
+        if field_name == 'olt_port_id':
+            groups = self.env['wigo.ftth.olt.port'].read_group(
+                domain=[],
+                fields=['interface_port', 'id:min'],
+                groupby=['interface_port'],
+                lazy=False,
+            )
+
+            values = []
+            for g in groups:
+                interface = g.get('interface_port')
+
+                if not interface:
+                    continue
+
+                display_name = interface
+                values.append({
+                    'id': interface,
+                    'display_name': display_name,
+                    'count': g.get('__count', 0),
+                })
+
+            return {
+                'parent_field': None,
+                'values': values,
+            }
+
+        if field_name == 'box_group_id':
+            domain = kwargs.get('search_domain', [])
+
+            groups = self.env['wigo.ftth.subinterface'].read_group(
+                domain=domain + [('box_group_id', '!=', False)],
+                fields=['box_group_id'],
+                groupby=['box_group_id'],
+                lazy=False,
+            )
+
+            grouped_by_name = {}
+
+            for g in groups:
+                data = g.get('box_group_id')
+                if not data:
+                    continue
+
+                name = data[1]
+                count = g.get('__count', 0)
+
+                if name not in grouped_by_name:
+                    grouped_by_name[name] = {
+                        'id': name,  # 🔥 usamos el nombre como ID
+                        'display_name': name,
+                        'count': count,
+                    }
+                else:
+                    grouped_by_name[name]['count'] += count
+
+            return {
+                'parent_field': None,
+                'values': list(grouped_by_name.values()),
+            }
+        if field_name == 'box_id':
+            domain = kwargs.get('search_domain', [])
+
+            records = self.env['wigo.ftth.subinterface'].search(
+                domain + [('box_id', '!=', False)]
+            )
+
+            grouped = {}
+
+            for rec in records:
+                box = rec.box_id
+                if not box or not box.identifier:
+                    continue
+
+                name = box.identifier  
+
+                if name not in grouped:
+                    grouped[name] = {
+                        'ids': set(),
+                        'count': 0,
+                    }
+
+                grouped[name]['ids'].add(box.id)
+                grouped[name]['count'] += 1
+
+            values = []
+            for name, data in grouped.items():
+                values.append({
+                    'id': list(data['ids'])[0], 
+                    'display_name': name,       
+                    'count': data['count'],
+                    '__domain': [('box_id', 'in', list(data['ids']))],  # 🔥 clave
+                })
+
+            return {
+                'parent_field': None,
+                'values': values,
+            }
+
+        return super().search_panel_select_range(field_name, **kwargs)        

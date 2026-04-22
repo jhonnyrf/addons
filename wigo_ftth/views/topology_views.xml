@@ -656,7 +656,7 @@
                     <group string="Información General" col="2" name="group_general">
 
                         <group>
-                            <field name="odn_number" readonly="1"/>
+                            <field name="odn_number"/>
                             <field name="odf_port" placeholder="Ej: 01, 02"/>
                         </group>
 
@@ -1042,6 +1042,8 @@
                 <!-- SearchPanel (sidebar) -->
                 <searchpanel>
                     <field name="box_group_id" string="Grupo de Caja"/>
+                    <field name="olt_id" string="OLT"/>
+                    <field name="olt_port_id" string="Puerto OLT"/>
                     <field name="port_capacity" string="Capacidad"/>
                 </searchpanel>
 
@@ -1167,10 +1169,12 @@
 
                 <!-- SearchPanel (sidebar) -->
                 <searchpanel>
+                    <field name="state" string="Estado"/>
                     <field name="olt_id" string="OLT"/>
                     <field name="olt_port_id" string="Puerto OLT"/>
+                    <field name="box_group_id" string="Grupo de Caja"/>
                     <field name="box_id" string="Caja NAP"/>
-                    <field name="state" string="Estado"/>
+
                 </searchpanel>
 
             </search>
@@ -1197,6 +1201,8 @@
         <field name="arch" type="xml">
             <list string="Subinterfaces OLT" decoration-muted="state == 'free'" decoration-primary="state == 'occupied'" decoration-info="state == 'allocated'" decoration-warning="state == 'reserved'" decoration-success="state == 'active'">
                 <field name="code" string="Subinterfaz"/>
+                <field name="prefix"/>
+                <field name="port_identifier" string="Id. Puerto"/>
                 <field name="olt_id" string="OLT"/>
                 <field name="olt_port_id"/>
                 <field name="vlan_text" string="VLAN"/>
@@ -1234,6 +1240,8 @@
                         <!-- ================= PUERTO OLT ================= -->
                         <group string="Puerto OLT">
                             <field name="olt_port_id" required="1"/>
+                            <field name="prefix"/>
+                            <field name="port_identifier" readonly="1"/>
                             <field name="subinterface_number"/>
                             <field name="vlan_text"/>
                             <field name="active"/>
@@ -1345,12 +1353,11 @@
             ========================== -->
 
                 <searchpanel>
-
+                    <field name="state" string="Estado"/>
                     <field name="olt_id" string="OLT"/>
                     <field name="olt_port_id" string="Puerto OLT"/>
                     <field name="box_group_id" string="Grupo Caja"/>
                     <field name="box_id" string="Caja"/>
-                    <field name="state" string="Estado"/>
 
                 </searchpanel>
 

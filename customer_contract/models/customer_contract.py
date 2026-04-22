@@ -5,7 +5,7 @@ import logging
 import re
 
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 from datetime import timedelta
 _logger = logging.getLogger(__name__)
 
@@ -42,6 +42,12 @@ class CustomerContract(models.Model):
     _inherit     = ['mail.thread', 'mail.activity.mixin']
     _rec_name    = 'name'
 
+    # Un contrato no puede repetir su número de contrato.
+    _name_unique = models.Constraint(
+        'unique(name)',
+        'El número de contrato debe ser único.',
+    )
+
     # =========================================================
     # CLIENTE / CONTACTO
     # =========================================================
@@ -64,6 +70,16 @@ class CustomerContract(models.Model):
         'res.partner',
         string='Persona de contacto',
         domain="[('parent_id', '=', partner_id)]",
+    )
+    billing_responsible_type = fields.Selection(
+        [
+            ('client', 'Cliente del contrato'),
+            ('other', 'Otra persona'),
+        ],
+        string='Responsable de facturación',
+        default='client',
+        tracking=True,
+        help='Permite usar los datos del cliente del contrato o de otra persona.',
     )
     lead_id = fields.Many2one(
         'crm.lead',
@@ -210,6 +226,20 @@ class CustomerContract(models.Model):
         attachment=True,
     )
     contrato_filename = fields.Char(string='Nombre del archivo')
+    contract_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'customer_contract_attachment_rel',
+        'contract_id',
+        'attachment_id',
+        string='Archivos de contrato',
+        copy=False,
+        help='Permite adjuntar múltiples archivos del contrato (PDF/JPG/PNG).',
+    )
+    has_contract_documents = fields.Boolean(
+        string='Tiene documentos de contrato',
+        compute='_compute_has_contract_documents',
+        store=False,
+    )
     contrato_mimetype = fields.Char(
         string='Tipo MIME',
         compute='_compute_contrato_mimetype',
@@ -249,6 +279,11 @@ class CustomerContract(models.Model):
             record.contrato_is_image  = mime in ('image/jpeg', 'image/png', 'image/jpg')
             record.contrato_is_pdf    = mime == 'application/pdf'
 
+    @api.depends('contrato', 'contract_attachment_ids')
+    def _compute_has_contract_documents(self):
+        for record in self:
+            record.has_contract_documents = bool(record.contrato or record.contract_attachment_ids)
+
     @api.depends('end_date', 'termination_date')
     def _compute_effective_end_date(self):
         for rec in self:
@@ -286,16 +321,27 @@ class CustomerContract(models.Model):
             self.location_link = self.partner_id.ubicacion or ''
             self.coordinates   = self.partner_id.coordenadas or ''
 
-    @api.onchange('contact_partner_id')
-    def _onchange_contact_partner(self):
-        if self.contact_partner_id:
-            self.billing_name  = self.contact_partner_id.name  or ''
-            self.billing_phone = self.contact_partner_id.phone or ''
-            self.billing_ci    = self.contact_partner_id.ci    or ''
+            # Para empresas, facturación debe ser manual.
+            if self.partner_id.is_company:
+                self.billing_responsible_type = 'other'
+
+        if self.billing_responsible_type == 'client' and self.partner_id and not self.partner_id.is_company:
+            self._fill_billing_from_contract_snapshot()
+
+    @api.onchange('contact_name', 'mobile', 'phone', 'ci')
+    def _onchange_contract_billing_source_fields(self):
+        if self.billing_responsible_type == 'client' and self.customer_type != 'company':
+            self._fill_billing_from_contract_snapshot()
+
+    @api.onchange('billing_responsible_type')
+    def _onchange_billing_responsible_type(self):
+        if self.billing_responsible_type == 'client':
+            if self.customer_type == 'company':
+                self.billing_responsible_type = 'other'
+            else:
+                self._fill_billing_from_contract_snapshot()
         else:
-            self.billing_name  = ''
-            self.billing_phone = ''
-            self.billing_ci    = ''
+            self._clear_billing_fields()
 
     # =========================================================
     # OVERRIDE CREATE / WRITE
@@ -304,11 +350,28 @@ class CustomerContract(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'Nuevo') == 'Nuevo':
-                seq_name = self.env['ir.sequence'].next_by_code('customer.contract') or 'CF-00001'
-                vals['name'] = self._normalize_contract_code(seq_name)
+                vals['name'] = self._next_unique_contract_code()
             self._prefill_partner_fields(vals)
-            self._prefill_contact_fields(vals)
+            self._prefill_billing_fields(vals)
         return super().create(vals_list)
+
+    @api.model
+    def _next_unique_contract_code(self):
+        """Genera un código CF único incluso si la secuencia fue reiniciada."""
+        for _attempt in range(50):
+            seq_name = self.env['ir.sequence'].next_by_code('customer.contract') or 'CF-00001'
+            candidate = self._normalize_contract_code(seq_name)
+            if not self.search_count([('name', '=', candidate)]):
+                return candidate
+
+        # Fallback defensivo: calcular siguiente número desde contratos existentes.
+        max_num = 0
+        existing = self.search([('name', 'like', 'CF-%')])
+        for rec in existing:
+            match = re.search(r'(\d+)$', rec.name or '')
+            if match:
+                max_num = max(max_num, int(match.group(1)))
+        return f"CF-{max_num + 1:05d}"
 
     @api.model
     def _normalize_contract_code(self, code):
@@ -321,9 +384,19 @@ class CustomerContract(models.Model):
     def write(self, vals):
         if 'partner_id' in vals:
             self._prefill_partner_fields(vals)
-        if 'contact_partner_id' in vals:
-            self._prefill_contact_fields(vals)
-        return super().write(vals)
+        billing_sync_needed = any(field in vals for field in ('billing_responsible_type', 'partner_id'))
+        result = super().write(vals)
+
+        if billing_sync_needed and not self.env.context.get('skip_billing_sync'):
+            for record in self:
+                if record.billing_responsible_type == 'client' and record.partner_id:
+                    record.with_context(skip_billing_sync=True).write({
+                        'billing_name': record.contact_name or record.partner_id.name or '',
+                        'billing_phone': record.mobile or record.phone or _get_partner_mobile(record.partner_id),
+                        'billing_ci': record.ci or record.partner_id.ci or '',
+                    })
+
+        return result
 
     def _prefill_partner_fields(self, vals):
         partner_id = vals.get('partner_id')
@@ -342,15 +415,42 @@ class CustomerContract(models.Model):
 
     def _prefill_contact_fields(self, vals):
         contact_id = vals.get('contact_partner_id')
-        if not contact_id:
-            vals.setdefault('billing_name',  '')
-            vals.setdefault('billing_phone', '')
-            vals.setdefault('billing_ci',    '')
+        if not contact_id or vals.get('billing_responsible_type', 'client') == 'client':
             return
         contact = self.env['res.partner'].browse(contact_id)
         vals.setdefault('billing_name',  contact.name  or '')
         vals.setdefault('billing_phone', contact.phone or '')
         vals.setdefault('billing_ci',    contact.ci    or '')
+
+    def _prefill_billing_fields(self, vals):
+        billing_type = vals.get('billing_responsible_type', 'client')
+
+        if billing_type == 'client':
+            partner_id = vals.get('partner_id')
+            if partner_id:
+                partner = self.env['res.partner'].browse(partner_id)
+                vals.setdefault('billing_name', vals.get('contact_name') or partner.name or '')
+                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or _get_partner_mobile(partner))
+                vals.setdefault('billing_ci', vals.get('ci') or partner.ci or '')
+            return
+
+    def _fill_billing_from_partner(self):
+        if self.partner_id:
+            self.billing_name = self.partner_id.name or ''
+            self.billing_phone = _get_partner_mobile(self.partner_id)
+            self.billing_ci = self.partner_id.ci or ''
+        else:
+            self._clear_billing_fields()
+
+    def _fill_billing_from_contract_snapshot(self):
+        self.billing_name = self.contact_name or (self.partner_id.name if self.partner_id else '') or ''
+        self.billing_phone = self.mobile or self.phone or (_get_partner_mobile(self.partner_id) if self.partner_id else '')
+        self.billing_ci = self.ci or (self.partner_id.ci if self.partner_id else '') or ''
+
+    def _clear_billing_fields(self):
+        self.billing_name = ''
+        self.billing_phone = ''
+        self.billing_ci = ''
 
     def name_get(self):
         result = []
@@ -492,13 +592,15 @@ class CustomerContract(models.Model):
                         "a la fecha de contrato."
                     )
 
-    @api.constrains('contrato', 'contrato_filename')
+    @api.constrains('contrato', 'contrato_filename', 'contract_attachment_ids')
     def _check_contrato_file(self):
         for record in self:
             if not record.contrato:
+                record._validate_attachment_files()
                 continue
             record._validate_file_format()
             record._validate_file_size()
+            record._validate_attachment_files()
 
     # =========================================================
     # MÉTODOS AUXILIARES DE VALIDACIÓN
@@ -528,12 +630,14 @@ class CustomerContract(models.Model):
             raise ValidationError("El CI es obligatorio para personas naturales.")
 
     def _validate_signed_fields(self):
-        if not self.contrato:
+        if not self.contrato and not self.contract_attachment_ids:
             raise ValidationError(
-                "Debe subir el archivo del contrato (PDF, JPG o PNG) "
+                "Debe subir al menos un archivo del contrato (PDF, JPG o PNG) "
                 "para registrar el contrato."
             )
-        self._validate_file_format()
+        if self.contrato:
+            self._validate_file_format()
+        self._validate_attachment_files()
 
     def _validate_active_fields(self):
         missing = []
@@ -606,6 +710,93 @@ class CustomerContract(models.Model):
                 f"El archivo supera el tamaño máximo permitido de 5 MB "
                 f"(tamaño actual: {size_mb:.2f} MB)."
             )
+
+    def _validate_attachment_files(self):
+        for attachment in self.contract_attachment_ids:
+            if attachment.type and attachment.type != 'binary':
+                raise ValidationError(
+                    f"El archivo '{attachment.name}' no es un adjunto binario válido."
+                )
+
+            filename = (attachment.name or '').strip().lower()
+            ext = os.path.splitext(filename)[1]
+            mimetype = (attachment.mimetype or '').lower()
+
+            if ext and ext not in ALLOWED_EXTENSIONS:
+                raise ValidationError(
+                    f"Formato de archivo no permitido: '{ext}'. "
+                    "Solo se aceptan archivos PDF, JPG o PNG."
+                )
+
+            if mimetype and mimetype not in ALLOWED_MIME_TYPES:
+                raise ValidationError(
+                    f"Tipo de archivo no permitido (MIME: {mimetype}). "
+                    "Solo se aceptan PDF, JPG o PNG."
+                )
+
+            if attachment.file_size and attachment.file_size > MAX_FILE_SIZE_BYTES:
+                size_mb = attachment.file_size / (1024 * 1024)
+                raise ValidationError(
+                    f"El archivo '{attachment.name}' supera el tamaño máximo permitido de 5 MB "
+                    f"(tamaño actual: {size_mb:.2f} MB)."
+                )
+
+    def _get_contrato_url(self, download=False):
+        self.ensure_one()
+        if self.contract_attachment_ids:
+            attachment = self.contract_attachment_ids.sorted('id', reverse=True)[0]
+            return (
+                f"/web/content?model=ir.attachment&id={attachment.id}"
+                f"&field=datas&filename_field=name"
+                f"&download={'true' if download else 'false'}"
+            )
+
+        if self.contrato:
+            return (
+                f"/web/content?model=customer.contract&id={self.id}"
+                f"&field=contrato&filename_field=contrato_filename"
+                f"&download={'true' if download else 'false'}"
+            )
+
+        raise UserError('No hay contrato adjunto para mostrar.')
+
+    def _get_all_contract_attachments(self):
+        self.ensure_one()
+        return self.contract_attachment_ids
+
+    def _open_attachment_selector_wizard(self, action_type='view'):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Seleccionar archivo de contrato',
+            'res_model': 'customer.contract.attachment.viewer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_contract_id': self.id,
+                'default_action_type': action_type,
+            },
+        }
+
+    def action_ver_contrato(self):
+        self.ensure_one()
+        if len(self._get_all_contract_attachments()) > 1:
+            return self._open_attachment_selector_wizard(action_type='view')
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self._get_contrato_url(download=False),
+            'target': 'new',
+        }
+
+    def action_descargar_contrato(self):
+        self.ensure_one()
+        if len(self._get_all_contract_attachments()) > 1:
+            return self._open_attachment_selector_wizard(action_type='download')
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self._get_contrato_url(download=True),
+            'target': 'self',
+        }
 
     # =========================================================
     # GESTIÓN DE ESTADOS (BOTONES)
@@ -700,3 +891,58 @@ class CustomerContractPlanWizard(models.TransientModel):
             new_plan_id=self.new_plan_id.id,
             note=self.note or '',
         )
+
+
+class CustomerContractAttachmentViewerWizard(models.TransientModel):
+    _name = 'customer.contract.attachment.viewer.wizard'
+    _description = 'Seleccionar adjunto de contrato'
+
+    contract_id = fields.Many2one(
+        'customer.contract',
+        string='Contrato',
+        required=True,
+        readonly=True,
+    )
+    action_type = fields.Selection(
+        [
+            ('view', 'Ver en grande'),
+            ('download', 'Descargar'),
+        ],
+        string='Acción',
+        required=True,
+        default='view',
+        readonly=True,
+    )
+    available_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        compute='_compute_available_attachment_ids',
+        string='Adjuntos disponibles',
+    )
+    attachment_id = fields.Many2one(
+        'ir.attachment',
+        string='Archivo',
+        required=True,
+        domain="[('id', 'in', available_attachment_ids)]",
+    )
+
+    @api.depends('contract_id')
+    def _compute_available_attachment_ids(self):
+        for rec in self:
+            rec.available_attachment_ids = rec.contract_id._get_all_contract_attachments()
+            if not rec.attachment_id and rec.available_attachment_ids:
+                rec.attachment_id = rec.available_attachment_ids.sorted('id', reverse=True)[0]
+
+    def action_confirm(self):
+        self.ensure_one()
+        if not self.attachment_id:
+            raise UserError('Debes seleccionar un archivo.')
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (
+                f"/web/content?model=ir.attachment&id={self.attachment_id.id}"
+                f"&field=datas&filename_field=name"
+                f"&download={'true' if self.action_type == 'download' else 'false'}"
+            ),
+            'target': 'self' if self.action_type == 'download' else 'new',
+        }

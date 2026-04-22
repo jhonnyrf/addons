@@ -22,3 +22,4 @@ access_generate_subinterfaces_wizard,access_generate_subinterfaces_wizard,model_
 access_generic_confirm_wizard,access_generic_confirm_wizard,model_wigo_generic_confirm_wizard,base.group_user,1,1,1,1
 access_ftth_brand_user,wigo.ftth.brand user,model_wigo_ftth_brand,base.group_user,1,1,1,1
 access_ftth_model_user,wigo.ftth.model user,model_wigo_ftth_model,base.group_user,1,1,1,1
+access_cancel_work_order_wizard,access_cancel_work_order_wizard,model_wigo_ftth_cancel_work_order_wizard,base.group_user,1,1,1,1

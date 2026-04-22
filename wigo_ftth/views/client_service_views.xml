@@ -49,22 +49,22 @@
                     <div class="oe_title">
                         <label for="codigo_cliente" string="Código de cliente"/>
                         <h1>
-                            <field name="codigo_cliente"/>
+                            <field name="codigo_cliente" readonly="1"/>
                         </h1>
                     </div>
 
                     <!-- RESUMEN (arriba: lectura rápida, menos scroll) -->
                     <group col="4">
                         <group string="Cliente / Servicio" colspan="2">
-                            <field name="partner_id"/>
-                            <field name="plan_id"/>
-                            <field name="servicio"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="plan_id" readonly="1"/>
+                            <field name="servicio" readonly="1"/>
                         </group>
 
                         <group string="Operación" colspan="2">
-                            <field name="fecha_instalacion"/>
+                            <field name="fecha_instalacion" readonly="1"/>
                             <field name="fecha_baja" invisible="estado_servicio not in ['baja','cancelado']"/>
-                            <field name="installer_id"/>
+                            <field name="installer_id" readonly="1"/>
                         </group>
                     </group>
 
@@ -79,7 +79,7 @@
                                 </group>
 
                                 <group string="Ubicación" colspan="2">
-                                    <field name="link_ubicacion" widget="url"/>
+                                    <field name="link_ubicacion" widget="url" readonly="1"/>
                                 </group>
                             </group>
 
@@ -91,9 +91,23 @@
                         </page>
 
                         <page string="Equipo ONU" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
-                            <group col="2">
-                                <group>
-                                    <field name="onu_id"/>
+                            <group col="4">
+                                <group string="ONU asignada" colspan="2">
+                                    <field name="onu_id" readonly="1"/>
+                                </group>
+
+                                <group string="Detalle" colspan="2" invisible="not onu_id">
+                                    <group col="2">
+                                        <field name="onu_state" readonly="1"/>
+                                        <field name="onu_serial_number" readonly="1"/>
+                                        <field name="onu_rotulo" readonly="1"/>
+                                        <field name="onu_marca" readonly="1"/>
+                                        <field name="onu_modelo" readonly="1"/>
+                                        <field name="onu_perfil_olt" readonly="1"/>
+                                        <field name="onu_pon_sn" readonly="1"/>
+                                        <field name="onu_wifi_ssid" readonly="1"/>
+                                        <field name="onu_wifi_password" readonly="1" widget="password"/>
+                                    </group>
                                 </group>
                             </group>
                         </page>
@@ -101,18 +115,17 @@
                         <page string="Topología" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
                             <group col="4">
                                 <group string="OLT / Subinterfaz" colspan="2">
-                                    <field name="nodo_id"/>
-                                    <field name="olt_id"/>
-                                    <field name="olt_port_id"/>
-                                    <field name="subinterface_id"/>
-                                    <field name="odn_id"/>
+                                    <field name="nodo_id" readonly="1"/>
+                                    <field name="olt_id" readonly="1"/>
+                                    <field name="olt_port_id" readonly="1"/>
+                                    <field name="subinterface_id" readonly="1"/>
+                                    <field name="odn_id" readonly="1"/>
                                 </group>
 
                                 <group string="NAP" colspan="2">
-                                    <field name="box_group_id"/>
-                                    <field name="box_id"/>
-                                    <field name="box_port_id"/>
-                                    <field name="ruta" readonly="1"/>
+                                    <field name="box_group_id" readonly="1"/>
+                                    <field name="box_id" readonly="1"/>
+                                    <field name="box_port_id" readonly="1"/>                                    
                                 </group>
                             </group>
                         </page>

@@ -30,6 +30,7 @@
         'views/generate_boxes_wizard.xml',
         'views/generate_subinterfaces_wizard.xml',
         'views/generic_confirm_wizard.xml',
+        'views/cancel_work_order_wizard.xml',
         'views/onu_views.xml',
         'views/installer_views.xml',
         'views/additional_equipment_views.xml',

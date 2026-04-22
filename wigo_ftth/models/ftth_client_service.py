@@ -79,6 +79,22 @@ class FtthClientService(models.Model):
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
     )
 
+    # ── Datos de la ONU (solo lectura, related) ──────────────────
+    onu_state = fields.Selection(related='onu_id.state', string='Estado ONU', readonly=True)
+    onu_serial_number = fields.Char(related='onu_id.serial_number', string='Nº serie ONU', readonly=True)
+    onu_rotulo = fields.Char(related='onu_id.rotulo', string='Rótulo / Etiqueta', readonly=True)
+    onu_marca = fields.Char(related='onu_id.marca', string='Marca', readonly=True)
+    onu_modelo = fields.Char(related='onu_id.modelo', string='Modelo', readonly=True)
+    onu_perfil_olt = fields.Char(related='onu_id.perfil_olt', string='Perfil OLT', readonly=True)
+    onu_pon_sn = fields.Char(related='onu_id.pon_sn', string='PON S/N', readonly=True)
+    onu_wifi_ssid = fields.Char(related='onu_id.wifi_ssid', string='WiFi SSID', readonly=True)
+    onu_wifi_password = fields.Char(
+        related='onu_id.wifi_password',
+        string='WiFi Password',
+        readonly=True,
+        groups='wigo_ftth.group_ftth_tech',
+    )
+
     # ── Credenciales PPPoE / VLAN (Técnica + Manager) ────────────
     pppoe_user = fields.Char(string='Usuario PPPoE', groups='wigo_ftth.group_ftth_tech,base.group_erp_manager')
     pppoe_password = fields.Char(string='Contraseña PPPoE', groups='wigo_ftth.group_ftth_tech,base.group_erp_manager')
@@ -115,7 +131,7 @@ class FtthClientService(models.Model):
         string='Ubicación (Google Maps)',
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
     )
-    observaciones = fields.Text(
+    observaciones = fields.Html(
         string='Observaciones',
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
     )
