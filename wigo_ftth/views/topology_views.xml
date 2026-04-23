@@ -625,6 +625,7 @@
             <list string="ODN">
                 <field name="name" string="Nombre ODN"/>
                 <field name="odn_number" string="N° ODN"/>
+                <field name="node_id" string="Nodo"/>
                 <field name="olt_id" string="OLT asociada"/>
                 <field name="odf_port" string="ODF / Puerto"/>
                 <field name="active" widget="boolean_toggle"/>
@@ -662,7 +663,7 @@
 
                         <group>
                             <field name="olt_id" domain="[('has_odn', '=', False)]"/>
-                            <field name="node_name"/>
+                            <field name="node_id" readonly="1"/>
 
                             <field name="active"/>
                         </group>
@@ -718,6 +719,7 @@
                 <!-- Búsquedas rápidas -->
                 <field name="name"/>
                 <field name="odn_number"/>
+                <field name="node_id"/>
                 <field name="olt_id"/>
                 <field name="odf_port"/>
 
@@ -730,6 +732,7 @@
                 <separator/>
 
                 <!-- Filtros por relación -->
+                <filter name="filter_by_node" string="Por Nodo" domain="[]" context="{'group_by': 'node_id'}"/>
                 <filter name="filter_by_olt" string="Por OLT" domain="[]" context="{'group_by': 'olt_id'}"/>
                 <filter name="filter_by_group_count" string="Con Grupos" domain="[('box_group_ids', '!=', False)]"/>
 
@@ -737,6 +740,7 @@
 
                 <!-- SearchPanel (sidebar) -->
                 <searchpanel>
+                    <field name="node_id" string="Nodo"/>
                     <field name="olt_id" string="OLT"/>
                 </searchpanel>
 

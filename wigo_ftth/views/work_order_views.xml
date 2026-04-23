@@ -12,6 +12,8 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="customer_code"/>
+                <field name="regional_id"/>
+                <field name="installer_id"/>
 
                 <separator/>
 
@@ -32,6 +34,7 @@
                 <!-- Group By -->
                 <filter string="Agrupar por estado" name="group_by_state" context="{'group_by':'state'}"/>
                 <filter string="Agrupar por instalador" name="group_by_installer" context="{'group_by':'installer_id'}"/>
+                <filter string="Agrupar por regional" name="group_by_regional" context="{'group_by':'regional_id'}"/>
             </search>
         </field>
     </record>
@@ -48,6 +51,7 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="customer_code"/>
+                <field name="regional_id"/>
                 <field name="work_type"/>
                 <field name="state"/>
                 <field name="installer_id"/>
@@ -62,6 +66,12 @@
                         <div class="text-muted small">
                             <i class="fa fa-user me-1" title="Cliente"/>
                             <field name="partner_id"/>
+                        </div>
+
+                        <div class="small" invisible="not regional_id">
+                            <span class="badge bg-info">
+                                <field name="regional_id"/>
+                            </span>
                         </div>
 
                         <div class="small" invisible="not customer_code">
@@ -96,6 +106,7 @@
             <list string="Órdenes de Trabajo" decoration-success="state == 'active'" decoration-warning="state in ['assigned','in_field','installed']" decoration-danger="state == 'incident'" decoration-muted="state in ['deactivation_executed','cancelled']">
 
                 <field name="name"/>
+                <field name="regional_id" optional="show"/>
                 <field name="work_type" widget="badge"/>
                 <field name="partner_id"/>
                 <field name="customer_code"/>
@@ -164,7 +175,7 @@
                     <group col="4">
                         <group string="OT / Cliente" colspan="2">
                             <field name="work_type"/>
-                            <field name="contract_id" readonly="state == 'active'"/>
+                            <field name="contract_id" domain="[('state', '=', 'active')]" readonly="state == 'active'"/>
 
                             <field name="partner_id" readonly="1"/>
                             <field name="customer_code" readonly="1"/>
@@ -207,13 +218,14 @@
                                 </group>
 
                                 <group string="Ruta calculada" colspan="2">
+                                    <field name="regional_id" readonly="1" force_save="1"/>
+                                    <field name="node_id" readonly="1" force_save="1"/>
                                     <field name="olt_id" readonly="1" force_save="1"/>
                                     <field name="olt_port_id" readonly="1" force_save="1"/>
 
                                     <field name="subinterface_id" domain="[('olt_port_id','=',olt_port_id),('state','=','occupied')]" readonly="1" force_save="1"/>
 
                                     <field name="odn_id" readonly="1" force_save="1"/>
-                                    <field name="node_id" readonly="1" force_save="1"/>
                                 </group>
                             </group>
                         </page>
@@ -268,19 +280,19 @@
         </field>
     </record>
 
-    <!-- ==========================================================================
-         ACTION
-    ========================================================================== -->
-    <record id="action_ftth_work_order" model="ir.actions.act_window">
-        <field name="name">Órdenes de Trabajo</field>
-        <field name="res_model">wigo.ftth.work.order</field>
-        <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_ftth_work_order_search"/>
-        <field name="context">{'active_test': False}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">No hay órdenes de trabajo</p>
-            <p>Se crean automáticamente al ganar un lead en el CRM.</p>
-        </field>
-    </record>
+<!-- ==========================================================================
+          ACTION
+     ========================================================================== -->
+     <record id="action_ftth_work_order" model="ir.actions.act_window">
+         <field name="name">Órdenes de Trabajo</field>
+         <field name="res_model">wigo.ftth.work.order</field>
+         <field name="view_mode">list,form</field>
+         <field name="search_view_id" ref="view_ftth_work_order_search"/>
+         <field name="context">{'search_default_filter_active': 1}</field>
+         <field name="help" type="html">
+             <p class="o_view_nocontent_smiling_face">No hay órdenes de trabajo</p>
+             <p>Se crean automáticamente al ganar un lead en el CRM.</p>
+         </field>
+     </record>
 
 </odoo>

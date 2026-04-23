@@ -35,7 +35,7 @@
                     <div class="oe_title">
                         <label for="name" string="Nº de Contrato"/>
                         <h1>
-                            <field name="name" readonly="1"/>
+                            <field name="name" readonly="state not in ['draft','pending']"/>
                         </h1>
                     </div>
 

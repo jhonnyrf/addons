@@ -13,6 +13,7 @@
                 <field name="gestor_comercial"/>
                 <field name="installer_id"/>
                 <field name="fecha_instalacion"/>
+                <field name="regional_id" optional="show" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
                 <field name="nodo_id" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
                 <field name="olt_id" string="OLT" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
                 <field name="subinterface_id" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
@@ -115,6 +116,7 @@
                         <page string="Topología" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
                             <group col="4">
                                 <group string="OLT / Subinterfaz" colspan="2">
+                                    <field name="regional_id" readonly="1"/>
                                     <field name="nodo_id" readonly="1"/>
                                     <field name="olt_id" readonly="1"/>
                                     <field name="olt_port_id" readonly="1"/>
@@ -125,7 +127,7 @@
                                 <group string="NAP" colspan="2">
                                     <field name="box_group_id" readonly="1"/>
                                     <field name="box_id" readonly="1"/>
-                                    <field name="box_port_id" readonly="1"/>                                    
+                                    <field name="box_port_id" readonly="1"/>
                                 </group>
                             </group>
                         </page>
@@ -195,6 +197,7 @@
                 <field name="codigo_cliente"/>
                 <field name="partner_id"/>
                 <field name="gestor_comercial"/>
+                <field name="nodo_id"/>
                 <separator/>
                 <filter string="Activos" name="active" domain="[('estado_servicio','=','active')]"/>
                 <filter string="Suspendidos" name="suspended" domain="[('estado_servicio','=','suspended')]"/>
@@ -207,6 +210,7 @@
                 <filter string="Por instalador" name="group_instalador" context="{'group_by':'installer_id'}"/>
                 <filter string="Por gestor" name="group_gestor" context="{'group_by':'gestor_comercial'}"/>
                 <filter string="Por mes inst." name="group_mes" context="{'group_by':'fecha_instalacion:month'}"/>
+                <filter string="Por regional" name="group_regional" context="{'group_by':'regional_id'}" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
                 <filter string="Por nodo" name="group_nodo" context="{'group_by':'nodo_id'}" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
                 <filter string="Por OLT" name="group_olt" context="{'group_by':'olt_id'}" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager"/>
             </search>

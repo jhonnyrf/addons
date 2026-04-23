@@ -70,6 +70,22 @@ class FtthWorkOrder(models.Model):
     )
 
     node_id = fields.Many2one('wigo.ftth.nodo', string='Nodo')
+    regional_id = fields.Many2one(
+        'wigo.ftth.regional',
+        string='Regional',
+        compute='_compute_regional_id',
+        store=True,
+        index=True,
+        help='Regional a la que pertenece el nodo de esta orden de trabajo.'
+    )
+
+    # ==========================================================================
+    # Computed Fields
+    # ==========================================================================
+    @api.depends('node_id')
+    def _compute_regional_id(self):
+        for record in self:
+            record.regional_id = record.node_id.regional_id if record.node_id else False
 
     olt_id = fields.Many2one('wigo.ftth.olt', string='OLT', tracking=True)
 

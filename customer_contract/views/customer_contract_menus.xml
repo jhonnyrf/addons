@@ -3,7 +3,7 @@
     <!-- Menú raíz -->
     <menuitem id="menu_customer_contract_root" name="Contratos" sequence="50" web_icon="customer_contract,static/description/icon.png"/>
 
-    <!-- Acción principal: todos los contratos (todos los estados) -->
+    <!-- Acción principal: contratos activos por defecto -->
     <record id="action_customer_contract" model="ir.actions.act_window">
         <field name="name">Contratos de Clientes</field>
         <field name="res_model">customer.contract</field>
@@ -11,7 +11,7 @@
         <field name="view_id" ref="view_customer_contract_tree"/>
         <field name="search_view_id" ref="view_customer_contract_search"/>
         <field name="domain">[('state', 'in', ['draft', 'pending', 'signed', 'active', 'terminated'])]</field>
-        <field name="context">{'active_test': False}</field>
+        <field name="context">{'search_default_state_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aquí puedes ver y gestionar todos los contratos de clientes, tanto activos como históricos.

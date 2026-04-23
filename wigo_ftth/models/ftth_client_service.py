@@ -35,6 +35,14 @@ class FtthClientService(models.Model):
         string='Nodo',
         groups='wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager',
     )
+    regional_id = fields.Many2one(
+        'wigo.ftth.regional',
+        string='Regional',
+        compute='_compute_regional_id',
+        store=True,
+        index=True,
+        help='Regional a la que pertenece el nodo de esta ficha técnica.',
+    )
     olt_id = fields.Many2one(
         'wigo.ftth.olt',
         string='OLT',
@@ -150,6 +158,11 @@ class FtthClientService(models.Model):
             if r.box_port_id:
                 partes.append(f'P{r.box_port_id.numero_puerto}')
             r.ruta = ' → '.join(partes) if partes else ''
+
+    @api.depends('nodo_id')
+    def _compute_regional_id(self):
+        for record in self:
+            record.regional_id = record.nodo_id.regional_id if record.nodo_id else False
 
     def action_sync_from_work_order(self):
         """Actualizar la ficha técnica con la información que exista en la OT origen.

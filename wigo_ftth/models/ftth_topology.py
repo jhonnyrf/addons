@@ -756,20 +756,15 @@ class FtthOdn(models.Model):
         required=True,
         ondelete='restrict'
     )
-    regional_id = fields.Many2one(
-        'wigo.ftth.regional',
-        string='Regional',
-        compute='_compute_regional_id',
+    node_id = fields.Many2one(
+        'wigo.ftth.nodo',
+        string='Nodo',
+        compute='_compute_node_id',
         store=True,
         index=True,
-        help='Regional asociada a la ODN (obtenida desde la OLT).'
+        help='Nodo asociado a la ODN (obtenido desde la OLT).'
     )
-    node_name = fields.Char(
-        string='Nombre del Nodo (desde OLT)',
-        compute='_compute_node_name',
-        store=True,
-        help='Se obtiene automáticamente del nodo asociado a la OLT'
-    )
+
     odn_number = fields.Char(string='N° ODN')
 
     odf_port = fields.Char(
@@ -803,8 +798,8 @@ class FtthOdn(models.Model):
     def init(self):
         """Limpia datos históricos para evitar fallos en actualización.
 
-        - Elimina constraint SQL legado que puede romper la recomputación de `regional_id`.
-        - Normaliza `odn_number` y resuelve duplicados por regional de forma determinística.
+        - Elimina constraint SQL legado que puede romper la recomputación de `node_id`.
+        - Normaliza `odn_number` y resuelve duplicados por nodo de forma determinística.
         """
         self.env.cr.execute(
             'ALTER TABLE wigo_ftth_odn '
@@ -815,30 +810,29 @@ class FtthOdn(models.Model):
             """
             SELECT
                 o.id,
-                r.id AS regional_id,
+                n.id AS node_id,
                 o.odn_number
             FROM wigo_ftth_odn o
             LEFT JOIN wigo_ftth_olt olt ON olt.id = o.olt_id
             LEFT JOIN wigo_ftth_nodo n ON n.id = olt.node_id
-            LEFT JOIN wigo_ftth_regional r ON r.id = n.regional_id
-            ORDER BY r.id NULLS LAST, o.id
+            ORDER BY n.id NULLS LAST, o.id
             """
         )
         rows = self.env.cr.fetchall()
 
-        rows_by_regional = {}
-        for odn_id, regional_id, odn_number in rows:
-            rows_by_regional.setdefault(regional_id, []).append((odn_id, odn_number))
+        rows_by_node = {}
+        for odn_id, node_id, odn_number in rows:
+            rows_by_node.setdefault(node_id, []).append((odn_id, odn_number))
 
         updates = []
-        for regional_id, regional_rows in rows_by_regional.items():
-            if not regional_id:
+        for node_id, node_rows in rows_by_node.items():
+            if not node_id:
                 continue
 
             used_numbers = set()
             pending_ids = []
 
-            for odn_id, odn_number in regional_rows:
+            for odn_id, odn_number in node_rows:
                 text = str(odn_number).strip() if odn_number not in (False, None) else ''
                 normalized = None
                 if text.isdigit():
@@ -893,24 +887,24 @@ class FtthOdn(models.Model):
         for record in self:
             self._validate_number(record.odf_port)
 
-    @api.constrains('odn_number', 'olt_id')
-    def _check_odn_number_unique_by_regional(self):
+    @api.constrains('odn_number', 'node_id')
+    def _check_odn_number_unique_by_node(self):
         if self.env.context.get('install_mode'):
             return
 
         for record in self:
-            if not record.odn_number or not record.regional_id:
+            if not record.odn_number or not record.node_id:
                 continue
 
             normalized = self._normalize_odn_number(record.odn_number)
             duplicates = self.search([
                 ('id', '!=', record.id),
-                ('regional_id', '=', record.regional_id.id),
+                ('node_id', '=', record.node_id.id),
                 ('odn_number', '!=', False),
             ])
             if any(self._normalize_odn_number(dup.odn_number) == normalized for dup in duplicates):
                 raise ValidationError(
-                    'El N° ODN debe ser único dentro de la misma regional.'
+                    'El N° ODN debe ser único dentro del mismo nodo.'
                 )
 
     # =========================
@@ -930,15 +924,15 @@ class FtthOdn(models.Model):
         res = super().default_get(fields_list)
 
         if 'odn_number' in fields_list and not res.get('odn_number'):
-            regional_id = self._get_regional_id_from_vals(res)
-            if regional_id:
-                res['odn_number'] = self._get_next_odn_number(regional_id=regional_id)
+            node_id = self._get_node_id_from_vals(res)
+            if node_id:
+                res['odn_number'] = self._get_next_odn_number(node_id=node_id)
 
         return res
 
     @api.model_create_multi
     def create(self, vals_list):
-        next_number_by_regional = {}
+        next_number_by_node = {}
 
         for vals in vals_list:
             _logger.info(f"Creando ODN con valores: {vals}")
@@ -946,16 +940,16 @@ class FtthOdn(models.Model):
                 vals['odn_number'] = self._normalize_odn_number(vals['odn_number'])
                 continue
 
-            regional_id = self._get_regional_id_from_vals(vals)
-            if not regional_id:
+            node_id = self._get_node_id_from_vals(vals)
+            if not node_id:
                 continue
 
-            if regional_id not in next_number_by_regional:
-                next_number_by_regional[regional_id] = self._get_next_odn_number_int(regional_id)
+            if node_id not in next_number_by_node:
+                next_number_by_node[node_id] = self._get_next_odn_number_int(node_id)
 
             if not vals.get('odn_number'):
-                vals['odn_number'] = self._format_number(next_number_by_regional[regional_id])
-                next_number_by_regional[regional_id] += 1
+                vals['odn_number'] = self._format_number(next_number_by_node[node_id])
+                next_number_by_node[node_id] += 1
 
         records = super().create(vals_list)
 
@@ -984,19 +978,14 @@ class FtthOdn(models.Model):
             olt.write({'has_odn': has_odn})
 
         return res    
-   # ═════════════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════════════════════════════
     # Compute Methods
     # ═════════════════════════════════════════════════════════════════════════════
 
-    @api.depends('olt_id', 'olt_id.node_id', 'olt_id.node_id.regional_id')
-    def _compute_regional_id(self):
+    @api.depends('olt_id', 'olt_id.node_id')
+    def _compute_node_id(self):
         for record in self:
-            record.regional_id = record.olt_id.node_id.regional_id if record.olt_id else False
-
-    @api.depends('olt_id')
-    def _compute_node_name(self):
-        for record in self:
-            record.node_name = record.olt_id.node_id.display_name if record.olt_id else False
+            record.node_id = record.olt_id.node_id if record.olt_id else False
 
     # ═════════════════════════════════════════════════════════════════════════════
     # Onchange
@@ -1006,7 +995,7 @@ class FtthOdn(models.Model):
     def _onchange_olt_id(self):
         if self.olt_id:
             if not self.odn_number:
-                self.odn_number = self._get_next_odn_number(regional_id=self.olt_id.node_id.regional_id.id)
+                self.odn_number = self._get_next_odn_number(node_id=self.olt_id.node_id.id)
             if not self.name:
                 self.name = self._build_odn_name(self.odn_number)
     # =========================
@@ -1052,14 +1041,14 @@ class FtthOdn(models.Model):
          
             
                 
-    def _get_next_odn_number(self, regional_id=None):
-        next_number = self._get_next_odn_number_int(regional_id)
+    def _get_next_odn_number(self, node_id=None):
+        next_number = self._get_next_odn_number_int(node_id)
         return self._format_number(next_number)
 
-    def _get_next_odn_number_int(self, regional_id=None):
+    def _get_next_odn_number_int(self, node_id=None):
         domain = [('odn_number', '!=', False)]
-        if regional_id:
-            domain.append(('olt_id.node_id.regional_id', '=', regional_id))
+        if node_id:
+            domain.append(('node_id', '=', node_id))
 
         odns = self.search(domain)
 
@@ -1072,13 +1061,13 @@ class FtthOdn(models.Model):
         return (max(numbers) if numbers else 0) + 1
 
     @api.model
-    def _get_regional_id_from_vals(self, vals):
+    def _get_node_id_from_vals(self, vals):
         olt_id = vals.get('olt_id') or self.env.context.get('default_olt_id')
         if not olt_id:
             return False
 
         olt = self.env['wigo.ftth.olt'].browse(olt_id)
-        return olt.node_id.regional_id.id if olt and olt.node_id and olt.node_id.regional_id else False
+        return olt.node_id.id if olt and olt.node_id else False
 
     @api.model
     def _normalize_odn_number(self, number):

@@ -54,8 +54,6 @@ class CustomerContract(models.Model):
         string='Nº de Contrato',
         required=True,
         copy=False,
-        readonly=True,
-        default='Nuevo',
         tracking=True,
     )
     partner_id = fields.Many2one(
@@ -353,10 +351,17 @@ class CustomerContract(models.Model):
     # =========================================================
     # OVERRIDE CREATE / WRITE
     # =========================================================
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        if 'name' in fields_list and not res.get('name'):
+            res['name'] = self._next_unique_contract_code()
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get('name', 'Nuevo') == 'Nuevo':
+            if not vals.get('name'):
                 vals['name'] = self._next_unique_contract_code()
             self._prefill_partner_fields(vals)
             self._prefill_billing_fields(vals)
@@ -561,7 +566,7 @@ class CustomerContract(models.Model):
         if attachment_ids:
             new_contract_vals['contract_attachment_ids'] = [(6, 0, attachment_ids)]
 
-        new_contract = self.copy({
+        new_contract = self.with_context(change_plan_mode=True).copy({
             **new_contract_vals,
         })
 
@@ -647,6 +652,25 @@ class CustomerContract(models.Model):
             if duplicate:
                 raise ValidationError(
                     "Ya existe un contrato vigente con el mismo número de contrato."
+                )
+
+    @api.constrains('name')
+    def _check_contract_code_exists(self):
+        if self.env.context.get('install_mode'):
+            return
+        if self.env.context.get('change_plan_mode'):
+            return
+        for record in self:
+            if not record.name:
+                continue
+            existing = self.search([
+                ('id', '!=', record.id),
+                ('name', '=', record.name),
+            ], limit=1)
+            if existing:
+                raise ValidationError(
+                    f"El código de contrato '{record.name}' ya está en uso. "
+                    "Por favor, use otro código o déjelo vacío para generar uno automáticamente."
                 )
 
     @api.constrains('contrato', 'contrato_filename', 'contract_attachment_ids')
