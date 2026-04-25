@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PLANILLA GENERAL — list con semáforo por mes (pivot)
+    ══════════════════════════════════════════════════════════ -->
+
+    <!-- Pivot interactivo (permite ver totales por mes/estado) -->
+    <record id="view_planilla_general_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.planilla</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Planilla General de Cobros" disable_linking="False">
+                <field name="partner_id" type="row"/>
+                <field name="mes" type="col"/>
+                <field name="monto_pagado" type="measure" string="Pagado (Bs)"/>
+                <field name="monto_a_cobrar" type="measure" string="A cobrar (Bs)"/>
+                <field name="diferencia" type="measure" string="Diferencia (Bs)"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Lista semaforizadas por estado — replica el Excel de Dania -->
+    <record id="view_planilla_general_list" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.list.planilla</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <list string="Planilla de Cobros"
+                  multi_edit="1"
+                  decoration-success="estado_pago == 'al_dia'"
+                  decoration-warning="estado_pago in ['pendiente','deuda_parcial']"
+                  decoration-danger="estado_pago == 'mora'"
+                  decoration-muted="estado_pago == 'baja_definitiva'"
+                  default_order="anio desc, mes desc, codigo_cliente">
+                <field name="anio" optional="show"/>
+                <field name="mes" optional="show"/>
+                <field name="codigo_cliente"/>
+                <field name="partner_id" string="Cliente"/>
+                <field name="contract_id" optional="show"/>
+                <field name="plan_id"/>
+                <field name="monto_a_cobrar" string="A cobrar (Bs)"
+                       widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_pagado" string="Pagado (Bs)"
+                       widget="monetary" options="{'currency_field': False}"/>
+                <field name="diferencia" string="Diferencia (Bs)"
+                       widget="monetary" options="{'currency_field': False}"/>
+                <field name="fecha_pago"/>
+                <field name="canal_pago" optional="show"/>
+                <field name="comprobante" optional="show" string="Referencia"/>
+                <field name="estado_pago" widget="badge"
+                       decoration-success="estado_pago == 'al_dia'"
+                       decoration-warning="estado_pago in ['pendiente','deuda_parcial']"
+                       decoration-danger="estado_pago == 'mora'"
+                       decoration-muted="estado_pago == 'baja_definitiva'"/>
+                <field name="registrado_por" optional="hide"/>
+                <!-- Botón para ir al cliente directamente desde la planilla -->
+                <button name="action_open_partner" string="👤" type="object"
+                        title="Ver ficha del cliente"/>
+                <button name="action_registrar_pago" string="✅" type="object"
+                        title="Confirmar pago"
+                        invisible="estado_pago == 'al_dia'"/>
+                <button name="action_generar_recibo" string="🖨️" type="object"
+                        title="Generar recibo de cobro"
+                        invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search view para la planilla general -->
+    <record id="view_planilla_general_search" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.search.planilla</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <search string="Filtrar planilla">
+                <field name="partner_id" string="Cliente"/>
+                <field name="codigo_cliente" string="Código CF"/>
+                <field name="plan_id" string="Plan"/>
+                <field name="anio" string="Año"/>
+                <separator/>
+                <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
+                <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
+                <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
+                <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
+                <filter name="baja" string="Bajas" domain="[('estado_pago','=','baja_definitiva')]"/>
+                <separator/>
+                <filter name="enero" string="Enero" domain="[('mes','=','1')]"/>
+                <filter name="febrero" string="Febrero" domain="[('mes','=','2')]"/>
+                <filter name="marzo" string="Marzo" domain="[('mes','=','3')]"/>
+                <filter name="abril" string="Abril" domain="[('mes','=','4')]"/>
+                <filter name="mayo" string="Mayo" domain="[('mes','=','5')]"/>
+                <filter name="junio" string="Junio" domain="[('mes','=','6')]"/>
+                <filter name="julio" string="Julio" domain="[('mes','=','7')]"/>
+                <filter name="agosto" string="Agosto" domain="[('mes','=','8')]"/>
+                <filter name="septiembre" string="Septiembre" domain="[('mes','=','9')]"/>
+                <filter name="octubre" string="Octubre" domain="[('mes','=','10')]"/>
+                <filter name="noviembre" string="Noviembre" domain="[('mes','=','11')]"/>
+                <filter name="diciembre" string="Diciembre" domain="[('mes','=','12')]"/>
+                <separator/>
+                <filter name="anio_actual" string="Año actual"
+                        domain="[('anio','=', context_today().year)]"/>
+                <separator/>
+                <filter name="group_partner" string="Agrupar por Cliente"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_mes" string="Agrupar por Mes"
+                        context="{'group_by': 'mes'}"/>
+                <filter name="group_plan" string="Agrupar por Plan"
+                        context="{'group_by': 'plan_id'}"/>
+                <filter name="group_estado" string="Agrupar por Estado"
+                        context="{'group_by': 'estado_pago'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Acción: Planilla General -->
+    <record id="action_planilla_general" model="ir.actions.act_window">
+        <field name="name">Planilla General de Cobros</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_planilla_general_list'), 'list'),
+            (ref('wigo_cobranza.view_planilla_general_pivot'), 'pivot'),
+            (False, 'graph'),
+        ]"/>
+        <field name="search_view_id" ref="view_planilla_general_search"/>
+        <field name="context">{'search_default_anio_actual': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay registros en la planilla para el período seleccionado.
+            </p>
+            <p>La planilla se genera automáticamente el día 1 de cada mes para todos los contratos activos.</p>
+        </field>
+    </record>
+
+</odoo>

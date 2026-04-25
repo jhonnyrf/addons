@@ -617,7 +617,8 @@ class WigoPagoEstado(models.Model):
     # Business logic
     # ─────────────────────────────────────────────────────────────
     def action_registrar_pago(self):
-        """Marcar como pagado y notificar a técnica si había suspensión pendiente."""
+        """Marcar como pagado, notificar a técnica si había suspensión pendiente
+        y abrir automáticamente el recibo de cobro como popup."""
         for rec in self:
             if not rec.monto_pagado or not rec.fecha_pago:
                 raise ValidationError(
@@ -648,6 +649,24 @@ class WigoPagoEstado(models.Model):
                 body=f"Pago de Bs. {rec.monto_pagado:.2f} registrado vía {dict(rec._fields['canal_pago'].selection).get(rec.canal_pago, '')}."
             )
         self._recompute_contract_mora()
+
+        # ── Abrir recibo automáticamente como popup ──────────────────
+        self.ensure_one()
+        Recibo = self.env['wigo.recibo.cobro']
+        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
+        if not recibo:
+            recibo = Recibo.create({'pago_id': self.id})
+        if recibo.state == 'borrador':
+            recibo.action_emitir()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Recibo — {self.display_name}',
+            'res_model': 'wigo.recibo.cobro',
+            'view_mode': 'form',
+            'res_id': recibo.id,
+            'target': 'new',
+            'context': {'dialog_size': 'large'},
+        }
 
     def _recompute_contract_mora(self):
         """
@@ -753,6 +772,80 @@ class WigoPagoEstado(models.Model):
             'type': 'ir.actions.act_url',
             'url': self._get_comprobante_url(download=True),
             'target': 'self',
+        }
+
+
+    # ─────────────────────────────────────────────────────────────
+    # Recibo de cobro
+    # ─────────────────────────────────────────────────────────────
+    def action_generar_recibo(self):
+        """Crea o abre el recibo de cobro para este pago."""
+        self.ensure_one()
+        if self.estado_pago not in ('al_dia', 'deuda_parcial'):
+            raise UserError(
+                'Solo se puede generar recibo para pagos confirmados (Al día o Deuda parcial).'
+            )
+        Recibo = self.env['wigo.recibo.cobro']
+        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
+        if not recibo:
+            recibo = Recibo.create({'pago_id': self.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Recibo — {self.display_name}',
+            'res_model': 'wigo.recibo.cobro',
+            'view_mode': 'form',
+            'res_id': recibo.id,
+            'target': 'new',
+        }
+
+    def action_imprimir_recibo(self):
+        """Genera e imprime el recibo PDF directamente."""
+        self.ensure_one()
+        Recibo = self.env['wigo.recibo.cobro']
+        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
+        if not recibo:
+            recibo = Recibo.create({'pago_id': self.id})
+        return recibo.action_imprimir()
+
+    # ─────────────────────────────────────────────────────────────
+    # Facturación
+    # ─────────────────────────────────────────────────────────────
+    def action_registrar_factura(self):
+        """Abre un formulario para registrar la factura vinculada a este pago."""
+        self.ensure_one()
+        Factura = self.env['wigo.factura.cobranza']
+        factura = Factura.search([('pago_id', '=', self.id)], limit=1)
+        ctx = {
+            'default_pago_id': self.id,
+            'default_partner_id': self.partner_id.id,
+            'default_contract_id': self.contract_id.id if self.contract_id else False,
+            'default_monto_total': self.monto_pagado,
+            'default_periodo_facturado': self.periodo,
+            'default_fecha_emision': str(self.fecha_pago or fields.Date.context_today(self)),
+        }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Factura — {self.display_name}',
+            'res_model': 'wigo.factura.cobranza',
+            'view_mode': 'form',
+            'res_id': factura.id if factura else False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+    # ─────────────────────────────────────────────────────────────
+    # Navegación desde planilla al cliente
+    # ─────────────────────────────────────────────────────────────
+    def action_open_partner(self):
+        """Navega a la ficha del cliente desde la planilla."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.partner_id.name,
+            'res_model': 'res.partner',
+            'view_mode': 'form',
+            'res_id': self.partner_id.id,
+            'target': 'current',
         }
 
     # ─────────────────────────────────────────────────────────────

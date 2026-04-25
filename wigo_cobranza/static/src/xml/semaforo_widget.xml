@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="wigo_cobranza.SemaforoWidget">
+        <div class="o_field_widget o_semaforo_pago" t-att-style="'display:inline-flex; align-items:center; gap:8px; padding:4px 10px 4px 6px; border-radius:20px; border:1px solid ' + config.border + '; background:' + config.bg + '; font-size:13px; font-weight:600; color:' + config.textColor + '; white-space:nowrap;'">
+            <!-- Círculo de color con glow -->
+            <span t-att-style="'display:inline-block; width:14px; height:14px; border-radius:50%; background:' + config.color + '; box-shadow:' + config.glow + '; flex-shrink:0;'"/>
+            <!-- Texto del estado -->
+            <span t-esc="config.label"/>
+        </div>
+    </t>
+
+</templates>

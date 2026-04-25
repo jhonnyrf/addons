@@ -618,6 +618,13 @@ class CrmLead(models.Model):
         help="Pega las coordenadas de ubicacion (latitud, longitud).",
     )
 
+    telefono_contacto = fields.Char(
+        string="Teléfono",
+        compute='_compute_telefono_contacto',
+        inverse='_inverse_telefono_contacto',
+        readonly=False,
+    )
+
     plan_id = fields.Many2one(
         'internet.plan',
         string="Plan contratado",
@@ -650,6 +657,24 @@ class CrmLead(models.Model):
         related='contract_id.plan_id',
         string="Plan (contrato)",
         store=True,
+    )
+
+    stage_show_button_won = fields.Boolean(
+        related='stage_id.show_button_won',
+        string="Mostrar botón ganado",
+        readonly=True,
+    )
+
+    stage_show_button_lost = fields.Boolean(
+        related='stage_id.show_button_lost',
+        string="Mostrar botón perdido",
+        readonly=True,
+    )
+
+    stage_show_button_new_contract = fields.Boolean(
+        related='stage_id.show_button_new_contract',
+        string="Mostrar botón nuevo contrato",
+        readonly=True,
     )
 
     contract_date = fields.Date(
@@ -691,6 +716,32 @@ class CrmLead(models.Model):
             if not zone:
                 zone = Zone.create({'name': value})
             lead.zona_id = zone
+
+    @api.depends('partner_id')
+    def _compute_telefono_contacto(self):
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                lead.telefono_contacto = False
+                continue
+            if 'celular' in partner._fields:
+                lead.telefono_contacto = partner.celular or False
+            else:
+                lead.telefono_contacto = partner.phone or False
+
+    def _inverse_telefono_contacto(self):
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                continue
+            if 'celular' in partner._fields:
+                partner.with_context(skip_partner_to_lead_sync=True).write({
+                    'celular': lead.telefono_contacto or False,
+                })
+            else:
+                partner.with_context(skip_partner_to_lead_sync=True).write({
+                    'phone': lead.telefono_contacto or False,
+                })
 
     def _inverse_zona_id(self):
         for lead in self:

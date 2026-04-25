@@ -109,9 +109,13 @@
             <xpath expr="//field[@name='state_id']" position="replace"/>
             <xpath expr="//field[@name='zip']" position="replace"/>
             <xpath expr="//field[@name='country_id']" position="replace"/>
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="string">Celular</attribute>
+                <attribute name="placeholder">Celular</attribute>
+            </xpath>
             <xpath expr="//group[.//field[@name='street']]" position="before">
                 <group col="2">
-                    <field name="celular" string="Celular" placeholder="Celular" invisible="is_company"/>
+                    <field name="celular" string="Teléfono" placeholder="Teléfono" invisible="is_company"/>
                     <field name="ci" string="CI" placeholder="CI" invisible="company_type != 'person'"/>
                 </group>
                 <group string="Dirección" col="2" invisible="is_company">

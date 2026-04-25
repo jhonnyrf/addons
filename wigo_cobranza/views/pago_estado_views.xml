@@ -22,7 +22,7 @@
                 <field name="diferencia" string="Diferencia (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="fecha_pago"/>
                 <field name="canal_pago" optional="show"/>
-                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
+                <field name="estado_pago" widget="semaforo_pago" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
                 <field name="registrado_por" optional="hide"/>
             </list>
         </field>
@@ -40,6 +40,9 @@
                     <button name="action_registrar_pago" string="✅ Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
                     <button name="action_marcar_mora" string="🔴 Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
                     <button name="action_instruir_baja" string="⛔ Instruir Baja" type="object" class="btn-danger" invisible="estado_pago == 'baja_definitiva'" confirm="¿Confirma instruir la BAJA DEFINITIVA del cliente? Se notificará al área técnica."/>
+                    <button name="action_generar_recibo" string="🧾 Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+                    <button name="action_imprimir_recibo" string="🖨️ Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+                    <button name="action_registrar_factura" string="📄 Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
                     <button name="action_open_contract_crm" string="📌 Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
                 </header>
@@ -119,7 +122,7 @@
 
                     <!-- Solo lectura para Comercial y Técnica -->
                     <group string="Estado de pago" col="2">
-                        <field name="estado_pago" readonly="1"/>
+                        <field name="estado_pago" widget="semaforo_pago" readonly="1" string="Estado de pago"/>
                     </group>
 
                     <field name="notas" string="Notas de cobranza" placeholder="Observaciones internas sobre este cobro..."/>

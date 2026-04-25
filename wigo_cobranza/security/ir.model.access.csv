@@ -4,3 +4,12 @@ access_pago_estado_contabilidad,wigo.pago.estado contabilidad,model_wigo_pago_es
 access_pago_estado_readonly,wigo.pago.estado readonly,model_wigo_pago_estado,wigo_cobranza.group_cobranza_readonly,1,0,0,0
 access_pago_estado_admin,wigo.pago.estado admin,model_wigo_pago_estado,base.group_system,1,1,1,1
 access_pago_estado_user,wigo.pago.estado user,model_wigo_pago_estado,base.group_user,1,1,1,1
+access_recibo_cobro_cobranza,wigo.recibo.cobro cobranza,model_wigo_recibo_cobro,wigo_cobranza.group_cobranza,1,1,1,1
+access_recibo_cobro_contabilidad,wigo.recibo.cobro contabilidad,model_wigo_recibo_cobro,wigo_cobranza.group_contabilidad,1,1,1,1
+access_recibo_cobro_user,wigo.recibo.cobro user,model_wigo_recibo_cobro,base.group_user,1,1,1,0
+access_incobrable_cobranza,wigo.incobrable cobranza,model_wigo_incobrable,wigo_cobranza.group_cobranza,1,1,1,0
+access_incobrable_contabilidad,wigo.incobrable contabilidad,model_wigo_incobrable,wigo_cobranza.group_contabilidad,1,1,1,1
+access_incobrable_user,wigo.incobrable user,model_wigo_incobrable,base.group_user,1,0,0,0
+access_factura_cobranza_cobranza,wigo.factura.cobranza cobranza,model_wigo_factura_cobranza,wigo_cobranza.group_cobranza,1,1,1,0
+access_factura_cobranza_contabilidad,wigo.factura.cobranza contabilidad,model_wigo_factura_cobranza,wigo_cobranza.group_contabilidad,1,1,1,1
+access_factura_cobranza_user,wigo.factura.cobranza user,model_wigo_factura_cobranza,base.group_user,1,0,0,0

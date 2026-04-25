@@ -20,7 +20,7 @@
 
             <!-- 2. Semáforo de estado de pago visible junto al estado del servicio -->
             <field name="estado_servicio" position="after">
-                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" readonly="1" string="Estado de pago"/>
+                <field name="estado_pago" widget="semaforo_pago" readonly="1" string="Estado de pago"/>
             </field>
 
             <!-- 3. Información de prorrateo en grupo datos del servicio -->
@@ -36,7 +36,7 @@
                     <group>
                         <group string="Estado de pago" col="2">
                             <group>
-                                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" readonly="1"/>
+                                <field name="estado_pago" widget="semaforo_pago" readonly="1"/>
                                 <field name="ultimo_pago_fecha" readonly="1"/>
                             </group>
                             <group>

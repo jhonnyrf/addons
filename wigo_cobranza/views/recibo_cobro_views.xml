@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         LIST VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_recibo_cobro_list" model="ir.ui.view">
+        <field name="name">wigo.recibo.cobro.list</field>
+        <field name="model">wigo.recibo.cobro</field>
+        <field name="arch" type="xml">
+            <list string="Recibos de Cobro"
+                  decoration-success="state == 'emitido'"
+                  decoration-muted="state == 'anulado'"
+                  decoration-warning="state == 'borrador'">
+                <field name="numero"/>
+                <field name="partner_id"/>
+                <field name="codigo_cliente"/>
+                <field name="periodo"/>
+                <field name="monto" widget="monetary" options="{'currency_field': False}"/>
+                <field name="canal_pago" optional="show"/>
+                <field name="fecha_pago"/>
+                <field name="registrado_por" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'emitido'"
+                       decoration-warning="state == 'borrador'"
+                       decoration-danger="state == 'anulado'"/>
+                <button name="action_imprimir" string="🖨️ Imprimir" type="object"
+                        invisible="state == 'anulado'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         FORM VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_recibo_cobro_form" model="ir.ui.view">
+        <field name="name">wigo.recibo.cobro.form</field>
+        <field name="model">wigo.recibo.cobro</field>
+        <field name="arch" type="xml">
+            <form string="Recibo de Cobro">
+                <header>
+                    <button name="action_emitir" string="✅ Emitir Recibo" type="object"
+                            class="btn-primary" invisible="state != 'borrador'"/>
+                    <button name="action_imprimir" string="🖨️ Imprimir PDF" type="object"
+                            class="btn-primary" invisible="state == 'anulado'"/>
+                    <button name="action_anular" string="❌ Anular" type="object"
+                            class="btn-danger" invisible="state == 'anulado'"
+                            confirm="¿Confirma anular este recibo?"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,emitido,anulado"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Emitido" bg_color="text-bg-success"
+                            invisible="state != 'emitido'"/>
+                    <widget name="web_ribbon" title="Anulado" bg_color="text-bg-danger"
+                            invisible="state != 'anulado'"/>
+
+                    <div class="oe_title">
+                        <label for="numero"/>
+                        <h1><field name="numero" readonly="1"/></h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="Datos del pago">
+                            <field name="pago_id" options="{'no_create': True}"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="codigo_cliente" readonly="1"/>
+                            <field name="periodo" readonly="1"/>
+                            <field name="fecha_pago" readonly="1"/>
+                        </group>
+                        <group string="Monto y canal">
+                            <field name="monto" readonly="1"
+                                   widget="monetary" options="{'currency_field': False}"/>
+                            <field name="canal_pago" readonly="1"/>
+                            <field name="monto_en_letras" readonly="1"/>
+                            <field name="descripcion"/>
+                            <field name="registrado_por" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SEARCH VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_recibo_cobro_search" model="ir.ui.view">
+        <field name="name">wigo.recibo.cobro.search</field>
+        <field name="model">wigo.recibo.cobro</field>
+        <field name="arch" type="xml">
+            <search string="Buscar recibos">
+                <field name="numero"/>
+                <field name="partner_id" string="Cliente"/>
+                <field name="codigo_cliente"/>
+                <field name="periodo"/>
+                <separator/>
+                <filter name="emitidos" string="Emitidos" domain="[('state','=','emitido')]"/>
+                <filter name="borradores" string="Borradores" domain="[('state','=','borrador')]"/>
+                <filter name="anulados" string="Anulados" domain="[('state','=','anulado')]"/>
+                <separator/>
+                <filter name="mes_actual" string="Mes actual"
+                        domain="[('fecha_pago','&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="group_partner" string="Agrupar por Cliente"
+                        context="{'group_by': 'partner_id'}"/>
+                <filter name="group_periodo" string="Agrupar por Período"
+                        context="{'group_by': 'periodo'}"/>
+                <filter name="group_canal" string="Agrupar por Canal"
+                        context="{'group_by': 'canal_pago'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ACTION
+    ══════════════════════════════════════════════════════════ -->
+    <record id="action_recibo_cobro" model="ir.actions.act_window">
+        <field name="name">Recibos de Cobro</field>
+        <field name="res_model">wigo.recibo.cobro</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_recibo_cobro_search"/>
+        <field name="context">{'search_default_emitidos': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay recibos generados aún.
+            </p>
+            <p>Los recibos se generan desde el formulario de pago del cliente.</p>
+        </field>
+    </record>
+
+</odoo>

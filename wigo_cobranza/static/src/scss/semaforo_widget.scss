@@ -1,0 +1,15 @@
+// Semáforo de estado de pago — estilos adicionales
+.o_semaforo_pago {
+    transition: box-shadow 0.2s, background 0.2s;
+    cursor: default;
+    user-select: none;
+
+    &:hover {
+        filter: brightness(0.97);
+    }
+
+    // En lista: evitar desbordamiento en celdas angostas
+    .o_list_view & {
+        max-width: 160px;
+    }
+}

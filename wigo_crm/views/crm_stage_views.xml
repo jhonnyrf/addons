@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Vista de formulario para crm.stage con configuración de botones -->
+        <record id="view_crm_stage_form_buttons_config" model="ir.ui.view">
+            <field name="name">crm.stage.form.buttons.config</field>
+            <field name="model">crm.stage</field>
+            <field name="inherit_id" ref="crm.crm_stage_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='requirements']" position="after">
+                    <separator string="Configuración de Botones" colspan="2"/>
+                    <group>
+                        <field name="show_button_won"/>
+                        <field name="show_button_lost"/>
+                        <field name="show_button_new_contract"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -20,6 +20,7 @@
                 <field name="contract_id"/>
                 <field name="contract_name"/>
                 <field name="contract_plan_id"/>
+                <field name="stage_id"/>
             </xpath>
 
             <!-- Muestra zona, codigo de cliente y plan en la tarjeta del lead. -->

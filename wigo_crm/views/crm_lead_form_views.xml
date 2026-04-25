@@ -6,9 +6,26 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
-            <!-- Boton manual para crear contrato junto a Ganado/Perdido en la cabecera. -->
+            <!-- Carga los flags de configuración del stage para usarlos en los botones del formulario. -->
+            <xpath expr="//form" position="inside">
+                <field name="stage_show_button_won" invisible="1"/>
+                <field name="stage_show_button_lost" invisible="1"/>
+                <field name="stage_show_button_new_contract" invisible="1"/>
+            </xpath>
+
+            <!-- Oculta o muestra los botones de cabecera según la configuración de la etapa. -->
+            <xpath expr="//button[@name='action_set_won_rainbowman']" position="attributes">
+                <attribute name="invisible">won_status != 'won' or not stage_show_button_won</attribute>
+            </xpath>
+
+            <!-- Oculta el boton base de perdido según la configuración de la etapa. -->
+            <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="attributes">
+                <attribute name="invisible">won_status == 'lost' or not stage_show_button_lost</attribute>
+            </xpath>
+
+            <!-- Boton para crear contrato desde la cabecera. -->
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
-                <button name="action_create_contract" type="object" string="Nuevo Contrato" class="btn-primary" invisible="won_status != 'won' or contract_id or not partner_id or not plan_id"/>
+                <button name="action_create_contract" type="object" string="Nuevo Contrato" class="btn-primary" invisible="not stage_show_button_new_contract or contract_id or not partner_id or not plan_id"/>
             </xpath>
 
             <!-- Agrega boton estadistico para abrir contrato y mostrar cantidad asociada. -->
@@ -41,6 +58,17 @@
             <!-- Renombra el campo partner_id a Usuario en la UI. -->
             <xpath expr="//field[@name='partner_id']" position="attributes">
                 <attribute name="string">Usuario</attribute>
+            </xpath>
+
+            <!-- En CRM, el campo base phone se muestra como Celular. -->
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="string">Celular</attribute>
+                <attribute name="placeholder">Celular</attribute>
+            </xpath>
+
+            <!-- Muestra Teléfono fijo recuperado desde Contactos (campo custom celular). -->
+            <xpath expr="//field[@name='phone']/.." position="after">
+                <field name="telefono_contacto" string="Teléfono" placeholder="Teléfono"/>
             </xpath>
 
             <!-- Inserta secciones propias de Wigo despues del primer grupo del formulario base. -->

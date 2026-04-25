@@ -26,6 +26,26 @@
 
      <menuitem id="menu_cobranza_suspender_hoy" name="⚠️ Suspender Hoy" parent="menu_cobranza_gestion" action="wigo_cobranza.action_suspender_hoy" sequence="50"/>
 
+
+     <!-- ─── Planilla General ─────────────────────────────── -->
+     <menuitem id="menu_planilla_general" name="📊 Planilla General" parent="menu_cobranza_gestion"
+               action="wigo_cobranza.action_planilla_general" sequence="15"/>
+
+     <!-- ─── Recibos ─────────────────────────────────────── -->
+     <menuitem id="menu_recibos" name="Recibos de Cobro" parent="menu_cobranza_gestion"
+               action="wigo_cobranza.action_recibo_cobro" sequence="35"/>
+
+     <!-- ─── Facturación ─────────────────────────────────── -->
+     <menuitem id="menu_facturacion" name="Facturación" parent="menu_cobranza_gestion"
+               action="wigo_cobranza.action_factura_cobranza" sequence="45"/>
+
+     <!-- ─── Incobrables ─────────────────────────────────── -->
+     <menuitem id="menu_incobrables_gestion" name="⚠️ Incobrables" parent="menu_cobranza_gestion"
+               action="wigo_cobranza.action_incobrable" sequence="55"/>
+
+     <menuitem id="menu_baja_incobrable" name="Baja - Incobrables" parent="menu_cobranza_gestion"
+               action="wigo_cobranza.action_incobrable_baja" sequence="60"/>
+
      <!-- ─── Reportes ─────────────────────────────────────────── -->
      <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>
 

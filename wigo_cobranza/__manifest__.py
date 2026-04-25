@@ -24,12 +24,28 @@
         'security/security.xml',
         'security/ir.model.access.csv',
         'data/cron.xml',
+        'data/sequences.xml',
+        'reports/report_recibo_cobro.xml',
         'views/pago_estado_views.xml',
         'views/pago_estado_contract_workspace_views.xml',
         'views/client_service_cobranza_views.xml',
         'views/customer_contract_cobranza_views.xml',
         'views/res_partner_cobranza_views.xml',
         'views/reporte_mora_views.xml',
+        'views/recibo_cobro_views.xml',
+        'views/incobrable_views.xml',
+        'views/factura_cobranza_views.xml',
+        'views/planilla_general_views.xml',
         'views/menu.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'wigo_cobranza/static/src/js/semaforo_widget.js',
+            'wigo_cobranza/static/src/xml/semaforo_widget.xml',
+            'wigo_cobranza/static/src/scss/semaforo_widget.scss',
+        ],
+    },
+    'external_dependencies': {
+        'python': ['num2words'],
+    },
 }
