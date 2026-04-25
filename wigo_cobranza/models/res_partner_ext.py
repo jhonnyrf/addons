@@ -102,3 +102,50 @@ class ResPartnerCobranza(models.Model):
             'res_id': self.id,
             'target': 'current',
         }
+
+    def action_registrar_factura_desde_cliente(self):
+        """Abrir formulario de nueva factura pre-cargada con datos del cliente."""
+        self.ensure_one()
+        contract = self.contract_ids.filtered(
+            lambda c: c.state == 'active' and not c.is_superseded
+        )[:1]
+        ctx = {
+            'default_partner_id': self.id,
+            'default_razon_social': self.name,
+            'default_nit_ci': getattr(self, 'cobranza_ci', '') or getattr(self, 'vat', '') or '',
+        }
+        if contract:
+            ctx['default_contract_id'] = contract.id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Nueva Factura — {self.name}',
+            'res_model': 'wigo.factura.cobranza',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': ctx,
+        }
+
+    def action_registrar_incobrable_desde_cliente(self):
+        """Abrir formulario de incobrable pre-cargado con datos del cliente."""
+        self.ensure_one()
+        contract = self.contract_ids.filtered(
+            lambda c: not c.is_superseded
+        )[:1]
+        svc = self.env['wigo.ftth.client.service'].search(
+            [('partner_id', '=', self.id)], limit=1
+        )
+        ctx = {
+            'default_partner_id': self.id,
+        }
+        if contract:
+            ctx['default_contract_id'] = contract.id
+        if svc:
+            ctx['default_client_service_id'] = svc.id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Declarar Incobrable — {self.name}',
+            'res_model': 'wigo.incobrable',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': ctx,
+        }

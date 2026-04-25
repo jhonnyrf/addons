@@ -33,6 +33,7 @@
         'views/res_partner_cobranza_views.xml',
         'views/reporte_mora_views.xml',
         'views/recibo_cobro_views.xml',
+        'views/recibo_config_views.xml',
         'views/incobrable_views.xml',
         'views/factura_cobranza_views.xml',
         'views/planilla_general_views.xml',

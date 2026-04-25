@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_recibo_config_form" model="ir.ui.view">
+        <field name="name">wigo.recibo.config.form</field>
+        <field name="model">wigo.recibo.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuración del Recibo">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>⚙️ Configuración del Recibo de Cobro</h1>
+                        <p class="text-muted">Personaliza el logo, datos de empresa y firma que aparecen en el PDF del recibo.</p>
+                    </div>
+
+                    <group string="🏢 Datos de la empresa" col="2">
+                        <group>
+                            <field name="empresa_nombre" string="Nombre empresa"/>
+                            <field name="empresa_direccion" string="Dirección"/>
+                            <field name="empresa_ciudad" string="Ciudad"/>
+                            <field name="empresa_celular" string="CEL empresa"/>
+                        </group>
+                        <group>
+                            <field name="usar_logo_imagen" string="Usar imagen de logo"/>
+                            <field name="logo" widget="image"
+                                   class="oe_avatar"
+                                   options="{'size': [400, 160]}"
+                                   invisible="not usar_logo_imagen"
+                                   string="Logo (imagen)"/>
+                            <div invisible="usar_logo_imagen" class="alert alert-info" style="margin-top:8px;">
+                                <strong>Modo texto activo:</strong> El logo se mostrará como texto estilizado
+                                <em>"wigo / FAST / INTERNET"</em>. Activa "Usar imagen de logo" para subir tu propio logo.
+                            </div>
+                        </group>
+                    </group>
+
+                    <group string="✍️ Datos de la firma" col="2">
+                        <group>
+                            <field name="firma_nombre" string="Nombre del firmante"/>
+                            <field name="firma_cargo" string="Cargo"/>
+                            <field name="firma_celular" string="CEL firmante"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-success mt-3">
+                        <strong>💡 Tip:</strong> Los cambios se aplican inmediatamente al siguiente recibo que generes. No necesitas reiniciar el servidor.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server action para abrir el singleton -->
+    <record id="action_recibo_config" model="ir.actions.server">
+        <field name="name">Configuración del Recibo</field>
+        <field name="model_id" ref="model_wigo_recibo_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['wigo.recibo.config'].get_config()
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Configuración del Recibo',
+    'res_model': 'wigo.recibo.config',
+    'view_mode': 'form',
+    'res_id': config.id,
+    'target': 'current',
+}
+        </field>
+    </record>
+
+    <!-- Menú Configuración dentro de Cobranza -->
+    <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="wigo_cobranza.menu_cobranza_root" sequence="90"/>
+    <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root"
+              action="action_recibo_config" sequence="10"/>
+
+</odoo>

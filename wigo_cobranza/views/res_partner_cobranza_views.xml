@@ -74,7 +74,11 @@
                                 </h1>
                             </div>
                         </div>
-                        <button name="action_open_contact_form" type="object" string="Ver más detalles contacto" class="btn-success" icon="fa-external-link"/>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button name="action_open_contact_form" type="object" string="Ver contacto" class="btn-success" icon="fa-external-link"/>
+                            <button name="action_registrar_factura_desde_cliente" type="object" string="📄 Nueva Factura" class="btn-secondary"/>
+                            <button name="action_registrar_incobrable_desde_cliente" type="object" string="⚠️ Declarar Incobrable" class="btn-warning"/>
+                        </div>
                     </div>
 
                     <group string="Datos del cliente" col="2">
