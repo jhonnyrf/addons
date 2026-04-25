@@ -1370,6 +1370,7 @@ class FtthBox(models.Model):
     FIRST_LETTER = 'A'
     STATE_FREE = 'free'
     NON_OCCUPIED_PORT_STATES = ('free', 'occupied')
+    OCCUPIED_PORT_STATES = ('allocated', 'reserved', 'active')
 
     # ═════════════════════════════════════════════════════════════════════════════
     # Fields
@@ -1385,6 +1386,15 @@ class FtthBox(models.Model):
         string='Grupo',
         required=True,
         ondelete='cascade'
+    )
+
+    zone_id = fields.Many2one(
+        'wigo.zone',
+        string='Zona',
+        related='box_group_id.zone_id',
+        store=True,
+        readonly=True,
+        index=True,
     )
 
     olt_id = fields.Many2one(
@@ -1426,6 +1436,18 @@ class FtthBox(models.Model):
         string='Libres'
     )
 
+    state = fields.Selection(
+        [
+            ('available', 'Disponible'),
+            ('partial', 'Parcial'),
+            ('full', 'Ocupada'),
+        ],
+        string='Estado',
+        compute='_compute_state',
+        store=True,
+        readonly=True,
+    )
+
     # ═════════════════════════════════════════════════════════════════════════════
     # Computed Fields
     # ═════════════════════════════════════════════════════════════════════════════
@@ -1435,6 +1457,21 @@ class FtthBox(models.Model):
             record.free_ports = len(
                 record.port_ids.filtered(lambda port: port.state in self.NON_OCCUPIED_PORT_STATES)
             )
+
+    @api.depends('port_ids', 'port_ids.state')
+    def _compute_state(self):
+        for record in self:
+            total_ports = len(record.port_ids)
+            occupied_ports = len(
+                record.port_ids.filtered(lambda port: port.state in self.OCCUPIED_PORT_STATES)
+            )
+
+            if total_ports and occupied_ports == total_ports:
+                record.state = 'full'
+            elif occupied_ports > 0:
+                record.state = 'partial'
+            else:
+                record.state = 'available'
 
     # ═════════════════════════════════════════════════════════════════════════════
     # Onchange Methods
@@ -2556,3 +2593,14 @@ class FtthSubinterface(models.Model):
             }
 
         return super().search_panel_select_range(field_name, **kwargs)        
+
+
+class WigoZoneFtth(models.Model):
+    _inherit = 'wigo.zone'
+
+    box_ids = fields.One2many(
+        'wigo.ftth.box',
+        'zone_id',
+        string='Cajas NAP',
+        readonly=True,
+    )

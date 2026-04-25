@@ -62,6 +62,9 @@
                                     <field name="vport"/>
                                 </group>
                                 <group>
+                                    <field name="pppoe_user"/>
+                                    <field name="pppoe_password"/>
+                                    <field name="vlan"/>
                                     <field name="user_mgmt"/>
                                     <field name="password_mgmt"/>
                                 </group>

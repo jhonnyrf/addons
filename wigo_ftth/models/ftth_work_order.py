@@ -341,6 +341,21 @@ class FtthWorkOrder(models.Model):
             record._release_resources_on_cancel()
             record.write({'state': 'cancelled'})
 
+    def unlink(self):
+        """Antes de eliminar una OT, liberar recursos igual que en cancelación.
+
+        Esto evita dejar inconsistencias en topología (subinterfaz/puerto/ONU)
+        cuando se borra el registro directamente.
+        """
+        if not self.env.context.get('skip_cancel_on_unlink'):
+            for record in self:
+                # Reutiliza exactamente la misma lógica operativa de cancelación.
+                if record.state != 'cancelled':
+                    record.action_cancel()
+                else:
+                    record._release_resources_on_cancel()
+        return super().unlink()
+
     def _release_resources_on_cancel(self):
         """Liberar subinterfaz, puerto de caja y ONU al cancelar la OT.
 
@@ -421,7 +436,7 @@ class FtthWorkOrder(models.Model):
             existing.write(vals)
             service = existing
         else:
-            service = service_model.create(vals)
+            service = service_model.with_context(allow_ftth_cs_autocreate=True).create(vals)
 
         self.client_service_id = service.id
         self._link_resources_to_service(service)
@@ -464,7 +479,9 @@ class FtthWorkOrder(models.Model):
             'observaciones': self.notes or False,
 
             # Config / WiFi (si viene en la ONU seleccionada)
-            'vlan': str(sub.vlan_id) if sub and sub.vlan_id else False,
+            'pppoe_user': onu.pppoe_user if onu else False,
+            'pppoe_password': onu.pppoe_password if onu else False,
+            'vlan': str(sub.vlan_id) if sub and sub.vlan_id else (onu.vlan if onu else False),
             'tcont': onu.tcont if onu else False,
             'gemport': onu.gemport if onu else False,
             'vport': onu.vport if onu else False,

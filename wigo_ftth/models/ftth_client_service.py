@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class FtthClientService(models.Model):
@@ -8,6 +9,17 @@ class FtthClientService(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'codigo_cliente'
     _rec_name = 'codigo_cliente'
+
+    _ONU_SYNC_FIELD_MAP = {
+        'pppoe_user': 'pppoe_user',
+        'pppoe_password': 'pppoe_password',
+        'vlan': 'vlan',
+        'tcont': 'tcont',
+        'gemport': 'gemport',
+        'vport': 'vport',
+        'wifi_ssid': 'wifi_ssid',
+        'wifi_pass': 'wifi_password',
+    }
 
     # ── Datos del cliente ─────────────────────────────────────────
     partner_id = fields.Many2one('res.partner', string='Cliente', required=True, ondelete='restrict', tracking=True)
@@ -180,7 +192,21 @@ class FtthClientService(models.Model):
         vals.pop('fecha_instalacion', None)
         vals.pop('estado_servicio', None)
 
-        self.sudo().write(vals)
+        # No sobrescribir datos existentes con valores vacíos/nulos.
+        # Este botón debe complementar información, no borrar contenido previo.
+        cleaned_vals = {}
+        for field_name, incoming_value in vals.items():
+            current_value = self[field_name]
+            if incoming_value in (False, None, ''):
+                # Si ya hay dato en la ficha, preservar lo existente.
+                if current_value not in (False, None, ''):
+                    continue
+                # Si ambos están vacíos, no hace falta escribir.
+                continue
+            cleaned_vals[field_name] = incoming_value
+
+        if cleaned_vals:
+            self.sudo().write(cleaned_vals)
         return True
 
     def action_view_work_order(self):
@@ -192,3 +218,59 @@ class FtthClientService(models.Model):
             'view_mode': 'form',
             'res_id': self.work_order_id.id,
         }
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.context.get('install_mode') and not self.env.context.get('allow_ftth_cs_autocreate'):
+            raise ValidationError(
+                'No está permitido crear fichas técnicas manualmente. '
+                'La ficha técnica se genera automáticamente desde la Orden de Trabajo de instalación.'
+            )
+
+        for vals in vals_list:
+            if not vals.get('work_order_id') and not self.env.context.get('install_mode'):
+                raise ValidationError(
+                    'La ficha técnica debe estar vinculada a una Orden de Trabajo de instalación.'
+                )
+
+        services = super().create(vals_list)
+        services._sync_onu_configuration()
+        return services
+
+    def write(self, vals):
+        res = super().write(vals)
+        if not self.env.context.get('skip_onu_sync'):
+            self._sync_onu_configuration(trigger_vals=vals)
+        return res
+
+    def _get_onu_sync_vals(self):
+        self.ensure_one()
+        if not self.onu_id:
+            return {}
+
+        onu_vals = {}
+        onu_fields = self.onu_id._fields
+        for service_field, onu_field in self._ONU_SYNC_FIELD_MAP.items():
+            if onu_field in onu_fields:
+                onu_vals[onu_field] = self[service_field]
+        return onu_vals
+
+    def _sync_onu_configuration(self, trigger_vals=None):
+        if self.env.context.get('skip_onu_sync'):
+            return
+
+        for record in self:
+            if not record.onu_id:
+                continue
+
+            if trigger_vals is None or 'onu_id' in trigger_vals:
+                onu_vals = record._get_onu_sync_vals()
+            else:
+                onu_vals = {}
+                onu_fields = record.onu_id._fields
+                for service_field, onu_field in record._ONU_SYNC_FIELD_MAP.items():
+                    if service_field in trigger_vals and onu_field in onu_fields:
+                        onu_vals[onu_field] = record[service_field]
+
+            if onu_vals:
+                record.onu_id.sudo().with_context(skip_onu_sync=True).write(onu_vals)

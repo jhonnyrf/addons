@@ -27,7 +27,7 @@
         <field name="name">wigo.ftth.client.service.form</field>
         <field name="model">wigo.ftth.client.service</field>
         <field name="arch" type="xml">
-            <form string="Ficha Técnica del Cliente">
+            <form string="Ficha Técnica del Cliente" create="false">
                 <header>
                     <field name="estado_servicio" widget="statusbar" statusbar_visible="active,suspended,corte,baja"/>
                 </header>
@@ -59,7 +59,6 @@
                         <group string="Cliente / Servicio" colspan="2">
                             <field name="partner_id" readonly="1"/>
                             <field name="plan_id" readonly="1"/>
-                            <field name="servicio" readonly="1"/>
                         </group>
 
                         <group string="Operación" colspan="2">
@@ -107,7 +106,7 @@
                                         <field name="onu_perfil_olt" readonly="1"/>
                                         <field name="onu_pon_sn" readonly="1"/>
                                         <field name="onu_wifi_ssid" readonly="1"/>
-                                        <field name="onu_wifi_password" readonly="1" widget="password"/>
+                                        <field name="onu_wifi_password" readonly="1" widget="char"/>
                                     </group>
                                 </group>
                             </group>
@@ -136,7 +135,7 @@
                             <group col="4">
                                 <group string="PPPoE / VLAN" colspan="2">
                                     <field name="pppoe_user"/>
-                                    <field name="pppoe_password" password="True"/>
+                                    <field name="pppoe_password" widget="char"/>
                                     <field name="vlan"/>
                                 </group>
 
@@ -152,7 +151,7 @@
                             <group col="2">
                                 <group>
                                     <field name="wifi_ssid"/>
-                                    <field name="wifi_pass" password="True"/>
+                                    <field name="wifi_pass" widget="char"/>
                                 </group>
                             </group>
                         </page>
@@ -222,7 +221,7 @@
         <field name="res_model">wigo.ftth.client.service</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_ftth_cs_search"/>
-        <field name="context">{'search_default_active': 1}</field>
+        <field name="context">{'search_default_active': 1, 'create': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No hay fichas técnicas aún</p>
             <p>Se crean automáticamente al activar una Orden de Trabajo.</p>

@@ -71,3 +71,4 @@ pgdata/
 Thumbs.db
 *.tmp
 *.bak
+.github

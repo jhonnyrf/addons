@@ -42,6 +42,19 @@ class CustomerContract(models.Model):
     _inherit     = ['mail.thread', 'mail.activity.mixin']
     _rec_name    = 'name'
 
+    _PARTNER_SYNC_FIELDS = (
+        'partner_id',
+        'contact_name',
+        'phone',
+        'mobile',
+        'email',
+        'address',
+        'ci',
+        'vat',
+        'location_link',
+        'coordinates',
+    )
+
     # Nota:
     # El código de contrato puede repetirse entre versiones históricas cuando
     # se hace cambio de plan. Se controla por constrains Python que solo exista
@@ -365,7 +378,10 @@ class CustomerContract(models.Model):
                 vals['name'] = self._next_unique_contract_code()
             self._prefill_partner_fields(vals)
             self._prefill_billing_fields(vals)
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        if not self.env.context.get('skip_contract_to_partner_sync'):
+            records._sync_partner_from_contract()
+        return records
 
     @api.model
     def _next_unique_contract_code(self):
@@ -397,6 +413,7 @@ class CustomerContract(models.Model):
         if 'partner_id' in vals:
             self._prefill_partner_fields(vals)
         billing_sync_needed = any(field in vals for field in ('billing_responsible_type', 'partner_id'))
+        partner_sync_needed = any(field in vals for field in self._PARTNER_SYNC_FIELDS)
         result = super().write(vals)
 
         if billing_sync_needed and not self.env.context.get('skip_billing_sync'):
@@ -408,7 +425,44 @@ class CustomerContract(models.Model):
                         'billing_ci': record.ci or record.partner_id.ci or '',
                     })
 
+        if partner_sync_needed and not self.env.context.get('skip_contract_to_partner_sync'):
+            self._sync_partner_from_contract()
+
         return result
+
+    def _sync_partner_from_contract(self):
+        """Sincroniza snapshot del contrato hacia el contacto (res.partner)."""
+        for record in self:
+            partner = record.partner_id
+            if not partner:
+                continue
+
+            vals = {}
+            partner_fields = partner._fields
+
+            if 'name' in partner_fields:
+                vals['name'] = record.contact_name or partner.name or ''
+            if 'phone' in partner_fields:
+                vals['phone'] = record.phone or False
+            if 'mobile' in partner_fields:
+                vals['mobile'] = record.mobile or False
+            if 'celular' in partner_fields:
+                vals['celular'] = record.mobile or False
+            if 'email' in partner_fields:
+                vals['email'] = record.email or False
+            if 'direccion' in partner_fields:
+                vals['direccion'] = record.address or False
+            if 'ci' in partner_fields:
+                vals['ci'] = record.ci or False
+            if 'vat' in partner_fields:
+                vals['vat'] = record.vat or False
+            if 'ubicacion' in partner_fields:
+                vals['ubicacion'] = record.location_link or False
+            if 'coordenadas' in partner_fields:
+                vals['coordenadas'] = record.coordinates or False
+
+            if vals:
+                partner.with_context(skip_partner_to_lead_sync=True).sudo().write(vals)
 
     def _prefill_partner_fields(self, vals):
         partner_id = vals.get('partner_id')

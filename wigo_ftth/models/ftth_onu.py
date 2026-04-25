@@ -53,6 +53,11 @@ class FtthOnu(models.Model):
     gemport = fields.Char(string='GEM Port')
     vport = fields.Char(string='V-Port')
 
+    # Configuración WAN / PPPoE
+    pppoe_user = fields.Char(string='Usuario PPPoE', tracking=True)
+    pppoe_password = fields.Char(string='Contraseña PPPoE', tracking=True)
+    vlan = fields.Char(string='VLAN', tracking=True)
+
     # WiFi
     wifi_ssid = fields.Char(string='WiFi SSID')
     wifi_password = fields.Char(string='WiFi Password', groups='wigo_ftth.group_ftth_tech')
