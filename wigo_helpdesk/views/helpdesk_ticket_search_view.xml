@@ -40,8 +40,8 @@
                                 <filter name="filter_commercial" string="Área Comercial" domain="[('incident_type_id.area', '=', 'commercial')]"/>
                                 <separator/>
                                 <!-- Filtros por mes -->
-                                <filter name="filter_this_month" string="Este Mes" domain="[('create_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')), ('create_date', '&lt;', (context_today() + relativedelta(months=1, day=1)).strftime('%Y-%m-%d'))]"/>
-                                <filter name="filter_last_month" string="Mes Anterior" domain="[('create_date', '&gt;=', (context_today() + relativedelta(months=-1, day=1)).strftime('%Y-%m-%d')), ('create_date', '&lt;', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
+                                <filter name="filter_this_month" string="Este Mes" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                                <filter name="filter_last_month" string="Todo (Sin filtro de mes)" domain="[]"/>
 
                                 <group>
                                         <filter name="group_stage" string="Etapa" context="{'group_by': 'stage_id'}"/>

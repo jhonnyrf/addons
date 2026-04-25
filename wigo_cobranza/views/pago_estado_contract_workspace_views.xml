@@ -24,8 +24,11 @@
         <field name="arch" type="xml">
             <form string="Registro mensual de pago">
                 <header>
-                    <button name="action_registrar_pago" string="Confirmar pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
-                    <button name="action_marcar_mora" string="Marcar mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
+                    <button name="action_registrar_pago" string="✅ Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
+                    <button name="action_marcar_mora" string="🔴 Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
+                    <button name="action_generar_recibo" string="🧾 Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+                    <button name="action_imprimir_recibo" string="🖨️ Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+                    <button name="action_registrar_factura" string="📄 Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>                    
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
                 </header>
                 <sheet>
@@ -43,8 +46,8 @@
                         </group>
                         <group>
                             <field name="monto_plan" readonly="1"/>
-                            <field name="es_primer_mes" readonly="1"/>
-                            <field name="monto_prorrateo" readonly="1" invisible="not es_primer_mes"/>
+                            <field name="es_primer_mes"/>
+                            <field name="monto_prorrateo" readonly="not es_primer_mes"/>
                         </group>
                     </group>
 
@@ -63,22 +66,42 @@
                             </group>
                         </page>
 
-                        <page string="Comprobante">
+                        <page string="Comprobante" name="comprobante">
+                            <field name="comprobante_adjunto_is_image" invisible="1"/>
+                            <field name="comprobante_adjunto_is_pdf" invisible="1"/>
+                            <field name="has_comprobante" invisible="1"/>
+
                             <group string="Adjunto de respaldo" col="2">
                                 <group>
-                                    <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Adjuntar imagen o PDF"/>
+                                    <field name="comprobante_adjunto" invisible="1"/>
+                                    <field name="comprobante_adjunto_fname" invisible="1"/>
+                                    <field name="comprobante_attachment_ids" widget="many2many_binary" string="Archivo(s) de comprobante" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
                                 </group>
-                                <group>
-                                    <field name="comprobante_adjunto" widget="image" class="oe_avatar" options="{'size': [1024, 1024]}" readonly="1" invisible="not comprobante_adjunto_is_image"/>
-                                    <div class="alert alert-info" invisible="not comprobante_adjunto_is_pdf" style="margin-bottom: 12px;">
-                                        <strong>Comprobante PDF cargado.</strong>
-                                        <div>Usa los botones para ver en grande o descargar.</div>
-                                    </div>
-                                    <div class="d-flex gap-2 flex-wrap" invisible="not comprobante_adjunto">
+                                <group invisible="not has_comprobante">
+                                    <div class="d-flex gap-2 flex-wrap" style="margin-bottom: 12px;">
                                         <button name="action_ver_comprobante" type="object" string="Ver en grande" class="btn btn-outline-primary"/>
                                         <button name="action_descargar_comprobante" type="object" string="Descargar" class="btn btn-primary"/>
                                     </div>
                                 </group>
+                                <div role="alert" class="alert alert-info mb-3" invisible="has_comprobante" style="margin: 8px 0; width: 100%; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-info-circle me-1" title="Información"/>
+                                    Formatos aceptados: <strong>JPG, PNG, PDF</strong>.
+                                </div>
+                            </group>
+
+                            <group string="Vista previa" invisible="not comprobante_adjunto_is_image">
+                                <field name="comprobante_adjunto" widget="image" nolabel="1" readonly="1" options="{'size': [900, 600]}" class="o_field_image_full"/>
+                            </group>
+
+                            <group string="Documento PDF" invisible="not comprobante_adjunto_is_pdf">
+                                <div role="status" class="alert alert-success" style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-file-pdf-o fa-2x text-danger" title="Archivo PDF"/>
+                                    <div>
+                                        <strong>Archivo PDF cargado correctamente.</strong>
+                                        <br/>
+                                        Usa los botones para ver en grande o descargar.
+                                    </div>
+                                </div>
                             </group>
                         </page>
                     </notebook>

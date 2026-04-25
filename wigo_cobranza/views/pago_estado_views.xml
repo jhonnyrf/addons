@@ -79,8 +79,8 @@
                         <group>
                             <field name="partner_direccion" readonly="1"/>
                             <field name="monto_plan" readonly="1"/>
-                            <field name="es_primer_mes" readonly="1"/>
-                            <field name="monto_prorrateo" readonly="1" invisible="not es_primer_mes"/>
+                            <field name="es_primer_mes"/>
+                            <field name="monto_prorrateo" readonly="not es_primer_mes"/>
                             <field name="crm_lead_id" readonly="1" invisible="1"/>
                         </group>
                     </group>
@@ -100,22 +100,42 @@
                             </group>
                         </page>
 
-                        <page string="Comprobante">
+                        <page string="Comprobante" name="comprobante">
+                            <field name="comprobante_adjunto_is_image" invisible="1"/>
+                            <field name="comprobante_adjunto_is_pdf" invisible="1"/>
+                            <field name="has_comprobante" invisible="1"/>
+
                             <group string="Adjunto de respaldo" col="2">
                                 <group>
-                                    <field name="comprobante_adjunto" widget="binary" filename="comprobante_adjunto_fname" string="Subir imagen o PDF"/>
+                                    <field name="comprobante_adjunto" invisible="1"/>
+                                    <field name="comprobante_adjunto_fname" invisible="1"/>
+                                    <field name="comprobante_attachment_ids" widget="many2many_binary" string="Archivo(s) de comprobante" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
                                 </group>
-                                <group>
-                                    <field name="comprobante_adjunto" widget="image" class="oe_avatar" options="{'size': [1024, 1024]}" readonly="1" invisible="not comprobante_adjunto_is_image"/>
-                                    <div class="alert alert-info" invisible="not comprobante_adjunto_is_pdf" style="margin-bottom: 12px;">
-                                        <strong>Comprobante PDF cargado.</strong>
-                                        <div>Usa los botones para ver en grande o descargar.</div>
-                                    </div>
-                                    <div class="d-flex gap-2 flex-wrap" invisible="not comprobante_adjunto">
+                                <group invisible="not has_comprobante">
+                                    <div class="d-flex gap-2 flex-wrap" style="margin-bottom: 12px;">
                                         <button name="action_ver_comprobante" type="object" string="Ver en grande" class="btn btn-outline-primary"/>
                                         <button name="action_descargar_comprobante" type="object" string="Descargar" class="btn btn-primary"/>
                                     </div>
                                 </group>
+                                <div role="alert" class="alert alert-info mb-3" invisible="has_comprobante" style="margin: 8px 0; width: 100%; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-info-circle me-1" title="Información"/>
+                                    Formatos aceptados: <strong>JPG, PNG, PDF</strong>.
+                                </div>
+                            </group>
+
+                            <group string="Vista previa" invisible="not comprobante_adjunto_is_image">
+                                <field name="comprobante_adjunto" widget="image" nolabel="1" readonly="1" options="{'size': [900, 600]}" class="o_field_image_full"/>
+                            </group>
+
+                            <group string="Documento PDF" invisible="not comprobante_adjunto_is_pdf">
+                                <div role="status" class="alert alert-success" style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa fa-file-pdf-o fa-2x text-danger" title="Archivo PDF"/>
+                                    <div>
+                                        <strong>Archivo PDF cargado correctamente.</strong>
+                                        <br/>
+                                        Usa los botones para ver en grande o descargar.
+                                    </div>
+                                </div>
                             </group>
                         </page>
                     </notebook>
@@ -168,18 +188,20 @@
                             ('anio', '=', context_today().year)
                         ]"/>
                 <filter name="suspender_hoy" string="Suspender hoy (mora mes anterior)" domain="[
-                            ('estado_pago','in',['pendiente','mora']), ('anio','=', (context_today() - relativedelta(months=1)).year if context_today().month > 1 else context_today().year - 1), ('mes','=',
-                                '1' if ((context_today().month - 2) % 12 + 1) == 1 else
-                                '2' if ((context_today().month - 2) % 12 + 1) == 2 else
-                                '3' if ((context_today().month - 2) % 12 + 1) == 3 else
-                                '4' if ((context_today().month - 2) % 12 + 1) == 4 else
-                                '5' if ((context_today().month - 2) % 12 + 1) == 5 else
-                                '6' if ((context_today().month - 2) % 12 + 1) == 6 else
-                                '7' if ((context_today().month - 2) % 12 + 1) == 7 else
-                                '8' if ((context_today().month - 2) % 12 + 1) == 8 else
-                                '9' if ((context_today().month - 2) % 12 + 1) == 9 else
-                                '10' if ((context_today().month - 2) % 12 + 1) == 10 else
-                                '11' if ((context_today().month - 2) % 12 + 1) == 11 else
+                            ('estado_pago','in',['pendiente','mora']), 
+                            ('anio', '=', context_today().year if context_today().month > 1 else context_today().year - 1), 
+                            ('mes', '=',
+                                '1' if context_today().month == 2 else
+                                '2' if context_today().month == 3 else
+                                '3' if context_today().month == 4 else
+                                '4' if context_today().month == 5 else
+                                '5' if context_today().month == 6 else
+                                '6' if context_today().month == 7 else
+                                '7' if context_today().month == 8 else
+                                '8' if context_today().month == 9 else
+                                '9' if context_today().month == 10 else
+                                '10' if context_today().month == 11 else
+                                '11' if context_today().month == 12 else
                                 '12'
                             )
                         ]"/>
@@ -230,6 +252,29 @@
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_pago_estado_search"/>
         <field name="context">{'search_default_mora': 1}</field>
+    </record>
+    
+    <!-- ══════════════════════════════════════════════════════════
+         ATTACHMENT VIEWER WIZARD VIEW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_wigo_pago_estado_attachment_viewer_wizard_form" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.attachment.viewer.wizard.form</field>
+        <field name="model">wigo.pago.estado.attachment.viewer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Seleccionar comprobante">
+                <sheet>
+                    <group>
+                        <field name="pago_id" readonly="1"/>
+                        <field name="action_type" readonly="1"/>
+                        <field name="attachment_id" options="{'no_create': True, 'no_open': True}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Continuar" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
     </record>
 
 </odoo>

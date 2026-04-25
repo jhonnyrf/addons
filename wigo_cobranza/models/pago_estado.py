@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import calendar
 import base64
 from datetime import date
 from odoo import models, fields, api
@@ -85,12 +84,13 @@ class WigoPagoEstado(models.Model):
     )
     monto_prorrateo = fields.Float(
         string='Monto prorrateo (Bs)',
-        compute='_compute_prorrateo', store=True,
-        help='Calculado solo para el primer mes según fecha de instalación.',
+        default=0.0,
+        help='Monto editable manualmente cuando se marque primer mes.',
     )
     es_primer_mes = fields.Boolean(
         string='¿Es primer mes?',
-        compute='_compute_prorrateo', store=True,
+        default=False,
+        help='Activa la edición manual del prorrateo para este registro.',
     )
     monto_a_cobrar = fields.Float(
         string='Monto a cobrar (Bs)',
@@ -119,11 +119,22 @@ class WigoPagoEstado(models.Model):
     comprobante = fields.Char(string='Referencia / N° comprobante', tracking=True)
     comprobante_adjunto = fields.Binary(string='Comprobante (imagen o PDF)')
     comprobante_adjunto_fname = fields.Char()
+    comprobante_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'wigo_pago_estado_attachment_rel',
+        'pago_id',
+        'attachment_id',
+        string='Comprobantes adjuntos',
+        copy=False,
+    )
     comprobante_adjunto_is_image = fields.Boolean(
         string='Adjunto es imagen', compute='_compute_comprobante_adjunto_type', store=False,
     )
     comprobante_adjunto_is_pdf = fields.Boolean(
         string='Adjunto es PDF', compute='_compute_comprobante_adjunto_type', store=False,
+    )
+    has_comprobante = fields.Boolean(
+        string='Tiene comprobante', compute='_compute_has_comprobante', store=False,
     )
     registrado_por = fields.Many2one(
         'res.users', string='Registrado por',
@@ -146,6 +157,11 @@ class WigoPagoEstado(models.Model):
 
     # ── Display ───────────────────────────────────────────────────
     display_name = fields.Char(compute='_compute_display_name', store=True)
+
+    @api.depends('comprobante_adjunto', 'comprobante_attachment_ids')
+    def _compute_has_comprobante(self):
+        for rec in self:
+            rec.has_comprobante = bool(rec.comprobante_adjunto or rec.comprobante_attachment_ids)
 
     # ─────────────────────────────────────────────────────────────
     # Constraints (Odoo 19: @api.constrains en lugar de _sql_constraints)
@@ -313,32 +329,6 @@ class WigoPagoEstado(models.Model):
                 getattr(partner, 'direccion', False) or partner.street or False
             ) if partner else False
 
-    @api.depends('client_service_id', 'contract_id', 'mes', 'anio', 'monto_plan')
-    def _compute_prorrateo(self):
-        for rec in self:
-            svc = rec.client_service_id
-            contract = rec.contract_id
-            fecha_instalacion = svc.fecha_instalacion if svc else (contract.installation_date if contract else False)
-            if not fecha_instalacion or not rec.mes or not rec.anio:
-                rec.es_primer_mes = False
-                rec.monto_prorrateo = 0.0
-                continue
-
-            fi = fecha_instalacion
-            mes_int = int(rec.mes)
-            anio_int = int(rec.anio)
-
-            if fi.month == mes_int and fi.year == anio_int:
-                # Es el primer mes: calcular prorrateo
-                dias_mes = calendar.monthrange(anio_int, mes_int)[1]
-                dias_restantes = dias_mes - fi.day + 1
-                precio = rec.monto_plan or (svc.plan_id.price if (svc and svc.plan_id) else (contract.plan_id.price if (contract and contract.plan_id) else 0.0))
-                rec.es_primer_mes = True
-                rec.monto_prorrateo = round((precio / dias_mes) * dias_restantes, 2)
-            else:
-                rec.es_primer_mes = False
-                rec.monto_prorrateo = 0.0
-
     @api.depends('es_primer_mes', 'monto_prorrateo', 'monto_plan')
     def _compute_monto_a_cobrar(self):
         for rec in self:
@@ -346,6 +336,11 @@ class WigoPagoEstado(models.Model):
                 rec.monto_a_cobrar = rec.monto_prorrateo
             else:
                 rec.monto_a_cobrar = rec.monto_plan
+
+    @api.onchange('es_primer_mes', 'monto_prorrateo', 'monto_plan')
+    def _onchange_prorrateo_manual(self):
+        for rec in self:
+            rec.monto_a_cobrar = rec.monto_prorrateo if rec.es_primer_mes else rec.monto_plan
 
     @api.depends('monto_a_cobrar', 'monto_pagado')
     def _compute_diferencia(self):
@@ -617,56 +612,34 @@ class WigoPagoEstado(models.Model):
     # Business logic
     # ─────────────────────────────────────────────────────────────
     def action_registrar_pago(self):
-        """Marcar como pagado, notificar a técnica si había suspensión pendiente
-        y abrir automáticamente el recibo de cobro como popup."""
+        """Marcar como pagado, notificar a técnica si había suspensión pendiente."""
         for rec in self:
             if not rec.monto_pagado or not rec.fecha_pago:
                 raise ValidationError(
                     'Debe ingresar el monto pagado y la fecha de pago antes de confirmar.'
                 )
-            if rec.monto_pagado >= rec.monto_a_cobrar:
-                rec.estado_pago = 'al_dia'
-            else:
-                rec.estado_pago = 'deuda_parcial'
+            nuevo_estado = 'al_dia' if rec.monto_pagado >= rec.monto_a_cobrar else 'deuda_parcial'
+            rec.write({'estado_pago': nuevo_estado})
 
-            # Actualizar estado_pago en la ficha del servicio
             svc = rec.client_service_id
             if svc:
-                svc.estado_pago = rec.estado_pago
-                # Si el servicio estaba suspendido → notificar a técnica para reactivar
+                svc.write({'estado_pago': nuevo_estado})
                 if svc.estado_servicio == 'suspended':
                     svc.message_post(
                         body=(
                             f"✅ <b>Pago registrado por cobranza.</b> "
-                            f"Cliente <b>{svc.codigo_cliente}</b> pagó Bs. {rec.monto_pagado:.2f} "
+                            f"Cliente <b>{svc.codigo_cliente}</b>paid Bs. {rec.monto_pagado:.2f} "
                             f"({rec.periodo}). "
                             f"<b>Proceder con la REACTIVACIÓN del servicio en la OLT.</b>"
                         ),
                         subtype_xmlid='mail.mt_comment',
                         partner_ids=self._get_tech_partner_ids(),
                     )
-            rec.message_post(
+        rec.message_post(
                 body=f"Pago de Bs. {rec.monto_pagado:.2f} registrado vía {dict(rec._fields['canal_pago'].selection).get(rec.canal_pago, '')}."
             )
         self._recompute_contract_mora()
-
-        # ── Abrir recibo automáticamente como popup ──────────────────
-        self.ensure_one()
-        Recibo = self.env['wigo.recibo.cobro']
-        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
-        if not recibo:
-            recibo = Recibo.create({'pago_id': self.id})
-        if recibo.state == 'borrador':
-            recibo.action_emitir()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': f'Recibo — {self.display_name}',
-            'res_model': 'wigo.recibo.cobro',
-            'view_mode': 'form',
-            'res_id': recibo.id,
-            'target': 'new',
-            'context': {'dialog_size': 'large'},
-        }
+        return True
 
     def _recompute_contract_mora(self):
         """
@@ -699,6 +672,9 @@ class WigoPagoEstado(models.Model):
                     if 'estado_servicio' in service._fields and service.estado_servicio != 'baja':
                         vals['estado_servicio'] = 'suspended'
                     service.write(vals)
+
+
+
 
     def action_marcar_mora(self):
         """Marcar cliente en mora y notificar a técnica para suspensión."""
@@ -747,10 +723,20 @@ class WigoPagoEstado(models.Model):
             return []
         return group.users.mapped('partner_id').ids
 
+    def _get_all_comprobante_attachments(self):
+        self.ensure_one()
+        return self.comprobante_attachment_ids
+
     def _get_comprobante_url(self, download=False):
         self.ensure_one()
+        attachments = self._get_all_comprobante_attachments()
+        if attachments:
+            att = attachments[0]
+            suffix = '?download=true' if download else ''
+            return f'/web/content/{att.id}{suffix}'
+
         if not self.comprobante_adjunto:
-            raise UserError('No hay comprobante adjunto para mostrar.')
+            return False
 
         return (
             f"/web/content?model=wigo.pago.estado&id={self.id}"
@@ -760,18 +746,46 @@ class WigoPagoEstado(models.Model):
 
     def action_ver_comprobante(self):
         self.ensure_one()
+        if len(self._get_all_comprobante_attachments()) > 1:
+            return self._open_attachment_selector_wizard(action_type='view')
+        
+        url = self._get_comprobante_url(download=False)
+        if not url:
+            raise UserError('No hay comprobante adjunto para mostrar.')
+            
         return {
             'type': 'ir.actions.act_url',
-            'url': self._get_comprobante_url(download=False),
+            'url': url,
             'target': 'new',
         }
 
     def action_descargar_comprobante(self):
         self.ensure_one()
+        if len(self._get_all_comprobante_attachments()) > 1:
+            return self._open_attachment_selector_wizard(action_type='download')
+            
+        url = self._get_comprobante_url(download=True)
+        if not url:
+            raise UserError('No hay comprobante adjunto para descargar.')
+
         return {
             'type': 'ir.actions.act_url',
-            'url': self._get_comprobante_url(download=True),
+            'url': url,
             'target': 'self',
+        }
+
+    def _open_attachment_selector_wizard(self, action_type='view'):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Seleccionar comprobante',
+            'res_model': 'wigo.pago.estado.attachment.viewer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_pago_id': self.id,
+                'default_action_type': action_type,
+            },
         }
 
 
@@ -982,3 +996,58 @@ class WigoPagoEstado(models.Model):
                     'model': 'wigo.pago.estado',
                     'res_id': False,
                 })
+
+
+class WigoPagoEstadoAttachmentViewerWizard(models.TransientModel):
+    _name = 'wigo.pago.estado.attachment.viewer.wizard'
+    _description = 'Seleccionar adjunto de pago'
+
+    pago_id = fields.Many2one(
+        'wigo.pago.estado',
+        string='Registro de Pago',
+        required=True,
+        readonly=True,
+    )
+    action_type = fields.Selection(
+        [
+            ('view', 'Ver en grande'),
+            ('download', 'Descargar'),
+        ],
+        string='Acción',
+        required=True,
+        default='view',
+        readonly=True,
+    )
+    available_attachment_ids = fields.Many2many(
+        'ir.attachment',
+        compute='_compute_available_attachment_ids',
+        string='Adjuntos disponibles',
+    )
+    attachment_id = fields.Many2one(
+        'ir.attachment',
+        string='Archivo',
+        required=True,
+        domain="[('id', 'in', available_attachment_ids)]",
+    )
+
+    @api.depends('pago_id')
+    def _compute_available_attachment_ids(self):
+        for rec in self:
+            rec.available_attachment_ids = rec.pago_id._get_all_comprobante_attachments()
+            if not rec.attachment_id and rec.available_attachment_ids:
+                rec.attachment_id = rec.available_attachment_ids.sorted('id', reverse=True)[0]
+
+    def action_confirm(self):
+        self.ensure_one()
+        if not self.attachment_id:
+            raise UserError('Debes seleccionar un archivo.')
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': (
+                f"/web/content?model=ir.attachment&id={self.attachment_id.id}"
+                f"&field=datas&filename_field=name"
+                f"&download={'true' if self.action_type == 'download' else 'false'}"
+            ),
+            'target': 'self' if self.action_type == 'download' else 'new',
+        }

@@ -12,6 +12,7 @@ access_incobrable_contabilidad,wigo.incobrable contabilidad,model_wigo_incobrabl
 access_incobrable_user,wigo.incobrable user,model_wigo_incobrable,base.group_user,1,0,0,0
 access_factura_cobranza_cobranza,wigo.factura.cobranza cobranza,model_wigo_factura_cobranza,wigo_cobranza.group_cobranza,1,1,1,0
 access_factura_cobranza_contabilidad,wigo.factura.cobranza contabilidad,model_wigo_factura_cobranza,wigo_cobranza.group_contabilidad,1,1,1,1
-access_factura_cobranza_user,wigo.factura.cobranza user,model_wigo_factura_cobranza,base.group_user,1,0,0,0
+access_factura_cobranza_user,wigo.factura.cobranza user,model_wigo_factura_cobranza,base.group_user,1,1,1,0
 access_recibo_config_user,wigo.recibo.config user,model_wigo_recibo_config,base.group_user,1,1,1,0
 access_recibo_config_admin,wigo.recibo.config admin,model_wigo_recibo_config,base.group_system,1,1,1,1
+access_pago_estado_attachment_viewer_wizard_user,wigo.pago.estado.attachment.viewer.wizard user,model_wigo_pago_estado_attachment_viewer_wizard,base.group_user,1,1,1,1

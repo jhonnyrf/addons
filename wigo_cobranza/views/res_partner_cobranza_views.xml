@@ -24,7 +24,6 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_small_column" create="false">
                 <field name="name"/>
-                <field name="image_1920"/>
                 <field name="cobranza_ci"/>
                 <field name="cobranza_celular"/>
                 <field name="cobranza_zona"/>
@@ -35,9 +34,6 @@
                         <main class="o_kanban_record_body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="o_kanban_image_container" style="width:36px; height:36px; overflow:hidden; border-radius:50%;">
-                                        <field name="image_1920" widget="image" class="o_kanban_image" style="width:36px; height:36px; object-fit:cover; border-radius:50%;"/>
-                                    </div>
                                     <strong>
                                         <field name="name"/>
                                     </strong>
@@ -67,18 +63,13 @@
                 <sheet style="width:100%;max-width:none;padding:1.5rem;">
                     <div class="d-flex justify-content-between align-items-center mb-4" style="gap:1rem;">
                         <div class="d-flex align-items-center gap-3">
-                            <field name="image_1920" widget="image" class="rounded-circle" style="width:72px; height:72px; object-fit:cover;"/>
                             <div>
                                 <h1 class="text-primary mb-0" style="font-size:2rem; line-height:1.1;">
                                     <field name="name" readonly="1"/>
                                 </h1>
                             </div>
                         </div>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <button name="action_open_contact_form" type="object" string="Ver contacto" class="btn-success" icon="fa-external-link"/>
-                            <button name="action_registrar_factura_desde_cliente" type="object" string="📄 Nueva Factura" class="btn-secondary"/>
-                            <button name="action_registrar_incobrable_desde_cliente" type="object" string="⚠️ Declarar Incobrable" class="btn-warning"/>
-                        </div>
+                        <button name="action_open_contact_form" type="object" string="Ver más detalles contacto" class="btn-success" icon="fa-external-link"/>
                     </div>
 
                     <group string="Datos del cliente" col="2">
