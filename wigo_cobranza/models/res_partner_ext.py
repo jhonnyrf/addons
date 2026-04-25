@@ -84,6 +84,7 @@ class ResPartnerCobranza(models.Model):
             'view_mode': 'list,form',
             'domain': [
                 ('partner_id', '=', self.id),
+                ('state', '=', 'active'),
                 ('is_superseded', '=', False),
             ],
             'context': {
