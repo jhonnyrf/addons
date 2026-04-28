@@ -1,4 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_wigo_zone_tech,wigo.zone tech,model_wigo_zone,wigo_ftth.group_ftth_tech,1,1,1,1
+access_wigo_zone_user,wigo.zone user,model_wigo_zone,base.group_user,1,0,0,0
 access_ftth_regional_user,wigo.ftth.regional user,model_wigo_ftth_regional,base.group_user,1,1,1,1
 access_ftth_nodo_user,wigo.ftth.nodo user,model_wigo_ftth_nodo,base.group_user,1,1,1,1
 access_ftth_technology_user,wigo.ftth.technology user,model_wigo_ftth_technology,base.group_user,1,1,1,1

@@ -1,11 +1,12 @@
 <odoo>
 
     <!-- Vista lista para administrar zonas configuradas en Wigo CRM. -->
+    <!-- NOTA: En CRM las zonas son SOLO LECTURA (create="0", edit="0", delete="0") -->
     <record id="view_wigo_zone_tree" model="ir.ui.view">
         <field name="name">wigo.zone.tree</field>
         <field name="model">wigo.zone</field>
         <field name="arch" type="xml">
-            <list string="Zonas" class="wigo_zone_list" decoration-success="coverage_status == 'available'" decoration-warning="coverage_status == 'warning'" decoration-danger="coverage_status == 'saturated'" decoration-muted="coverage_status == 'no_coverage'">
+            <list string="Zonas" class="wigo_zone_list" create="0" edit="0" delete="0" decoration-success="coverage_status == 'available'" decoration-warning="coverage_status == 'warning'" decoration-danger="coverage_status == 'saturated'" decoration-muted="coverage_status == 'no_coverage'">
 
                 <!-- Estado primero: escaneable tipo dashboard -->
                 <field name="coverage_status" widget="badge" decoration-success="coverage_status == 'available'" decoration-warning="coverage_status == 'warning'" decoration-danger="coverage_status == 'saturated'" decoration-muted="coverage_status == 'no_coverage'"/>
@@ -84,12 +85,13 @@
         </field>
     </record>
 
-    <!-- Vista formulario para crear, editar y eliminar zonas. -->
+    <!-- Vista formulario para zonas en CRM - SOLO LECTURA -->
+    <!-- Se ocultan los botones de edición y eliminación -->
     <record id="view_wigo_zone_form" model="ir.ui.view">
         <field name="name">wigo.zone.form</field>
         <field name="model">wigo.zone</field>
         <field name="arch" type="xml">
-            <form string="Zona">
+            <form string="Zona" create="0" edit="0" delete="0">
                 <sheet>
                     <group>
                         <field name="name"/>
@@ -117,7 +119,8 @@
     </record>
 
     <!-- Entrada para administrar zonas del selector de Zona en leads. -->
-    <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/>
+    <!-- REMOVIDO: Las zonas se gestionan exclusivamente en FTTH -->
+    <!-- <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/> -->
 
     <!-- Entrada en Configuracion de CRM para acceder a Planes sin salir del backend. -->
     <menuitem id="menu_wigo_crm_planes" name="Planes" parent="crm.crm_menu_config" action="action_open_wigo_planes_root" sequence="100"/>
