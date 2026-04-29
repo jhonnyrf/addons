@@ -81,18 +81,21 @@ class CrmLead(models.Model):
         related='stage_id.show_button_won',
         string="Mostrar botón ganado",
         readonly=True,
+        store=True,
     )
 
     stage_show_button_lost = fields.Boolean(
         related='stage_id.show_button_lost',
         string="Mostrar botón perdido",
         readonly=True,
+        store=True,
     )
 
     stage_show_button_new_contract = fields.Boolean(
         related='stage_id.show_button_new_contract',
         string="Mostrar botón nuevo contrato",
         readonly=True,
+        store=True,
     )
 
     contract_date = fields.Date(
@@ -106,12 +109,6 @@ class CrmLead(models.Model):
         string="Fecha de instalación",
         store=True,
     )
-    contract_count = fields.Integer(
-        string="Contratos",
-        compute='_compute_contract_count',
-    )
-        # ─── Smart button count ───────────────────────────────────────
-
     contract_count = fields.Integer(
         string="Contratos",
         compute='_compute_contract_count',
@@ -345,6 +342,10 @@ class CrmLead(models.Model):
 
         res = super().action_set_won_rainbowman()
         return res
+
+    def action_mark_won_wigo(self):
+        """Método personalizado Wigo para marcar lead como ganado (Botón controlado por stage)"""
+        return self.action_set_won_rainbowman()
 
 
     def _redirect_to_contract(self, fallback):

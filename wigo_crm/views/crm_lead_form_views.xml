@@ -13,9 +13,14 @@
                 <field name="stage_show_button_new_contract" invisible="1"/>
             </xpath>
 
-            <!-- Oculta o muestra los botones de cabecera según la configuración de la etapa. -->
-            <xpath expr="//button[@name='action_set_won_rainbowman']" position="attributes">
-                <attribute name="invisible">won_status != 'won' or not stage_show_button_won</attribute>
+            <!-- Ocultar el botón original "Ganado" (action_set_won_rainbowman) para reemplazarlo -->
+            <xpath expr="//button[@name='action_set_won_rainbowman']" position="replace">
+                <!-- Botón reemplazado por versión controlada -->
+            </xpath>
+
+            <!-- Crear nuevo botón GANADO controlado por stage_show_button_won -->
+            <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="before">
+                <button name="action_mark_won_wigo" type="object" string="🟢 Ganado" class="btn-success" invisible="not stage_show_button_won"/>
             </xpath>
 
             <!-- Oculta el boton base de perdido según la configuración de la etapa. -->
@@ -23,9 +28,9 @@
                 <attribute name="invisible">won_status == 'lost' or not stage_show_button_lost</attribute>
             </xpath>
 
-            <!-- Boton para crear contrato desde la cabecera. -->
-            <xpath expr="//button[@name='action_set_won_rainbowman']" position="after">
-                <button name="action_create_contract" type="object" string="Nuevo Contrato" class="btn-primary" invisible="not stage_show_button_new_contract or contract_id or not partner_id or not plan_id"/>
+            <!-- Boton para crear contrato desde la cabecera - Insertado después del botón Perdido. -->
+            <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="after">
+                <button name="action_create_contract" type="object" string="Nuevo Contrato" class="btn-primary" invisible="not stage_show_button_new_contract"/>
             </xpath>
 
             <!-- Agrega boton estadistico para abrir contrato y mostrar cantidad asociada. -->
