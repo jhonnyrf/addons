@@ -71,8 +71,8 @@
                             <group string="Contabilidad" col="2">
                                 <group>
                                     <field name="contabilidad_editable" invisible="1"/>
-                                    <field name="monto_a_cobrar" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
-                                    <field name="monto_pagado" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
+                                    <field name="monto_a_cobrar" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                                    <field name="monto_pagado" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                                     <field name="diferencia" readonly="1"/>
                                 </group>
                                 <group>

@@ -663,9 +663,11 @@ class WigoPagoEstado(models.Model):
         if contable_changed:
             justificacion = (vals.get('justificacion_edicion') or '').strip()
             for rec in self:
-                if rec.estado_pago != 'pendiente' and not justificacion:
+                # Permitir edición en pendiente/mora. Bloquear sin justificación
+                # solo cuando el pago ya está confirmado (al_dia/pagado).
+                if rec.estado_pago in ('pagado', 'al_dia') and not justificacion:
                     raise ValidationError(
-                        'Debe indicar una justificación para editar valores contables cuando el pago ya fue confirmado o está en mora.'
+                        'Debe indicar una justificación para editar valores contables cuando el pago ya fue confirmado (al día/pagado).'
                     )
                 audit_payload.append({
                     'id': rec.id,
@@ -827,8 +829,105 @@ class WigoPagoEstado(models.Model):
                         vals['estado_servicio'] = 'suspended'
                     service.write(vals)
 
+                if contract.payment_mode == 'postpaid':
+                    self._check_create_incobrable_from_contract(contract)
 
+    def _check_create_incobrable_from_contract(self, contract):
+        """
+        Verifica si un contrato PostPago tiene 3+ meses consecutivos sin pago
+        y crea automáticamente un registro incobrable si corresponde.
+        """
+        if not contract or contract.payment_mode != 'postpaid':
+            return
 
+        # Regla automática: debe ejecutarse aunque el usuario actual
+        # no tenga permisos de creación sobre wigo.incobrable.
+        Incobrable = self.env['wigo.incobrable'].sudo()
+
+        ya_existe = Incobrable.search([
+            ('partner_id', '=', contract.partner_id.id),
+            ('contract_id', '=', contract.id),
+            ('state', 'not in', ['recuperado', 'condonado']),
+        ], limit=1)
+        if ya_existe:
+            return
+
+        pagos = self.search([
+            ('contract_id', '=', contract.id),
+            ('estado_pago', 'in', ('pendiente', 'mora')),
+        ], order='anio desc, mes desc')
+
+        if not pagos:
+            return
+
+        meses_consecutivos = 0
+        ultimo_mes = None
+        ultimo_anio = None
+        periodos_adeudados = []
+
+        for pago in pagos:
+            mes_actual = int(pago.mes)
+            anio_actual = int(pago.anio)
+
+            if ultimo_mes is not None:
+                mes_esperado = ultimo_mes - 1
+                anio_esperado = ultimo_anio
+                if mes_esperado < 1:
+                    mes_esperado = 12
+                    anio_esperado -= 1
+
+                if mes_actual != mes_esperado or anio_actual != anio_esperado:
+                    break
+
+            meses_consecutivos += 1
+            ultimo_mes = mes_actual
+            ultimo_anio = anio_actual
+            periodos_adeudados.append(pago.periodo)
+
+        if meses_consecutivos < 3:
+            return
+
+        monto_total = sum(pagos[:meses_consecutivos].mapped('monto_a_cobrar'))
+        meses_txt = ', '.join(reversed(periodos_adeudados))
+        svc = self._find_client_service_for_contract(contract)
+
+        incobrable = Incobrable.create({
+            'partner_id': contract.partner_id.id,
+            'contract_id': contract.id,
+            'client_service_id': svc.id if svc else False,
+            'meses_adeudados': meses_txt,
+            'monto_total_adeudado': monto_total,
+            'state': 'activo',
+            'observaciones': (
+                f'Generado automáticamente: {meses_consecutivos} meses consecutivos sin pago.'
+            ),
+        })
+
+        if svc:
+            svc.message_post(
+                body=(
+                    f"⚠️ <b>Cliente trasladado a incobrables automáticamente.</b> "
+                    f"Código: <b>{svc.codigo_cliente}</b> — {svc.partner_id.name}. "
+                    f"Períodos: <b>{meses_txt}</b>."
+                ),
+                subtype_xmlid='mail.mt_comment',
+                partner_ids=self._get_tech_partner_ids(),
+            )
+
+        cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
+        if cobranza_group:
+            partners = cobranza_group.user_ids.mapped('partner_id')
+            if partners:
+                self.env['mail.message'].sudo().create({
+                    'message_type': 'notification',
+                    'body': (
+                        f"🚨 <b>{contract.partner_id.name}</b> trasladado a incobrables "
+                        f"por {meses_consecutivos} meses consecutivos sin pago (PostPago)."
+                    ),
+                    'partner_ids': partners.ids,
+                    'model': 'wigo.incobrable',
+                    'res_id': incobrable.id,
+                })
 
     def action_marcar_mora(self):
         """Marcar cliente en mora y notificar a técnica para suspensión."""
@@ -847,6 +946,8 @@ class WigoPagoEstado(models.Model):
                     subtype_xmlid='mail.mt_comment',
                     partner_ids=self._get_tech_partner_ids(),
                 )
+            if rec.contract_id and rec.contract_id.payment_mode == 'postpaid':
+                self._check_create_incobrable_from_contract(rec.contract_id)
 
     def action_instruir_baja(self):
         """Instruir baja definitiva al área técnica."""
@@ -875,7 +976,7 @@ class WigoPagoEstado(models.Model):
         group = self.env.ref('wigo_ftth.group_ftth_tech', raise_if_not_found=False)
         if not group:
             return []
-        return group.users.mapped('partner_id').ids
+        return group.user_ids.mapped('partner_id').ids
 
     def _get_all_comprobante_attachments(self):
         self.ensure_one()
@@ -1097,6 +1198,7 @@ class WigoPagoEstado(models.Model):
 
         contracts_activos = self.env['customer.contract'].search([
             ('state', '=', 'active'),
+            ('payment_mode', '=', 'postpaid'),
         ])
 
         creados = 0
@@ -1122,7 +1224,7 @@ class WigoPagoEstado(models.Model):
         # Notificar a grupo cobranza
         cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
         if cobranza_group and creados:
-            partners = cobranza_group.users.mapped('partner_id')
+            partners = cobranza_group.user_ids.mapped('partner_id')
             if partners:
                 self.env['mail.message'].create({
                     'message_type': 'notification',
@@ -1146,7 +1248,10 @@ class WigoPagoEstado(models.Model):
         hoy = date.today()
         mes_actual = str(hoy.month)
         anio_actual = hoy.year
-        contracts_activos = self.env['customer.contract'].search([('state', '=', 'active')])
+        contracts_activos = self.env['customer.contract'].search([
+            ('state', '=', 'active'),
+            ('payment_mode', '=', 'postpaid'),
+        ])
 
         for contract in contracts_activos:
             existente = self.search([
@@ -1167,6 +1272,21 @@ class WigoPagoEstado(models.Model):
             if service:
                 vals['client_service_id'] = service.id
             self.create(vals)
+
+    @api.model
+    def cron_detectar_incobrables(self):
+        """
+        Corre el día 1 de cada mes.
+        Revisa todos los contratos PostPago activos y crea incobrables
+        para los que tengan 3+ meses consecutivos sin pago.
+        """
+        contracts_postpago = self.env['customer.contract'].search([
+            ('state', '=', 'active'),
+            ('payment_mode', '=', 'postpaid'),
+        ])
+
+        for contract in contracts_postpago:
+            self._check_create_incobrable_from_contract(contract)
 
     @api.model
     def cron_alertar_suspension(self):
@@ -1200,7 +1320,7 @@ class WigoPagoEstado(models.Model):
         # Notificar a cobranza
         cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
         if cobranza_group and registros_mora:
-            partners = cobranza_group.users.mapped('partner_id')
+            partners = cobranza_group.user_ids.mapped('partner_id')
             if partners:
                 self.env['mail.message'].create({
                     'message_type': 'notification',
