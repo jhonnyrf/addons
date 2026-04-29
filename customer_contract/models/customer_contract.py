@@ -148,6 +148,21 @@ class CustomerContract(models.Model):
         readonly=True,
     )
 
+    payment_mode = fields.Selection(
+        [
+            ('prepaid', 'Prepago'),
+            ('postpaid', 'Postpago'),
+        ],
+        string='Modalidad de pago',
+        required=True,
+        default='prepaid',
+        tracking=True,
+        help=(
+            'Prepago: pagas antes de usar el servicio. '\
+            'Postpago: pagas después de usar el servicio (facturación mensual).'
+        ),
+    )
+
     # =========================================================
     # VINCULACIÓN CON PARTNER.PLAN (contactos_ext) — referencia débil
     # Se guarda como Integer para no depender de contactos_ext en tiempo

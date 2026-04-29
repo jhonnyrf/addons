@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_department_access_rule_tree" model="ir.ui.view">
+        <field name="name">department.access.rule.tree</field>
+        <field name="model">department.access.rule</field>
+        <field name="arch" type="xml">
+            <list string="Reglas de Acceso">
+                <field name="department_id"/>
+                <field name="rule_type"/>
+                <field name="model_name"/>
+                <field name="menu_name"/>
+                <field name="access_level"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_department_access_rule_form" model="ir.ui.view">
+        <field name="name">department.access.rule.form</field>
+        <field name="model">department.access.rule</field>
+        <field name="arch" type="xml">
+            <form string="Regla de Acceso">
+                <sheet>
+                    <group col="2">
+                        <group string="Regla">
+                            <field name="department_id"/>
+                            <field name="rule_type"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Ámbito">
+                            <field name="model_id" invisible="rule_type != 'modelo'" required="rule_type == 'modelo'"/>
+                            <field name="menu_id" invisible="rule_type != 'modulo'" required="rule_type == 'modulo'" context="{'tree_view_ref': 'department_access_control.view_ir_ui_menu_tree_department_access'}"/>
+                            <field name="include_submenu_models" invisible="rule_type != 'modulo'"/>
+                        </group>
+                    </group>
+
+                    <group string="Detalle" col="2">
+                        <group>
+                            <field name="model_name" readonly="1" invisible="rule_type != 'modelo'"/>
+                            <field name="menu_name" readonly="1" invisible="rule_type != 'modulo'"/>
+                            <field name="access_level"/>
+                        </group>
+                        <group>
+                            <field name="notes"/>
+                        </group>
+                    </group>
+
+                    <group string="Permisos" col="4">
+                        <field name="perm_read" widget="boolean_toggle"/>
+                        <field name="perm_write" widget="boolean_toggle"/>
+                        <field name="perm_create" widget="boolean_toggle"/>
+                        <field name="perm_unlink" widget="boolean_toggle"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_department_access_rule_search" model="ir.ui.view">
+        <field name="name">department.access.rule.search</field>
+        <field name="model">department.access.rule</field>
+        <field name="arch" type="xml">
+            <search string="Reglas de Acceso">
+                <field name="department_id"/>
+                <field name="model_id"/>
+                <field name="menu_id" context="{'tree_view_ref': 'department_access_control.view_ir_ui_menu_tree_department_access'}"/>
+                <field name="rule_type"/>
+                <separator/>
+                <filter string="Modelos" name="type_modelo" domain="[('rule_type','=','modelo')]"/>
+                <filter string="Módulos" name="type_modulo" domain="[('rule_type','=','modulo')]"/>
+                <filter string="Activas" name="active" domain="[('active','=',True)]"/>
+                <separator/>
+                <filter string="Solo lectura" name="readonly" domain="[('access_level','=','readonly')]"/>
+                <filter string="Lectura y escritura" name="write" domain="[('access_level','=','write')]"/>
+                <filter string="Completo" name="full" domain="[('access_level','=','full')]"/>
+                <filter string="Sin acceso" name="noaccess" domain="[('access_level','=','noaccess')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_all_access_rules" model="ir.actions.act_window">
+        <field name="name">Reglas de Acceso</field>
+        <field name="res_model">department.access.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_department_access_rule_tree"/>
+        <field name="search_view_id" ref="view_department_access_rule_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+</odoo>

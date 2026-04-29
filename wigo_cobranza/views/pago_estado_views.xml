@@ -8,7 +8,7 @@
         <field name="name">wigo.pago.estado.list</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <list string="Registros de Cobro" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc">
+            <list string="Registros de Cobro" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'" default_order="anio desc, mes desc">
                 <field name="codigo_cliente" optional="show"/>
                 <field name="partner_id"/>
                 <field name="partner_ci" optional="show"/>
@@ -16,13 +16,14 @@
                 <field name="contract_id" optional="show"/>
                 <field name="contract_state" optional="show"/>
                 <field name="plan_id" optional="show"/>
+                <field name="payment_mode" string="Modalidad" optional="show"/>
                 <field name="periodo"/>
                 <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="diferencia" string="Diferencia (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="fecha_pago"/>
                 <field name="canal_pago" optional="show"/>
-                <field name="estado_pago" widget="semaforo_pago" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
+                <field name="estado_pago" widget="semaforo_pago" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'"/>
                 <field name="registrado_por" optional="hide"/>
             </list>
         </field>
@@ -37,19 +38,19 @@
         <field name="arch" type="xml">
             <form string="Registro de Pago">
                 <header>
-                    <button name="action_registrar_pago" string="✅ Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
-                    <button name="action_marcar_mora" string="🔴 Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
-                    <button name="action_instruir_baja" string="⛔ Instruir Baja" type="object" class="btn-danger" invisible="estado_pago == 'baja_definitiva'" confirm="¿Confirma instruir la BAJA DEFINITIVA del cliente? Se notificará al área técnica."/>
-                    <button name="action_generar_recibo" string="🧾 Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
-                    <button name="action_imprimir_recibo" string="🖨️ Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
-                    <button name="action_registrar_factura" string="📄 Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
-                    <button name="action_open_contract_crm" string="📌 Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
-                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
+                    <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
+                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago == 'mora'"/>
+                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
+                    <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <button name="action_open_contract_crm" string="Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
+                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
-                    <widget name="web_ribbon" title="Al día" bg_color="text-bg-success" invisible="estado_pago != 'al_dia'"/>
-                    <widget name="web_ribbon" title="Baja definitiva" bg_color="text-bg-secondary" invisible="estado_pago != 'baja_definitiva'"/>
+                    <widget name="web_ribbon" title="Pagado" bg_color="text-bg-success" invisible="estado_pago != 'pagado'"/>
+                    <widget name="web_ribbon" title="Edición contable" bg_color="text-bg-warning" invisible="not contabilidad_editable"/>
 
                     <div class="oe_title">
                         <label for="partner_id" string="Cliente"/>
@@ -71,7 +72,10 @@
                             <field name="contract_id"/>
                             <field name="contract_state" readonly="1"/>
                             <field name="client_service_id" placeholder="Opcional: se autocompleta si existe servicio FTTH"/>
+
                             <field name="plan_id" readonly="1"/>
+                            <field name="payment_mode" readonly="1"/>
+
                             <field name="mes"/>
                             <field name="anio"/>
                             <field name="periodo" readonly="1"/>
@@ -87,15 +91,18 @@
 
                     <notebook>
                         <page string="Pago y Control">
-                            <group string="Datos del pago" col="2">
+                            <group string="Contabilidad" col="2">
                                 <group>
-                                    <field name="monto_pagado"/>
-                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
-                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
+                                    <field name="contabilidad_editable" invisible="1"/>
+                                    <field name="monto_a_cobrar" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
+                                    <field name="monto_pagado" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
+                                    <field name="diferencia" readonly="1"/>
                                 </group>
                                 <group>
+                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
+                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
                                     <field name="registrado_por" readonly="1"/>
-                                    <field name="diferencia" readonly="1"/>
+                                    <field name="justificacion_edicion" placeholder="Justificación obligatoria cuando se editen montos contables fuera de pendiente." invisible="not contabilidad_editable" required="contabilidad_editable"/>
                                 </group>
                             </group>
                         </page>
@@ -253,7 +260,7 @@
         <field name="search_view_id" ref="view_pago_estado_search"/>
         <field name="context">{'search_default_mora': 1}</field>
     </record>
-    
+
     <!-- ══════════════════════════════════════════════════════════
          ATTACHMENT VIEWER WIZARD VIEW
     ══════════════════════════════════════════════════════════ -->

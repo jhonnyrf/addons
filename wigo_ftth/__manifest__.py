@@ -21,7 +21,7 @@
     'application': True,
     'installable': True,
     'auto_install': False,
-    'data': [
+    'data': [       
         'security/security.xml',
         'security/ir.model.access.csv', 
         'data/sequence.xml',

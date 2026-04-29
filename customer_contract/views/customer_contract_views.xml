@@ -103,6 +103,16 @@
                                 </group>
                             </group>
 
+                            <group string="Modalidad de pago">
+                                <field name="payment_mode" widget="radio" readonly="state not in ['draft','pending','signed']"/>
+                                <!--  <div class="text-muted small" style="margin-top: 8px;">
+                                    <p class="mb-1">
+                                        <strong>Prepago:</strong> Pagas antes de usar el servicio.</p>
+                                    <p class="mb-0">
+                                        <strong>Postpago:</strong> Pagas después de usar el servicio (facturación mensual).</p>
+                                </div> -->
+                            </group>
+
                         </page>
 
                         <!-- ╔══════════════════════════════════╗
@@ -239,12 +249,13 @@
             <list string="Contratos de Clientes" decoration-info="state == 'draft'" decoration-warning="state == 'pending'" decoration-primary="state == 'signed'" decoration-success="state == 'active'" decoration-muted="state == 'terminated'">
                 <field name="name" string="Nº de Contrato" optional="show"/>
                 <field name="contact_name" string="Cliente"/>
+                <field name="payment_mode" string="Modalidad de pago"/>
                 <field name="billing_name" string="Facturante" optional="show"/>
                 <field name="ci" optional="show"/>
                 <field name="phone" optional="hide"/>
                 <field name="plan_id" string="Plan"/>
                 <field name="plan_price" string="Tarifa (Bs)"/>
-                <field name="installation_date" string="Instalación" optional="show"/>
+                <field name="installation_date" string="Fecha de Instalación" optional="show"/>
                 <field name="contract_date" string="Fecha Contrato" optional="hide"/>
                 <field name="is_superseded" string="Reemplazado" optional="show"/>
                 <field name="state" widget="badge"/>

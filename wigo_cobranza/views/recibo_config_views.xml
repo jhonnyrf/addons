@@ -21,11 +21,7 @@
                         </group>
                         <group>
                             <field name="usar_logo_imagen" string="Usar imagen de logo"/>
-                            <field name="logo" widget="image"
-                                   class="oe_avatar"
-                                   options="{'size': [400, 160]}"
-                                   invisible="not usar_logo_imagen"
-                                   string="Logo (imagen)"/>
+                            <field name="logo" widget="image" class="oe_avatar" options="{'size': [400, 160]}" invisible="not usar_logo_imagen" string="Logo (imagen)"/>
                             <div invisible="usar_logo_imagen" class="alert alert-info" style="margin-top:8px;">
                                 <strong>Modo texto activo:</strong> El logo se mostrará como texto estilizado
                                 <em>"wigo / FAST / INTERNET"</em>. Activa "Usar imagen de logo" para subir tu propio logo.
@@ -66,10 +62,5 @@ action = {
 }
         </field>
     </record>
-
-    <!-- Menú Configuración dentro de Cobranza -->
-    <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="wigo_cobranza.menu_cobranza_root" sequence="90"/>
-    <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root"
-              action="action_recibo_config" sequence="10"/>
 
 </odoo>

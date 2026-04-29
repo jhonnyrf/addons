@@ -3,7 +3,8 @@ import base64
 from datetime import date
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class WigoPagoEstado(models.Model):
     """
@@ -82,6 +83,17 @@ class WigoPagoEstado(models.Model):
         string='Monto del plan (Bs)',
         related='plan_id.price', store=True, readonly=True,
     )
+    payment_mode = fields.Selection(
+        [
+            ('prepaid', 'Prepago'),
+            ('postpaid', 'Postpago'),
+        ],
+        string='Modalidad de pago',
+        compute='_compute_payment_mode',
+        store=True,
+        readonly=True,
+        help='Modalidad copiada automáticamente desde el contrato relacionado.',
+    )
     monto_prorrateo = fields.Float(
         string='Monto prorrateo (Bs)',
         default=0.0,
@@ -95,7 +107,19 @@ class WigoPagoEstado(models.Model):
     monto_a_cobrar = fields.Float(
         string='Monto a cobrar (Bs)',
         compute='_compute_monto_a_cobrar', store=True,
+        inverse='_inverse_monto_a_cobrar',
         help='Prorrateo si es primer mes, tarifa completa en el resto.',
+    )
+    monto_a_cobrar_manual = fields.Float(
+        string='Monto a cobrar manual (Bs)',
+        default=False,
+        copy=False,
+        help='Sobrescribe el monto a cobrar sugerido por el sistema.',
+    )
+    monto_a_cobrar_manual_aplicado = fields.Boolean(
+        string='Override de monto a cobrar aplicado',
+        default=False,
+        copy=False,
     )
     monto_pagado = fields.Float(
         string='Monto pagado (Bs)', tracking=True,
@@ -140,20 +164,24 @@ class WigoPagoEstado(models.Model):
         'res.users', string='Registrado por',
         default=lambda self: self.env.user, tracking=True,
     )
+    contabilidad_editable = fields.Boolean(
+        string='Modo edición contable',
+        compute='_compute_contabilidad_editable',
+        store=False,
+    )
 
     # ── Estado ────────────────────────────────────────────────────
     estado_pago = fields.Selection([
-        ('al_dia',         'Al día'),
-        ('pendiente',      'Pendiente'),
-        ('mora',           'En mora'),
-        ('deuda_parcial',  'Deuda parcial'),
-        ('baja_definitiva','Baja definitiva'),
+        ('pendiente', 'Pendiente'),
+        ('pagado', 'Pagado'),
+        ('mora', 'Mora'),
     ], string='Estado de pago', default='pendiente',
        required=True, tracking=True, index=True,
     )
 
     # ── Notas ─────────────────────────────────────────────────────
     notas = fields.Text(string='Notas de cobranza')
+    justificacion_edicion = fields.Text(string='Justificación de edición contable')
 
     # ── Display ───────────────────────────────────────────────────
     display_name = fields.Char(compute='_compute_display_name', store=True)
@@ -162,6 +190,12 @@ class WigoPagoEstado(models.Model):
     def _compute_has_comprobante(self):
         for rec in self:
             rec.has_comprobante = bool(rec.comprobante_adjunto or rec.comprobante_attachment_ids)
+
+    @api.depends_context('contabilidad_editable')
+    def _compute_contabilidad_editable(self):
+        editable = bool(self.env.context.get('contabilidad_editable'))
+        for rec in self:
+            rec.contabilidad_editable = editable
 
     # ─────────────────────────────────────────────────────────────
     # Constraints (Odoo 19: @api.constrains en lugar de _sql_constraints)
@@ -295,8 +329,8 @@ class WigoPagoEstado(models.Model):
 
     def _sync_payment_defaults(self):
         for rec in self:
-            if rec.monto_a_cobrar and not rec.monto_pagado:
-                rec.monto_pagado = rec.monto_a_cobrar
+            if rec.monto_pagado in (False, None):
+                rec.monto_pagado = 0.0
 
     def _compute_eligible_partner_ids(self):
         Contract = self.env['customer.contract']
@@ -311,6 +345,11 @@ class WigoPagoEstado(models.Model):
         for rec in self:
             rec.codigo_cliente = rec.contract_id.name or rec.client_service_id.codigo_cliente or False
             rec.plan_id = rec.contract_id.plan_id or rec.client_service_id.plan_id or False
+
+    @api.depends('contract_id.payment_mode')
+    def _compute_payment_mode(self):
+        for rec in self:
+            rec.payment_mode = rec.contract_id.payment_mode if rec.contract_id else False
 
     @api.depends('partner_id')
     def _compute_partner_snapshot(self):
@@ -329,20 +368,34 @@ class WigoPagoEstado(models.Model):
                 getattr(partner, 'direccion', False) or partner.street or False
             ) if partner else False
 
-    @api.depends('es_primer_mes', 'monto_prorrateo', 'monto_plan')
+    @api.depends('es_primer_mes', 'monto_prorrateo', 'monto_plan', 'monto_a_cobrar_manual', 'monto_a_cobrar_manual_aplicado')
     def _compute_monto_a_cobrar(self):
         for rec in self:
-            if rec.es_primer_mes:
+            if rec.monto_a_cobrar_manual_aplicado:
+                rec.monto_a_cobrar = rec.monto_a_cobrar_manual
+            elif rec.es_primer_mes:
                 rec.monto_a_cobrar = rec.monto_prorrateo
-            else:
+            else:                                
                 rec.monto_a_cobrar = rec.monto_plan
+
+    def _inverse_monto_a_cobrar(self):
+        for rec in self:
+            rec.monto_a_cobrar_manual = rec.monto_a_cobrar
+            rec.monto_a_cobrar_manual_aplicado = True
 
     @api.onchange('es_primer_mes', 'monto_prorrateo', 'monto_plan')
     def _onchange_prorrateo_manual(self):
+        _logger.info(f"onchange_prorrateo_manual triggered for record {self.id}: es_primer_mes={self.es_primer_mes}, monto_prorrateo={self.monto_prorrateo}, monto_plan={self.monto_plan}")
         for rec in self:
+            # Si se deselecciona primer mes, resetea el prorrateo a 0
+            if not rec.es_primer_mes:
+                rec.monto_prorrateo = 0.0
+            # Actualiza monto_a_cobrar según el estado del primer mes
             rec.monto_a_cobrar = rec.monto_prorrateo if rec.es_primer_mes else rec.monto_plan
+            # Sincroniza monto_pagado con el nuevo monto_a_cobrar
+            rec.monto_pagado = rec.monto_a_cobrar or 0.0
 
-    @api.depends('monto_a_cobrar', 'monto_pagado')
+    @api.depends('monto_a_cobrar', 'monto_pagado','monto_prorrateo')
     def _compute_diferencia(self):
         for rec in self:
             rec.diferencia = rec.monto_pagado - rec.monto_a_cobrar
@@ -430,9 +483,9 @@ class WigoPagoEstado(models.Model):
 
     @api.onchange('monto_a_cobrar')
     def _onchange_monto_a_cobrar(self):
-        # Mantiene monto pagado precargado con el monto del plan/cobro.
-        if self.monto_a_cobrar:
-            self.monto_pagado = self.monto_a_cobrar
+        # No precargar el valor pagado antes de la confirmación.
+        if not self.estado_pago or self.estado_pago == 'pendiente':
+            self.monto_pagado = 0.0
 
     @api.onchange('client_service_id')
     def _onchange_client_service_id(self):
@@ -555,16 +608,117 @@ class WigoPagoEstado(models.Model):
                 vals['mes'] = mes_sugerido
                 vals['anio'] = anio_sugerido
 
+            # Poblar modalidad de pago desde el contrato (no editable manualmente)
+            if vals.get('contract_id'):
+                contract = Contract.browse(vals.get('contract_id'))
+                vals['payment_mode'] = contract.payment_mode if contract and contract.payment_mode else False
+
+            # Determinar estado inicial según modalidad
+            if not vals.get('estado_pago'):
+                pm = vals.get('payment_mode')
+                mes_actual = vals.get('mes')
+                try:
+                    anio_actual = int(vals.get('anio'))
+                except Exception:
+                    anio_actual = None
+
+                if pm == 'postpaid':
+                    # Postpago: por defecto pendiente, a menos que el mes anterior no esté pagado
+                    prev_mes = None
+                    prev_anio = None
+                    if mes_actual and anio_actual is not None:
+                        if mes_actual == '1':
+                            prev_mes = '12'
+                            prev_anio = anio_actual - 1
+                        else:
+                            prev_mes = str(int(mes_actual) - 1)
+                            prev_anio = anio_actual
+                    prev_rec = False
+                    if vals.get('contract_id') and prev_mes and prev_anio is not None:
+                        prev_rec = self.search([
+                            ('contract_id', '=', vals.get('contract_id')),
+                            ('mes', '=', prev_mes),
+                            ('anio', '=', prev_anio),
+                        ], limit=1)
+                    if prev_rec and prev_rec.estado_pago != 'pagado':
+                        vals['estado_pago'] = 'mora'
+                    else:
+                        vals['estado_pago'] = 'pendiente'
+                elif pm == 'prepaid':
+                    # Prepago: cliente debe pagar antes de consumir
+                    vals['estado_pago'] = 'mora'
+                else:
+                    vals.setdefault('estado_pago', 'pendiente')
+
         records = super().create(vals_list)
         records._sync_payment_defaults()
         records._recompute_contract_mora()
         return records
 
     def write(self, vals):
+        contable_fields = {'monto_a_cobrar', 'monto_pagado'}
+        contable_changed = any(field in vals for field in contable_fields)
+        audit_payload = []
+
+        if contable_changed:
+            justificacion = (vals.get('justificacion_edicion') or '').strip()
+            for rec in self:
+                if rec.estado_pago != 'pendiente' and not justificacion:
+                    raise ValidationError(
+                        'Debe indicar una justificación para editar valores contables cuando el pago ya fue confirmado o está en mora.'
+                    )
+                audit_payload.append({
+                    'id': rec.id,
+                    'old': {
+                        'monto_a_cobrar': rec.monto_a_cobrar,
+                        'monto_pagado': rec.monto_pagado,
+                    },
+                    'justificacion': justificacion,
+                    'usuario': self.env.user.display_name,
+                    'fecha': fields.Datetime.now(),
+                })
+
         res = super().write(vals)
+
+        if contable_changed:
+            for rec in self:
+                payload = next((item for item in audit_payload if item['id'] == rec.id), None)
+                if not payload:
+                    continue
+                nuevos = {
+                    'monto_a_cobrar': rec.monto_a_cobrar,
+                    'monto_pagado': rec.monto_pagado,
+                }
+                if payload['old'] != nuevos:
+                    rec.message_post(
+                        body=(
+                            f"<b>Edición contable registrada</b><br/>"
+                            f"Usuario: {payload['usuario']}<br/>"
+                            f"Fecha: {payload['fecha']}<br/>"
+                            f"Monto a cobrar anterior: {payload['old']['monto_a_cobrar']:.2f} → nuevo: {nuevos['monto_a_cobrar']:.2f}<br/>"
+                            f"Monto pagado anterior: {payload['old']['monto_pagado']:.2f} → nuevo: {nuevos['monto_pagado']:.2f}<br/>"
+                            f"Justificación: {payload['justificacion'] or 'Sin justificación'}"
+                        ),
+                        subtype_xmlid='mail.mt_note',
+                    )
+
+        if any(k in vals for k in ('es_primer_mes', 'monto_prorrateo', 'monto_plan')):
+            self._sync_payment_defaults()
         if any(k in vals for k in ('estado_pago', 'monto_pagado', 'contract_id', 'mes', 'anio')):
             self._recompute_contract_mora()
         return res
+
+    def action_editar_valores_contables(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Editar valores contables',
+            'res_model': 'wigo.pago.estado',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'target': 'current',
+            'context': dict(self.env.context, contabilidad_editable=True, form_view_initial_mode='edit'),
+        }
 
     def action_open_contract_crm(self):
         self.ensure_one()
@@ -618,7 +772,7 @@ class WigoPagoEstado(models.Model):
                 raise ValidationError(
                     'Debe ingresar el monto pagado y la fecha de pago antes de confirmar.'
                 )
-            nuevo_estado = 'al_dia' if rec.monto_pagado >= rec.monto_a_cobrar else 'deuda_parcial'
+            nuevo_estado = 'pagado' if rec.monto_pagado >= rec.monto_a_cobrar else 'pendiente'
             rec.write({'estado_pago': nuevo_estado})
 
             svc = rec.client_service_id
@@ -654,7 +808,7 @@ class WigoPagoEstado(models.Model):
             pagos = self.search([
                 ('contract_id', '=', contract.id),
             ])
-            unpaid = pagos.filtered(lambda p: p.estado_pago in ('pendiente', 'deuda_parcial', 'mora'))
+            unpaid = pagos.filtered(lambda p: p.estado_pago in ('pendiente', 'mora'))
 
             if len(unpaid) >= 3:
                 for rec in unpaid:
@@ -795,9 +949,9 @@ class WigoPagoEstado(models.Model):
     def action_generar_recibo(self):
         """Crea o abre el recibo de cobro para este pago."""
         self.ensure_one()
-        if self.estado_pago not in ('al_dia', 'deuda_parcial'):
+        if self.estado_pago not in ('pagado', 'pendiente'):
             raise UserError(
-                'Solo se puede generar recibo para pagos confirmados (Al día o Deuda parcial).'
+                'Solo se puede generar recibo para pagos confirmados (Pagado o Pendiente).'
             )
         Recibo = self.env['wigo.recibo.cobro']
         recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
@@ -894,7 +1048,6 @@ class WigoPagoEstado(models.Model):
                     'contract_id': contract.id,
                     'mes': mes_actual,
                     'anio': anio_actual,
-                    'estado_pago': 'pendiente',
                 }
                 if svc:
                     vals['client_service_id'] = svc.id
@@ -945,7 +1098,6 @@ class WigoPagoEstado(models.Model):
                 'contract_id': contract.id,
                 'mes': mes_actual,
                 'anio': anio_actual,
-                'estado_pago': 'pendiente',
             }
             if service:
                 vals['client_service_id'] = service.id

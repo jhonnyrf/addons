@@ -39,6 +39,7 @@
     <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_location" action="action_ftth_regional" sequence="10"/>
     <menuitem id="menu_ftth_config_nodo" name="Nodos" parent="menu_ftth_config_location" action="action_ftth_nodo" sequence="20"/>
     <menuitem id="menu_ftth_config_box_group" name="Zonas / Grupos de Cajas" parent="menu_ftth_config_location" action="action_ftth_box_group" sequence="30"/>
+    <menuitem id="menu_ftth_wigo_zone" name="Zonas" parent="menu_ftth_config_location" action="action_ftth_wigo_zone" sequence="5"/>
 
     <!-- Red GPON -->
     <menuitem id="menu_ftth_config_technology" name="Tecnologías" parent="menu_ftth_config_network" action="action_ftth_technology" sequence="10"/>

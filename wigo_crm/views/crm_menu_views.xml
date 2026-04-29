@@ -118,9 +118,8 @@
         <field name="target">self</field>
     </record>
 
-    <!-- Entrada para administrar zonas del selector de Zona en leads. -->
-    <!-- REMOVIDO: Las zonas se gestionan exclusivamente en FTTH -->
-    <!-- <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/> -->
+    <!-- Entrada para zonas en Configuración de CRM (solo lectura). -->
+    <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/>
 
     <!-- Entrada en Configuracion de CRM para acceder a Planes sin salir del backend. -->
     <menuitem id="menu_wigo_crm_planes" name="Planes" parent="crm.crm_menu_config" action="action_open_wigo_planes_root" sequence="100"/>

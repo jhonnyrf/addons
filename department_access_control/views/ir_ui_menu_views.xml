@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ir_ui_menu_tree_department_access" model="ir.ui.view">
+        <field name="name">ir.ui.menu.tree.department.access</field>
+        <field name="model">ir.ui.menu</field>
+        <field name="arch" type="xml">
+            <list string="Módulo / Menú / Sección">
+                <field name="complete_name" string="Menú"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

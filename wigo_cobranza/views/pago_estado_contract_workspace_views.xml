@@ -5,11 +5,12 @@
         <field name="name">wigo.pago.estado.contract.workspace.list</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'">
+            <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'">
                 <field name="periodo"/>
-                <field name="monto_a_cobrar" string="A cobrar (Bs)"/>
-                <field name="monto_pagado" string="Pagado (Bs)"/>
-                <field name="diferencia" string="Diferencia (Bs)"/>
+                <field name="payment_mode" string="Modalidad" optional="show"/>
+                <field name="monto_a_cobrar" string="DEBE (Bs)"/>
+                <field name="monto_pagado" string="HABER (Bs)"/>
+                <field name="diferencia" string="SALDO (Bs)"/>
                 <field name="fecha_pago"/>
                 <field name="estado_pago" widget="badge"/>
                 <field name="canal_pago" optional="show"/>
@@ -24,16 +25,18 @@
         <field name="arch" type="xml">
             <form string="Registro mensual de pago">
                 <header>
-                    <button name="action_registrar_pago" string="✅ Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'al_dia'"/>
-                    <button name="action_marcar_mora" string="🔴 Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['mora','al_dia','baja_definitiva']"/>
-                    <button name="action_generar_recibo" string="🧾 Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
-                    <button name="action_imprimir_recibo" string="🖨️ Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
-                    <button name="action_registrar_factura" string="📄 Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>                    
-                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,al_dia,mora,baja_definitiva"/>
+                    <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
+                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago == 'mora'"/>
+                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
+                    <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago not in ['pagado','pendiente']"/>
+                    <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
-                    <widget name="web_ribbon" title="Al día" bg_color="text-bg-success" invisible="estado_pago != 'al_dia'"/>
+                    <widget name="web_ribbon" title="Pagado" bg_color="text-bg-success" invisible="estado_pago != 'pagado'"/>
+                    <widget name="web_ribbon" title="Edición contable" bg_color="text-bg-warning" invisible="not contabilidad_editable"/>
 
                     <group string="Contrato y periodo" col="2">
                         <group>
@@ -46,6 +49,7 @@
                         </group>
                         <group>
                             <field name="monto_plan" readonly="1"/>
+                            <field name="payment_mode" readonly="1"/>
                             <field name="es_primer_mes"/>
                             <field name="monto_prorrateo" readonly="not es_primer_mes"/>
                         </group>
@@ -53,15 +57,18 @@
 
                     <notebook>
                         <page string="Pago y Control">
-                            <group string="Datos del pago" col="2">
+                            <group string="Contabilidad" col="2">
                                 <group>
-                                    <field name="monto_pagado"/>
-                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
-                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
+                                    <field name="contabilidad_editable" invisible="1"/>
+                                    <field name="monto_a_cobrar" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
+                                    <field name="monto_pagado" readonly="estado_pago != 'pendiente' and not contabilidad_editable"/>
+                                    <field name="diferencia" readonly="1"/>
                                 </group>
                                 <group>
+                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
+                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
                                     <field name="registrado_por" readonly="1"/>
-                                    <field name="diferencia" readonly="1"/>
+                                    <field name="justificacion_edicion" placeholder="Justificación obligatoria cuando se editen montos contables fuera de pendiente." invisible="not contabilidad_editable" required="contabilidad_editable"/>
                                 </group>
                             </group>
                         </page>

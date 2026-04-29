@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         VISTA FORM del Departamento — pestaña Control de Acceso
+    ============================================================ -->
+    <record id="view_hr_department_form_access" model="ir.ui.view">
+        <field name="name">hr.department.form.access</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Botones stat en el encabezado -->
+            <div name="button_box" position="inside">
+                <button name="action_view_access_rules"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-shield"
+                        groups="department_access_control.group_department_access_manager">
+                    <field name="access_rule_count" widget="statinfo" string="Reglas"/>
+                </button>
+                <button name="action_view_module_access"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-th-large"
+                        groups="department_access_control.group_department_access_manager">
+                    <field name="module_access_count" widget="statinfo" string="Módulos"/>
+                </button>
+            </div>
+
+            <!-- Bloque de Control de Acceso (la vista base no usa notebook/page) -->
+            <xpath expr="//sheet" position="inside">
+                <group string="Control de Acceso"
+                       groups="department_access_control.group_department_access_manager">
+
+                    <group string="Configuración General" col="2">
+                        <field name="restrict_access"/>
+                        <field name="access_policy" invisible="not restrict_access"/>
+                    </group>
+
+                    <!-- Aviso cuando está desactivado -->
+                    <separator string="Activa Restricciones de Acceso para controlar que puede ver y hacer este departamento en Odoo."
+                               invisible="restrict_access"/>
+
+                    <!-- Contenido cuando está activado -->
+                      <group invisible="not restrict_access" col="1">
+
+                           <!-- Reglas de acceso por módulo/menú -->
+                           <separator string="Reglas de Acceso a Datos (por Módulo)" class="mt-4"/>
+                           <separator string="Define acceso por módulo, menú o sección completa."/>
+                           <field name="access_rule_ids"
+                               nolabel="1"
+                               domain="[('rule_type', '=', 'modulo')]"
+                               context="{'default_rule_type': 'modulo'}">
+                            <list editable="bottom" string="Reglas por Módulo">
+                                <field name="menu_id"
+                                    string="Módulo / Menú / Sección"
+                                    context="{'tree_view_ref': 'department_access_control.view_ir_ui_menu_tree_department_access'}"/>
+                                <field name="menu_name"
+                                    string="Nombre Módulo"
+                                    readonly="1"/>
+                                <field name="include_submenu_models"
+                                    string="Incluir Sub."
+                                    widget="boolean_toggle"/>
+                                <field name="access_level"
+                                    string="Nivel de Acceso"
+                                    widget="badge"
+                                    decoration-info="access_level == 'readonly'"
+                                    decoration-warning="access_level == 'write'"
+                                    decoration-success="access_level == 'full'"
+                                    decoration-danger="access_level == 'noaccess'"
+                                    decoration-secondary="access_level == 'custom'"/>
+                                <field name="perm_read"
+                                    string="Leer"
+                                    widget="boolean_toggle"/>
+                                <field name="perm_write"
+                                    string="Modificar"
+                                    widget="boolean_toggle"/>
+                                <field name="perm_create"
+                                    string="Crear"
+                                    widget="boolean_toggle"/>
+                                <field name="perm_unlink"
+                                    string="Eliminar"
+                                    widget="boolean_toggle"/>
+                                <field name="active"
+                                    string="Activo"
+                                    widget="boolean_toggle"/>
+                                <field name="notes"
+                                    string="Obs."
+                                    optional="show"/>
+                            </list>
+                           </field>
+
+                        <!-- Visibilidad de módulos / menús -->
+                        <separator string="Visibilidad de Módulos / Menús" class="mt-4"/>
+                        <div class="text-muted small mb-2">
+                            <span invisible="access_policy != 'whitelist'">
+                                <strong>📋 Lista Blanca:</strong>
+                                El departamento <strong>SOLO</strong> verá los módulos
+                                marcados como <em>Visible</em>. Todo lo demás estará oculto.
+                            </span>
+                            <span invisible="access_policy != 'blacklist'">
+                                <strong>🚫 Lista Negra:</strong>
+                                El departamento verá <strong>TODO</strong> excepto los
+                                módulos marcados como <em>Oculto</em>.
+                            </span>
+                        </div>
+                           <field name="module_access_ids"
+                               nolabel="1"
+                               context="{'default_department_id': id, 'default_access_type': access_policy == 'blacklist' and 'hidden' or 'visible'}">
+                            <list editable="bottom" string="Módulos">
+                                <field name="menu_id"
+                                       string="Módulo / Menú"
+                                       domain="[('parent_id','=',False)]"
+                                       context="{'tree_view_ref': 'department_access_control.view_ir_ui_menu_tree_department_access'}"/>
+                                <field name="menu_name"
+                                       string="Nombre Completo"
+                                       optional="show"
+                                       readonly="1"/>
+                                <field name="access_type"
+                                       string="Tipo de Acceso"
+                                       widget="badge"
+                                       decoration-success="access_type == 'visible'"
+                                       decoration-danger="access_type == 'hidden'"/>
+                                <field name="active"
+                                       string="Activo"
+                                       widget="boolean_toggle"/>
+                                <field name="notes"
+                                       string="Obs."
+                                       optional="show"/>
+                            </list>
+                        </field>
+
+                        <!-- Botón de aplicación masiva -->
+                        <group col="1">
+                            <button name="action_apply_access_to_employees"
+                                    type="object"
+                                    string="Aplicar permisos a empleados del departamento"
+                                    class="btn btn-secondary"
+                                    icon="fa-magic"
+                                    confirm="¿Aplicar estas reglas a todos los empleados de este departamento?"/>
+                        </group>
+
+                    </group>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ============================================================
+         VISTA LIST del Departamento — columna de estado de acceso
+         (usa priority baja para no fallar si no existe la vista base)
+    ============================================================ -->
+    <record id="view_hr_department_list_access" model="ir.ui.view">
+        <field name="name">hr.department.list.access</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_tree"/>
+        <field name="priority">50</field>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="restrict_access"
+                       string="Acceso Restringido"
+                       optional="show"
+                       widget="boolean"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

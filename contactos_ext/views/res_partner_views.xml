@@ -119,7 +119,7 @@
                     <field name="ci" string="CI" placeholder="CI" invisible="company_type != 'person'"/>
                 </group>
                 <group string="Dirección" col="2" invisible="is_company">
-                    <field name="zona_id" string="Zona?" placeholder="Seleccionar o crear zona" context="{'form_view_ref': 'wigo_crm.view_wigo_zone_form'}"/>
+                    <field name="zona_id" string="Zona?" placeholder="Seleccionar o crear zona" context="{'form_view_ref': 'wigo_ftth.view_wigo_zone_form'}"/>
                     <field name="direccion" string="Dirección?" placeholder="Dirección exacta"/>
                     <field name="ubicacion" string="Ubicación?" widget="url" placeholder="Pegar enlace de Google Maps aquí"/>
                     <field name="coordenadas" string="Coordenadas?" placeholder="Ej. -17.783327, -63.182140"/>

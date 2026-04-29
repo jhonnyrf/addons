@@ -1387,7 +1387,7 @@
     <record id="view_wigo_zone_form_ftth_inherit_boxes" model="ir.ui.view">
         <field name="name">wigo.zone.form.ftth.boxes</field>
         <field name="model">wigo.zone</field>
-        <field name="inherit_id" ref="wigo_crm.view_wigo_zone_form"/>
+        <field name="inherit_id" ref="wigo_ftth.view_wigo_zone_form"/>
         <field name="arch" type="xml">
             <sheet position="inside">
                 <notebook>
