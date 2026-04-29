@@ -8,10 +8,7 @@
         <field name="name">wigo.recibo.cobro.list</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
-            <list string="Recibos de Cobro"
-                  decoration-success="state == 'emitido'"
-                  decoration-muted="state == 'anulado'"
-                  decoration-warning="state == 'borrador'">
+            <list string="Recibos de Cobro" decoration-success="state == 'emitido'" decoration-muted="state == 'anulado'" decoration-warning="state == 'borrador'">
                 <field name="numero"/>
                 <field name="partner_id"/>
                 <field name="codigo_cliente"/>
@@ -20,64 +17,91 @@
                 <field name="canal_pago" optional="show"/>
                 <field name="fecha_pago"/>
                 <field name="registrado_por" optional="hide"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'emitido'"
-                       decoration-warning="state == 'borrador'"
-                       decoration-danger="state == 'anulado'"/>
-                <button name="action_imprimir" string="🖨️ Imprimir" type="object"
-                        invisible="state == 'anulado'"/>
+                <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'borrador'" decoration-danger="state == 'anulado'"/>
+                <button name="action_imprimir" string="🖨️ Imprimir" type="object" invisible="state == 'anulado'"/>
             </list>
         </field>
     </record>
 
     <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW
+         FORM VIEW (PROFESIONAL - CON PREVIEW INTEGRADA)
     ══════════════════════════════════════════════════════════ -->
     <record id="view_recibo_cobro_form" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.form</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
-            <form string="Recibo de Cobro">
+            <form string="Recibo de Cobro" class="o_form_sheet_bg">
                 <header>
-                    <button name="action_emitir" string="✅ Emitir Recibo" type="object"
-                            class="btn-primary" invisible="state != 'borrador'"/>
-                    <button name="action_imprimir" string="🖨️ Imprimir PDF" type="object"
-                            class="btn-primary" invisible="state == 'anulado'"/>
-                    <button name="action_anular" string="❌ Anular" type="object"
-                            class="btn-danger" invisible="state == 'anulado'"
-                            confirm="¿Confirma anular este recibo?"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="borrador,emitido,anulado"/>
+                    <button name="action_emitir" string="✅ Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
+                    <button name="action_imprimir" string="🖨️ Imprimir PDF" type="object" class="btn-primary" invisible="state == 'anulado'"/>
+                    <button name="action_anular" string="❌ Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
                 </header>
+
                 <sheet>
-                    <widget name="web_ribbon" title="Emitido" bg_color="text-bg-success"
-                            invisible="state != 'emitido'"/>
-                    <widget name="web_ribbon" title="Anulado" bg_color="text-bg-danger"
-                            invisible="state != 'anulado'"/>
+                    <!-- LAYOUT: DOS COLUMNAS (FORMULARIO + PREVIEW) -->
+                    <div class="row">
 
-                    <div class="oe_title">
-                        <label for="numero"/>
-                        <h1><field name="numero" readonly="1"/></h1>
+                        <!-- COLUMNA IZQ: FORMULARIO (60%) -->
+                        <div class="col-lg-7">
+                            <div class="oe_title">
+                                <h1>Recibo Nº <field name="numero" readonly="1" class="ms-2"/>
+                                </h1>
+                            </div>
+
+                            <!-- DATOS DEL PAGO -->
+                            <group string="📋 Datos del Pago">
+                                <field name="pago_id" options="{'no_create': True}"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="codigo_cliente" readonly="1"/>
+                                <field name="fecha_pago" readonly="1"/>
+                                <field name="periodo" readonly="1"/>
+                                <field name="canal_pago" readonly="1"/>
+                            </group>
+
+                            <!-- MONTO -->
+                            <group string="💰 Monto">
+                                <field name="monto" readonly="1" widget="monetary"/>
+                                <field name="monto_en_letras" readonly="1"/>
+                            </group>
+
+                            <!-- DETALLE (EDITABLE) -->
+                            <group string="📝 Detalle (editable)">
+                                <field name="descripcion" nolabel="1" readonly="state != 'borrador'"/>
+                            </group>
+
+                            <!-- FIRMA (EDITABLE) -->
+                            <group string="✍️ Firma" col="1">
+                                <div class="alert alert-info">
+                                    <small>
+                                        <strong>💡</strong> Dejar vacío = usar configuración. Editable en Borrador.</small>
+                                </div>
+                                <field name="firma_nombre_override" placeholder="Lic. Patricia Villarroel" readonly="state != 'borrador'"/>
+                                <field name="firma_cargo_override" placeholder="CONTABILIDAD" readonly="state != 'borrador'"/>
+                                <field name="firma_celular_override" placeholder="68582771" readonly="state != 'borrador'"/>
+                            </group>
+
+                            <field name="registrado_por" readonly="1" invisible="1"/>
+                        </div>
+
+                        <!-- COLUMNA DER: PREVIEW (40%) -->
+                        <div class="col-lg-5">
+                            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <!-- Header Preview -->
+                                <div style="background: linear-gradient(135deg, #cc0000, #990000); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 8px; font-weight: bold;">
+                                    <i class="fa fa-eye"></i> Vista Previa del Recibo
+                                </div>
+
+                                <!-- Preview Message -->
+                                <div style="padding: 20px; text-align: center; color: #666; font-size: 14px;">
+                                    <p>Haga clic en <strong>"🖨️ Imprimir PDF"</strong> para ver una vista previa del recibo.</p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-
-                    <group col="2">
-                        <group string="Datos del pago">
-                            <field name="pago_id" options="{'no_create': True}"/>
-                            <field name="partner_id" readonly="1"/>
-                            <field name="codigo_cliente" readonly="1"/>
-                            <field name="periodo" readonly="1"/>
-                            <field name="fecha_pago" readonly="1"/>
-                        </group>
-                        <group string="Monto y canal">
-                            <field name="monto" readonly="1"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="canal_pago" readonly="1"/>
-                            <field name="monto_en_letras" readonly="1"/>
-                            <field name="descripcion"/>
-                            <field name="registrado_por" readonly="1"/>
-                        </group>
-                    </group>
                 </sheet>
+
                 <chatter/>
             </form>
         </field>
@@ -100,15 +124,11 @@
                 <filter name="borradores" string="Borradores" domain="[('state','=','borrador')]"/>
                 <filter name="anulados" string="Anulados" domain="[('state','=','anulado')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual"
-                        domain="[('fecha_pago','&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="mes_actual" string="Mes actual" domain="[('fecha_pago','&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
                 <separator/>
-                <filter name="group_partner" string="Agrupar por Cliente"
-                        context="{'group_by': 'partner_id'}"/>
-                <filter name="group_periodo" string="Agrupar por Período"
-                        context="{'group_by': 'periodo'}"/>
-                <filter name="group_canal" string="Agrupar por Canal"
-                        context="{'group_by': 'canal_pago'}"/>
+                <filter name="group_partner" string="Agrupar por Cliente" context="{'group_by': 'partner_id'}"/>
+                <filter name="group_periodo" string="Agrupar por Período" context="{'group_by': 'periodo'}"/>
+                <filter name="group_canal" string="Agrupar por Canal" context="{'group_by': 'canal_pago'}"/>
             </search>
         </field>
     </record>

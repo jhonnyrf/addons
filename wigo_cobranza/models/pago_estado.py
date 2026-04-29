@@ -946,6 +946,12 @@ class WigoPagoEstado(models.Model):
     # ─────────────────────────────────────────────────────────────
     # Recibo de cobro
     # ─────────────────────────────────────────────────────────────
+    recibo_generado = fields.Boolean(
+        string='Recibo generado',
+        default=False,
+        copy=False,
+    )
+
     def action_generar_recibo(self):
         """Crea o abre el recibo de cobro para este pago."""
         self.ensure_one()
@@ -957,6 +963,7 @@ class WigoPagoEstado(models.Model):
         recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
         if not recibo:
             recibo = Recibo.create({'pago_id': self.id})
+            self.recibo_generado = True
         return {
             'type': 'ir.actions.act_window',
             'name': f'Recibo — {self.display_name}',
@@ -973,6 +980,7 @@ class WigoPagoEstado(models.Model):
         recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
         if not recibo:
             recibo = Recibo.create({'pago_id': self.id})
+            self.recibo_generado = True
         return recibo.action_imprimir()
 
     # ─────────────────────────────────────────────────────────────

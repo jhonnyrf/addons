@@ -55,7 +55,20 @@ class WigoReciboCobro(models.Model):
     )
     descripcion = fields.Char(
         string='Descripción del servicio',
-        compute='_compute_descripcion', store=True,
+        compute='_compute_descripcion', store=True, readonly=False,
+    )
+    # Campos editables para personalizar el recibo
+    firma_nombre_override = fields.Char(
+        string='Nombre del firmante (override)',
+        help='Dejar vacío para usar el del config. Editable antes de emitir.'
+    )
+    firma_cargo_override = fields.Char(
+        string='Cargo (override)',
+        help='Dejar vacío para usar el del config. Editable antes de emitir.'
+    )
+    firma_celular_override = fields.Char(
+        string='CEL firmante (override)',
+        help='Dejar vacío para usar el del config. Editable antes de emitir.'
     )
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -103,4 +116,9 @@ class WigoReciboCobro(models.Model):
         self.ensure_one()
         if self.state == 'borrador':
             self.action_emitir()
+        return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
+
+    def action_preview(self):
+        """Abre previsualización del PDF en nueva pestaña"""
+        self.ensure_one()
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)

@@ -44,6 +44,7 @@
             'wigo_cobranza/static/src/js/semaforo_widget.js',
             'wigo_cobranza/static/src/xml/semaforo_widget.xml',
             'wigo_cobranza/static/src/scss/semaforo_widget.scss',
+            'wigo_cobranza/static/src/js/recibo_cobro_form.js',
         ],
     },
     'external_dependencies': {

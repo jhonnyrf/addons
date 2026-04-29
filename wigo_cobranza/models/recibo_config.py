@@ -35,7 +35,7 @@ class WigoReciboConfig(models.Model):
     logo_fname = fields.Char(string='Nombre del archivo logo')
     usar_logo_imagen = fields.Boolean(
         string='Usar logo imagen (si no, mostrar texto)',
-        default=False,
+        default=True,
     )
 
     # ── Firma ────────────────────────────────────────────────────

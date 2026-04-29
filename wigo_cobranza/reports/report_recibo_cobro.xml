@@ -1,221 +1,394 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="report_recibo_cobro_document">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
-                <!-- Cargar configuración del recibo -->
-                <t t-set="cfg" t-value="o.env['wigo.recibo.config'].get_config()"/>
+    <!-- ════════════════════════════════════════════════════════════
+         TEMPLATE PREVIEW (HTML embebido en el formulario)
+    ════════════════════════════════════════════════════════════ -->
+    <template id="report_recibo_cobro_preview">
+        <t t-set="cfg" t-value="doc.env['wigo.recibo.config'].get_config()"/>
+        <t t-set="company" t-value="doc.env.company"/>
+        <t t-set="firma_nombre" t-value="doc.firma_nombre_override or cfg.firma_nombre"/>
+        <t t-set="firma_cargo" t-value="doc.firma_cargo_override or cfg.firma_cargo"/>
+        <t t-set="firma_celular" t-value="doc.firma_celular_override or cfg.firma_celular"/>
 
-                <div style="font-family: Arial, sans-serif; font-size: 12px; color: #222; width: 100%; max-width: 780px; margin: 0 auto; padding: 24px 32px; box-sizing: border-box;">
+        <div style="font-family: Arial, sans-serif; font-size: 11px; padding: 15px; background: #f5f5f5;">
+            <!-- RECIBO ÚNICO PARA PREVIEW -->
+            <div style="border: 1px solid #ddd; padding: 15px; background: white; margin-bottom: 10px;">
 
-                    <!-- ═══════════ MACRO: bloque recibo ═══════════ -->
-                    <!-- Se repite dos veces (original + copia) para no duplicar código de datos -->
+                <!-- HEADER CON LOGO Y TITULO -->
+                <table width="100%" style="margin-bottom: 15px;">
+                    <tr>
+                        <td width="70%">
+                            <div style="font-size: 18px; font-weight: bold; color: #cc0000;">
+                                RECIBO DE COBRANZA
+                            </div>
+                            <div style="font-weight: bold; margin-top: 8px;">
+                                <t t-esc="cfg.empresa_nombre"/>
+                            </div>
+                            <div style="font-size: 10px; color: #666;">
+                                <t t-esc="cfg.empresa_direccion"/>
+                                <br/>
+                                <t t-esc="cfg.empresa_ciudad"/>
+                                <br/>
+                                CEL: <t t-esc="cfg.empresa_celular"/>
+                            </div>
+                        </td>
+                        <td width="30%" style="text-align: right;">
+                            <t t-if="company.logo">
+                                <img t-att-src="image_data_uri(company.logo)" style="max-height: 50px;"/>
+                            </t>
+                            <t t-elif="cfg.logo">
+                                <img t-att-src="image_data_uri(cfg.logo)" style="max-height: 50px;"/>
+                            </t>
+                            <div style="font-weight: bold; margin-top: 10px; font-size: 12px;">
+                                Nº <t t-esc="doc.numero"/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
 
-                    <!-- BLOQUE ORIGINAL -->
-                    <div style="border: 1px solid #ccc; padding: 20px 24px 16px 24px; margin-bottom: 0;">
-
-                        <!-- CABECERA -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
-                            <tr>
-                                <td valign="top" style="width: 60%;">
-                                    <div style="font-size: 26px; font-weight: bold; color: #222; letter-spacing: 1px; line-height: 1.1;">RECIBO DE COBRANZA</div>
-                                    <div style="margin-top: 6px; font-size: 12px; font-weight: bold;"><t t-esc="cfg.empresa_nombre"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.empresa_direccion"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.empresa_ciudad"/></div>
-                                    <div style="font-size: 11px; color: #444;">CEL: <t t-esc="cfg.empresa_celular"/></div>
-                                </td>
-                                <td valign="top" align="right" style="width: 40%;">
-                                    <!-- Logo: imagen si está configurada, texto si no -->
-                                    <t t-if="cfg.usar_logo_imagen and cfg.logo">
-                                        <img t-att-src="image_data_uri(cfg.logo)" style="max-height:70px; max-width:160px; display:inline-block;"/>
-                                    </t>
-                                    <t t-else="">
-                                        <div style="display: inline-block; text-align: center; border: 2px solid #cc0000; padding: 6px 14px 4px 14px; border-radius: 4px;">
-                                            <div style="font-size: 28px; font-weight: 900; color: #cc0000; font-style: italic; letter-spacing: -1px;">wigo</div>
-                                            <div style="font-size: 8px; font-weight: bold; color: #cc0000; letter-spacing: 3px; margin-top: -6px;">FAST</div>
-                                            <div style="font-size: 7px; letter-spacing: 2px; color: #888;">INTERNET</div>
-                                        </div>
-                                    </t>
-                                    <div style="margin-top: 8px; font-size: 13px; font-weight: bold; color: #222; text-align: right;">
-                                        Nº <t t-esc="o.numero"/>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- RECIBIDO DE / FECHA -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                            <tr>
-                                <td style="padding-bottom: 4px;">
-                                    <span style="font-size: 11px; font-weight: bold; text-decoration: underline;">RECIBIDO DE:</span>
-                                    <span style="font-size: 11px; font-weight: bold; color: #cc0000; margin-left: 30px;">FECHA:  <t t-esc="o.fecha_pago" t-options="{'widget': 'date', 'format': 'dd/MM/yyyy'}"/></span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span style="font-size: 12px;">Sr/Sra. :  </span><span style="font-size: 12px; font-weight: bold;"><t t-esc="o.partner_id.name"/></span></td>
-                            </tr>
-                        </table>
-
-                        <!-- TABLA DESCRIPCIÓN -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 4px;">
-                            <thead>
-                                <tr style="background-color: #cc0000;">
-                                    <th style="padding: 7px 10px; text-align: center; color: #fff; font-size: 11px; font-weight: bold; width: 75%;">DESCRIPCION</th>
-                                    <th style="padding: 7px 10px; text-align: center; color: #fff; font-size: 11px; font-weight: bold; width: 25%;">PRECIO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="padding: 10px 10px 4px 10px; font-size: 12px;"><t t-esc="o.descripcion"/></td>
-                                    <td style="padding: 10px 10px 4px 10px; text-align: right; font-size: 12px;"><t t-esc="o.monto" t-options="{'widget': 'float', 'precision': 2}"/></td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 0 10px 8px 10px; font-size: 11px; color: #555;">
-                                        <t t-if="o.codigo_cliente">CF-<t t-esc="o.codigo_cliente"/></t>
-                                    </td>
-                                    <td style="padding: 0 10px 8px 10px; border-top: 1px solid #999;"></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td style="padding: 6px 10px; font-size: 11px; font-style: italic;">SON: <t t-esc="o.monto_en_letras"/></td>
-                                    <td style="padding: 6px 10px; text-align: right;">
-                                        <span style="font-size: 11px; font-weight: bold;">TOTAL BS.</span>&#160;&#160;<span style="font-size: 14px; font-weight: bold;"><t t-esc="o.monto" t-options="{'widget': 'float', 'precision': 2}"/></span>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div style="background-color: #cc0000; height: 10px; margin: 10px 0;"></div>
-
-                        <!-- FIRMAS -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 14px;">
-                            <tr>
-                                <td style="width: 45%; vertical-align: top;">
-                                    <div style="font-size: 12px; font-weight: bold;"><t t-esc="cfg.firma_nombre"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.firma_cargo"/></div>
-                                    <div style="font-size: 11px; color: #444;">CEL. <t t-esc="cfg.firma_celular"/></div>
-                                </td>
-                                <td style="width: 10%;"></td>
-                                <td style="width: 45%; vertical-align: top;">
-                                    <div style="font-size: 11px; font-weight: bold; border-bottom: 1px solid #999; padding-bottom: 2px; margin-bottom: 6px;">ENTREGUE CONFORME</div>
-                                    <div style="font-size: 11px; color: #444;">Nombre: ___________________________</div>
-                                    <div style="font-size: 11px; color: #444; margin-top: 4px;">CI: ___________________________</div>
-                                </td>
-                            </tr>
-                        </table>
+                <!-- DATOS PRINCIPALES -->
+                <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                    <div style="margin-bottom: 8px;">
+                        <strong>RECIBIDO DE:</strong>
+                        <span style="margin-left: 20px;">
+                            <t t-esc="doc.partner_id.name"/>
+                        </span>
+                        <span style="margin-left: 30px; color: #cc0000;">
+                            <strong>FECHA:</strong>
+                            <t t-esc="doc.fecha_pago" t-options="{'widget':'date','format':'dd/MM/yyyy'}"/>
+                        </span>
                     </div>
-
-                    <!-- LÍNEA DE CORTE -->
-                    <div style="text-align: center; font-size: 10px; color: #aaa; letter-spacing: 2px; padding: 5px 0; border-top: 1px dashed #bbb; border-bottom: 1px dashed #bbb; margin: 0;">
-                        ✂  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ COPIA CLIENTE ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  ✂
+                    <div style="font-size: 10px; color: #666;">
+                        Código: <t t-esc="doc.codigo_cliente"/>
                     </div>
-
-                    <!-- BLOQUE COPIA (idéntico) -->
-                    <div style="border: 1px solid #ccc; border-top: none; padding: 20px 24px 16px 24px;">
-
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
-                            <tr>
-                                <td valign="top" style="width: 60%;">
-                                    <div style="font-size: 26px; font-weight: bold; color: #222; letter-spacing: 1px; line-height: 1.1;">RECIBO DE COBRANZA</div>
-                                    <div style="margin-top: 6px; font-size: 12px; font-weight: bold;"><t t-esc="cfg.empresa_nombre"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.empresa_direccion"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.empresa_ciudad"/></div>
-                                    <div style="font-size: 11px; color: #444;">CEL: <t t-esc="cfg.empresa_celular"/></div>
-                                </td>
-                                <td valign="top" align="right" style="width: 40%;">
-                                    <t t-if="cfg.usar_logo_imagen and cfg.logo">
-                                        <img t-att-src="image_data_uri(cfg.logo)" style="max-height:70px; max-width:160px; display:inline-block;"/>
-                                    </t>
-                                    <t t-else="">
-                                        <div style="display: inline-block; text-align: center; border: 2px solid #cc0000; padding: 6px 14px 4px 14px; border-radius: 4px;">
-                                            <div style="font-size: 28px; font-weight: 900; color: #cc0000; font-style: italic; letter-spacing: -1px;">wigo</div>
-                                            <div style="font-size: 8px; font-weight: bold; color: #cc0000; letter-spacing: 3px; margin-top: -6px;">FAST</div>
-                                            <div style="font-size: 7px; letter-spacing: 2px; color: #888;">INTERNET</div>
-                                        </div>
-                                    </t>
-                                    <div style="margin-top: 8px; font-size: 13px; font-weight: bold; color: #222; text-align: right;">
-                                        Nº <t t-esc="o.numero"/>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                            <tr>
-                                <td style="padding-bottom: 4px;">
-                                    <span style="font-size: 11px; font-weight: bold; text-decoration: underline;">RECIBIDO DE:</span>
-                                    <span style="font-size: 11px; font-weight: bold; color: #cc0000; margin-left: 30px;">FECHA:  <t t-esc="o.fecha_pago" t-options="{'widget': 'date', 'format': 'dd/MM/yyyy'}"/></span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span style="font-size: 12px;">Sr/Sra. :  </span><span style="font-size: 12px; font-weight: bold;"><t t-esc="o.partner_id.name"/></span></td>
-                            </tr>
-                        </table>
-
-                        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 4px;">
-                            <thead>
-                                <tr style="background-color: #cc0000;">
-                                    <th style="padding: 7px 10px; text-align: center; color: #fff; font-size: 11px; font-weight: bold; width: 75%;">DESCRIPCION</th>
-                                    <th style="padding: 7px 10px; text-align: center; color: #fff; font-size: 11px; font-weight: bold; width: 25%;">PRECIO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td style="padding: 10px 10px 4px 10px; font-size: 12px;"><t t-esc="o.descripcion"/></td>
-                                    <td style="padding: 10px 10px 4px 10px; text-align: right; font-size: 12px;"><t t-esc="o.monto" t-options="{'widget': 'float', 'precision': 2}"/></td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 0 10px 8px 10px; font-size: 11px; color: #555;">
-                                        <t t-if="o.codigo_cliente">CF-<t t-esc="o.codigo_cliente"/></t>
-                                    </td>
-                                    <td style="padding: 0 10px 8px 10px; border-top: 1px solid #999;"></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td style="padding: 6px 10px; font-size: 11px; font-style: italic;">SON: <t t-esc="o.monto_en_letras"/></td>
-                                    <td style="padding: 6px 10px; text-align: right;">
-                                        <span style="font-size: 11px; font-weight: bold;">TOTAL BS.</span>&#160;&#160;<span style="font-size: 14px; font-weight: bold;"><t t-esc="o.monto" t-options="{'widget': 'float', 'precision': 2}"/></span>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div style="background-color: #cc0000; height: 10px; margin: 10px 0;"></div>
-
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 14px;">
-                            <tr>
-                                <td style="width: 45%; vertical-align: top;">
-                                    <div style="font-size: 12px; font-weight: bold;"><t t-esc="cfg.firma_nombre"/></div>
-                                    <div style="font-size: 11px; color: #444;"><t t-esc="cfg.firma_cargo"/></div>
-                                    <div style="font-size: 11px; color: #444;">CEL. <t t-esc="cfg.firma_celular"/></div>
-                                </td>
-                                <td style="width: 10%;"></td>
-                                <td style="width: 45%; vertical-align: top;">
-                                    <div style="font-size: 11px; font-weight: bold; border-bottom: 1px solid #999; padding-bottom: 2px; margin-bottom: 6px;">ENTREGUE CONFORME</div>
-                                    <div style="font-size: 11px; color: #444;">Nombre: ___________________________</div>
-                                    <div style="font-size: 11px; color: #444; margin-top: 4px;">CI: ___________________________</div>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-
                 </div>
-            </t>
-        </t>
+
+                <!-- TABLA DE DETALLES -->
+                <table width="100%" style="margin: 15px 0; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #cc0000; color: white;">
+                            <th style="padding: 8px; text-align: left;">DESCRIPCIÓN</th>
+                            <th style="padding: 8px; text-align: right; width: 100px;">MONTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px;">
+                                <t t-esc="doc.descripcion"/>
+                            </td>
+                            <td style="padding: 10px; text-align: right;">
+                                <t t-esc="doc.monto" t-options="{'widget':'float','precision':2}"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; font-size: 10px; color: #666;">
+                                <t t-esc="doc.periodo or 'Servicio Internet'"/>
+                            </td>
+                            <td style="border-top: 2px solid #999; padding: 10px; text-align: right; font-weight: bold;">
+                                <t t-esc="doc.monto" t-options="{'widget':'float','precision':2}"/>
+ Bs.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- MONTO EN LETRAS -->
+                <div style="padding: 12px; background: #f9f9f9; margin: 10px 0; border-left: 3px solid #cc0000;">
+                    <strong>SON:</strong>
+                    <t t-esc="doc.monto_en_letras"/>
+                </div>
+
+                <!-- FIRMA -->
+                <div style="margin-top: 20px;">
+                    <table width="100%">
+                        <tr>
+                            <td width="50%" style="text-align: center; border-top: 1px solid #999; padding-top: 20px;">
+                                <div style="font-weight: bold;">
+                                    <t t-esc="firma_nombre"/>
+                                </div>
+                                <div style="font-size: 10px;">
+                                    <t t-esc="firma_cargo"/>
+                                </div>
+                                <div style="font-size: 9px; color: #666;">
+                                    CEL: <t t-esc="firma_celular"/>
+                                </div>
+                            </td>
+                            <td width="50%" style="text-align: center; border-top: 1px solid #999; padding-top: 20px;">
+                                <div style="font-weight: bold; font-size: 12px;">
+                                    ENTREGUE CONFORME
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
     </template>
 
-    <record id="action_report_recibo_cobro" model="ir.actions.report">
-        <field name="name">Recibo de Cobro</field>
-        <field name="model">wigo.recibo.cobro</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">wigo_cobranza.report_recibo_cobro_document</field>
-        <field name="report_file">wigo_cobranza.report_recibo_cobro_document</field>
-        <field name="binding_model_id" ref="model_wigo_recibo_cobro"/>
-        <field name="binding_type">report</field>
-        <field name="paperformat_id" ref="base.paperformat_euro"/>
-    </record>
+    <!-- ════════════════════════════════════════════════════════════
+         TEMPLATE PDF (DOCUMENTO PARA IMPRIMIR)
+    ════════════════════════════════════════════════════════════ -->
+    <template id="report_recibo_cobro_document">
+        <t t-call="web.html_container">
+            <meta charset="utf-8"/>
+
+            <t t-foreach="docs" t-as="o">
+                <t t-set="cfg" t-value="o.env['wigo.recibo.config'].get_config()"/>
+                <t t-set="company" t-value="o.env.company"/>
+
+                <!-- Variables de firma: usar override si existe, sino config -->
+                <t t-set="firma_nombre" t-value="o.firma_nombre_override or cfg.firma_nombre"/>
+                <t t-set="firma_cargo" t-value="o.firma_cargo_override or cfg.firma_cargo"/>
+                <t t-set="firma_celular" t-value="o.firma_celular_override or cfg.firma_celular"/>
+
+                <div style="font-family: Arial; font-size: 12px; max-width:780px; margin:auto;">
+
+                    <!-- =================== RECIBO ORIGINAL =================== -->
+                    <div style="border:1px solid #ccc; padding:20px;">
+
+                        <table width="100%">
+                            <tr>
+                                <td width="60%">
+                                    <div style="font-size:26px; font-weight:bold;">RECIBO DE COBRANZA</div>
+                                    <div>
+                                        <b>
+                                            <t t-esc="cfg.empresa_nombre"/>
+                                        </b>
+                                    </div>
+                                    <div>
+                                        <t t-esc="cfg.empresa_direccion"/>
+                                    </div>
+                                    <div>
+                                        <t t-esc="cfg.empresa_ciudad"/>
+                                    </div>
+                                    <div>CEL: <t t-esc="cfg.empresa_celular"/>
+                                    </div>
+                                </td>
+
+                                <td width="40%" align="right">
+                                    <t t-if="company.logo">
+                                        <img t-att-src="image_data_uri(company.logo)" style="max-height:70px;"/>
+                                    </t>
+                                    <t t-elif="cfg.logo">
+                                        <img t-att-src="image_data_uri(cfg.logo)" style="max-height:70px;"/>
+                                    </t>
+                                    <div style="margin-top:10px; font-weight:bold;">
+N&#176; <t t-esc="o.numero"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top:10px;">
+                            <b>RECIBIDO DE:</b>
+                            <span style="margin-left:30px; color:red;">
+FECHA:
+                                <t t-esc="o.fecha_pago" t-options="{'widget':'date','format':'dd/MM/yyyy'}"/>
+                            </span>
+                        </div>
+
+                        <div>Sr/Sra.: <b>
+                            <t t-esc="o.partner_id.name"/>
+                        </b>
+                    </div>
+
+                    <table width="100%" style="margin-top:10px; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#cc0000; color:#fff;">
+                                <th>DESCRIPCION</th>
+                                <th>PRECIO</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <t t-esc="o.descripcion"/>
+                                </td>
+                                <td align="right">
+                                    <t t-esc="o.monto" t-options="{'widget':'float','precision':2}"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <t t-esc="o.codigo_cliente"/>
+                                </td>
+                                <td style="border-top:1px solid #999;"></td>
+                            </tr>
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td>SON: <t t-esc="o.monto_en_letras"/>
+                                </td>
+                                <td align="right">
+                                    <b>TOTAL Bs.</b>
+                                    <t t-esc="o.monto" t-options="{'widget':'float','precision':2}"/>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="background:#cc0000; height:10px; margin:10px 0;"></div>
+
+                    <table width="100%">
+                        <tr>
+                            <td width="45%">
+                                <b>
+                                    <t t-esc="firma_nombre"/>
+                                </b>
+                                <br/>
+                                <t t-esc="firma_cargo"/>
+                                <br/>
+CEL: <t t-esc="firma_celular"/>
+                            </td>
+
+                            <td width="10%"></td>
+
+                            <td width="45%">
+                                <b>ENTREGUE CONFORME</b>
+                                <br/>
+Nombre: ___________________<br/>
+CI: ___________________
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+                <!-- =================== LINEA CORTE =================== -->
+                <div style="text-align:center; font-size:10px; margin:8px 0; border-top:1px dashed #aaa; border-bottom:1px dashed #aaa;">
+--- COPIA CLIENTE ---
+                </div>
+
+                <!-- =================== RECIBO COPIA =================== -->
+                <div style="border:1px solid #ccc; padding:20px;">
+
+                    <table width="100%">
+                        <tr>
+                            <td width="60%">
+                                <div style="font-size:26px; font-weight:bold;">RECIBO DE COBRANZA</div>
+                                <div>
+                                    <b>
+                                        <t t-esc="cfg.empresa_nombre"/>
+                                    </b>
+                                </div>
+                                <div>
+                                    <t t-esc="cfg.empresa_direccion"/>
+                                </div>
+                                <div>
+                                    <t t-esc="cfg.empresa_ciudad"/>
+                                </div>
+                                <div>CEL: <t t-esc="cfg.empresa_celular"/>
+                                </div>
+                            </td>
+
+                            <td width="40%" align="right">
+                                <t t-if="company.logo">
+                                    <img t-att-src="image_data_uri(company.logo)" style="max-height:70px;"/>
+                                </t>
+                                <t t-elif="cfg.logo">
+                                    <img t-att-src="image_data_uri(cfg.logo)" style="max-height:70px;"/>
+                                </t>
+                                <div style="margin-top:10px; font-weight:bold;">
+N&#176; <t t-esc="o.numero"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top:10px;">
+                        <b>RECIBIDO DE:</b>
+                        <span style="margin-left:30px; color:red;">
+FECHA:
+                            <t t-esc="o.fecha_pago" t-options="{'widget':'date','format':'dd/MM/yyyy'}"/>
+                        </span>
+                    </div>
+
+                    <div>Sr/Sra.: <b>
+                        <t t-esc="o.partner_id.name"/>
+                    </b>
+                </div>
+
+                <table width="100%" style="margin-top:10px; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#cc0000; color:#fff;">
+                            <th>DESCRIPCION</th>
+                            <th>PRECIO</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>
+                                <t t-esc="o.descripcion"/>
+                            </td>
+                            <td align="right">
+                                <t t-esc="o.monto" t-options="{'widget':'float','precision':2}"/>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <t t-esc="o.codigo_cliente"/>
+                            </td>
+                            <td style="border-top:1px solid #999;"></td>
+                        </tr>
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td>SON: <t t-esc="o.monto_en_letras"/>
+                            </td>
+                            <td align="right">
+                                <b>TOTAL Bs.</b>
+                                <t t-esc="o.monto" t-options="{'widget':'float','precision':2}"/>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="background:#cc0000; height:10px; margin:10px 0;"></div>
+
+                <table width="100%">
+                    <tr>
+                        <td width="45%">
+                            <b>
+                                <t t-esc="firma_nombre"/>
+                            </b>
+                            <br/>
+                            <t t-esc="firma_cargo"/>
+                            <br/>
+CEL: <t t-esc="firma_celular"/>
+                        </td>
+
+                        <td width="10%"></td>
+
+                        <td width="45%">
+                            <b>ENTREGUE CONFORME</b>
+                            <br/>
+Nombre: ___________________<br/>
+CI:     ___________________
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+
+        </div>
+    </t>
+</t>
+</template>
+<record id="action_report_recibo_cobro" model="ir.actions.report">
+<field name="name">Recibo de Cobro</field>
+<field name="model">wigo.recibo.cobro</field>
+<field name="report_type">qweb-pdf</field>
+<field name="report_name">wigo_cobranza.report_recibo_cobro_document</field>
+<field name="report_file">wigo_cobranza.report_recibo_cobro_document</field>
+<field name="binding_model_id" ref="model_wigo_recibo_cobro"/>
+<field name="binding_type">report</field>
+</record>
 
 </odoo>

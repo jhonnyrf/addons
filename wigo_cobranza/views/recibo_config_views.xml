@@ -20,12 +20,8 @@
                             <field name="empresa_celular" string="CEL empresa"/>
                         </group>
                         <group>
-                            <field name="usar_logo_imagen" string="Usar imagen de logo"/>
-                            <field name="logo" widget="image" class="oe_avatar" options="{'size': [400, 160]}" invisible="not usar_logo_imagen" string="Logo (imagen)"/>
-                            <div invisible="usar_logo_imagen" class="alert alert-info" style="margin-top:8px;">
-                                <strong>Modo texto activo:</strong> El logo se mostrará como texto estilizado
-                                <em>"wigo / FAST / INTERNET"</em>. Activa "Usar imagen de logo" para subir tu propio logo.
-                            </div>
+                            <field name="logo" widget="image" class="oe_avatar" options="{'size': [400, 160]}" string="Logo de la empresa"/>
+                            <field name="usar_logo_imagen" invisible="1"/>
                         </group>
                     </group>
 
