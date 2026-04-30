@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="wigo_cobranza.ReciboConfigPreview">
+        <div style="min-height: 200px;">
+            <t t-if="state.loading">
+                <div style="display:flex;align-items:center;justify-content:center;padding:40px 20px;color:#6b7280;">
+                    <i class="fa fa-spinner fa-spin me-2"/>
+                    Generando vista previa...
+                </div>
+            </t>
+            <t t-else="">
+                <div t-ref="configHtmlContainer"/>
+            </t>
+        </div>
+    </t>
+
+</templates>

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Wigo Cobranza',
-    'version': '19.0.1.0.4',
+    'version': '19.0.1.1.0',
     'summary': 'Gestión de cobranza, estado de pago y flujo de mora/suspensión — Área Contabilidad',
     'description': """
         Módulo de cobranza para Wigo Fast.
         Cubre:
-        - Registro de pagos de clientes (sin reemplazar el sistema SIN/SIAT)
-        - Estado de pago visible para todas las áreas (solo lectura para Comercial y Técnica)
-        - Flujo de mora → suspensión → baja con notificaciones internas
-        - Campo de prorrateo del primer mes (calculado automáticamente)
-        - Acciones programadas (cron) para alertas diarias
-        - Reportes: mora, suspender hoy, altas/bajas/cambios semanales
+        - Registro de pagos de clientes
+        - Estado de pago visible para todas las áreas
+        - Flujo de mora → suspensión → baja con notificaciones
+        - Recibos de cobro con previsualización en tiempo real
+        - Configuración completa de diseño (colores, fuentes, layout)
+        - Vista Kanban elegante para clientes
     """,
     'author': 'Wigo / Asiscore',
     'category': 'Accounting',
@@ -44,7 +44,12 @@
             'wigo_cobranza/static/src/js/semaforo_widget.js',
             'wigo_cobranza/static/src/xml/semaforo_widget.xml',
             'wigo_cobranza/static/src/scss/semaforo_widget.scss',
-            'wigo_cobranza/static/src/js/recibo_cobro_form.js',
+            # Widget de previsualización en tiempo real del recibo
+            'wigo_cobranza/static/src/js/recibo_live_preview.js',
+            'wigo_cobranza/static/src/xml/recibo_live_preview.xml',
+            # Widget de previsualización reactiva en la configuración del recibo
+            'wigo_cobranza/static/src/js/recibo_config_preview.js',
+            'wigo_cobranza/static/src/xml/recibo_config_preview.xml',
         ],
     },
     'external_dependencies': {

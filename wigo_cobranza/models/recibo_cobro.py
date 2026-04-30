@@ -8,6 +8,7 @@ class WigoReciboCobro(models.Model):
     """
     Recibo oficial de pago generado desde un registro wigo.pago.estado.
     Se puede imprimir en PDF con logo de empresa.
+    Genera dos copias: ORIGINAL (empresa) y COPIA CLIENTE.
     """
     _name = 'wigo.recibo.cobro'
     _description = 'Recibo de Cobro'
@@ -108,15 +109,41 @@ class WigoReciboCobro(models.Model):
                 raise UserError('Solo se pueden emitir recibos en borrador.')
             rec.state = 'emitido'
 
+    def action_volver_borrador(self):
+        """Permite regresar a borrador para editar, solo si no está anulado."""
+        for rec in self:
+            if rec.state == 'anulado':
+                raise UserError('No se puede editar un recibo anulado.')
+            rec.state = 'borrador'
+            rec.message_post(
+                body="Recibo regresado a borrador para edición.",
+                message_type='notification',
+            )
+
     def action_anular(self):
         for rec in self:
             rec.state = 'anulado'
 
     def action_imprimir(self):
+        """Imprime ambas copias (original + copia cliente) en un solo PDF."""
         self.ensure_one()
         if self.state == 'borrador':
             self.action_emitir()
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
+
+    def action_imprimir_solo_original(self):
+        """Imprime solo la copia ORIGINAL (para la empresa)."""
+        self.ensure_one()
+        if self.state == 'borrador':
+            self.action_emitir()
+        return self.env.ref('wigo_cobranza.action_report_recibo_cobro_original').report_action(self)
+
+    def action_imprimir_copia_cliente(self):
+        """Imprime solo la COPIA CLIENTE."""
+        self.ensure_one()
+        if self.state == 'borrador':
+            self.action_emitir()
+        return self.env.ref('wigo_cobranza.action_report_recibo_cobro_copia').report_action(self)
 
     def action_preview(self):
         """Abre previsualización del PDF en nueva pestaña"""

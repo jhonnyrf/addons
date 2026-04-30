@@ -22,31 +22,47 @@
         <field name="name">res.partner.kanban.cobranza.clients</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_small_column" create="false">
+            <kanban create="false" sample="1" quick_create="false">
                 <field name="name"/>
                 <field name="cobranza_ci"/>
                 <field name="cobranza_celular"/>
                 <field name="cobranza_zona"/>
                 <field name="active_contract_count"/>
                 <field name="contract_any_count"/>
+                <field name="email"/>
+                <field name="phone"/>
                 <templates>
                     <t t-name="card">
-                        <main class="o_kanban_record_body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <strong>
-                                        <field name="name"/>
-                                    </strong>
-                                </div>
-                                <span class="badge text-bg-success" t-esc="record.active_contract_count.value or 0"/>
+                        <aside>
+                            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2d5a9e);color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;">
+                                <t t-esc="record.name.value ? record.name.value[0].toUpperCase() : '?'"/>
                             </div>
-                            <div class="text-muted">CI: <field name="cobranza_ci"/>
+                        </aside>
+                        <main>
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <strong style="font-size:14px;">
+                                    <field name="name"/>
+                                </strong>
+                                <span t-attf-class="badge #{record.active_contract_count.value > 0 ? 'text-bg-success' : 'text-bg-secondary'}" style="white-space:nowrap;font-size:11px;">
+                                    <i class="fa fa-file-text-o me-1"/>
+                                    <t t-esc="record.active_contract_count.value"/> activo(s)
+                                </span>
                             </div>
-                            <div class="text-muted">Celular: <field name="cobranza_celular"/>
+                            <div style="font-size:11px;color:#6b7280;margin-top:4px;">
+                                <t t-if="record.cobranza_ci.value">
+                                    <div><i class="fa fa-id-card me-1"/>CI: <field name="cobranza_ci"/></div>
+                                </t>
+                                <t t-if="record.cobranza_celular.value">
+                                    <div><i class="fa fa-phone me-1"/>Cel: <field name="cobranza_celular"/></div>
+                                </t>
+                                <t t-if="record.cobranza_zona.value">
+                                    <div><i class="fa fa-map-marker me-1"/>Zona: <field name="cobranza_zona"/></div>
+                                </t>
                             </div>
-                            <div class="text-muted">Zona: <field name="cobranza_zona"/>
-                            </div>
-                            <div class="mt-2">Contratos totales: <field name="contract_any_count"/>
+                            <div class="d-flex justify-content-between align-items-center mt-2" style="border-top:1px solid #e5e7eb;padding-top:6px;">
+                                <span style="font-size:10px;color:#9ca3af;">
+                                    Total contratos: <field name="contract_any_count"/>
+                                </span>
                             </div>
                         </main>
                     </t>
@@ -122,15 +138,24 @@
     <record id="action_cobranza_clientes_contrato" model="ir.actions.act_window">
         <field name="name">Clientes con Contrato</field>
         <field name="res_model">res.partner</field>
-        <field name="view_mode">list,kanban,form</field>
+        <!-- kanban primero = vista por defecto al entrar -->
+        <field name="view_mode">kanban,list,form</field>
         <field name="context">{'create': False}</field>
         <field name="search_view_id" ref="view_partner_search_cobranza_clients"/>
         <field name="domain">[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]</field>
     </record>
 
-    <record id="action_cobranza_clientes_contrato_list" model="ir.actions.act_window.view">
+    <!-- Kanban como primera vista (sequence=1 → por defecto) -->
+    <record id="action_cobranza_clientes_contrato_kanban" model="ir.actions.act_window.view">
         <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
         <field name="sequence" eval="1"/>
+        <field name="view_mode">kanban</field>
+        <field name="view_id" ref="view_partner_kanban_cobranza_clients"/>
+    </record>
+
+    <record id="action_cobranza_clientes_contrato_list" model="ir.actions.act_window.view">
+        <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
+        <field name="sequence" eval="2"/>
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_partner_list_cobranza_clients"/>
     </record>
@@ -140,13 +165,6 @@
         <field name="sequence" eval="3"/>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_partner_form_cobranza_profile"/>
-    </record>
-
-    <record id="action_cobranza_clientes_contrato_kanban" model="ir.actions.act_window.view">
-        <field name="act_window_id" ref="action_cobranza_clientes_contrato"/>
-        <field name="sequence" eval="2"/>
-        <field name="view_mode">kanban</field>
-        <field name="view_id" ref="view_partner_kanban_cobranza_clients"/>
     </record>
 
 </odoo>

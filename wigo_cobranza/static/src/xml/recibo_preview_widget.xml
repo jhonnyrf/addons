@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="wigo_cobranza.ReciboPreviewWidget">
+        <div class="o_recibo_preview_wrapper" style="position:relative;">
+            <t t-if="state.loading">
+                <div style="display:flex;align-items:center;justify-content:center;padding:40px;color:#888;gap:10px;">
+                    <i class="fa fa-spinner fa-spin fa-lg"/>
+                    <span>Cargando vista previa...</span>
+                </div>
+            </t>
+            <t t-elif="state.error">
+                <div class="alert alert-warning" style="margin:10px;">
+                    <i class="fa fa-exclamation-triangle me-2"/>
+                    <t t-esc="state.error"/>
+                </div>
+            </t>
+            <t t-else="">
+                <!-- Preview HTML renderizado -->
+                <div t-ref="previewContainer" t-out="state.html"/>
+            </t>
+        </div>
+    </t>
+
+</templates>
