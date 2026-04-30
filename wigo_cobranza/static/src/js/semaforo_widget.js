@@ -78,4 +78,6 @@ export class SemaforoWidget extends Component {
     }
 }
 
-registry.category("fields").add("semaforo_pago", SemaforoWidget);
+registry.category("fields").add("semaforo_pago", {
+    component: SemaforoWidget,
+});
