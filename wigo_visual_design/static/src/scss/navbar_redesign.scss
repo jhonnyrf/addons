@@ -1,0 +1,92 @@
+// ============================================================================
+// Diseño Visual Wigo - Mejoras del Navbar (Solo Escritorio)
+// ============================================================================
+
+@media (min-width: 768px) {
+    // Mejorar el dropdown de apps en pantallas grandes para que parezca un sidebar izquierdo
+    .dropdown-menu:has(.dropdown-item.o_app) {
+        border-radius: 0 8px 8px 0;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.12);
+        border: 1px solid #e9ecef;
+        padding: 0.5rem;
+        min-width: 260px;
+        max-width: 300px;
+        
+        // Comportamiento de Sidebar Izquierdo
+        position: fixed !important;
+        top: var(--o-navbar-height, 46px) !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        margin: 0 !important;
+        transform: none !important;
+        overflow-y: auto;
+        background: white; // Fondo sólido
+        z-index: 1050; // Asegurar que esté sobre todo
+
+        // Scrollbar personalizado
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #d0d0d0;
+            border-radius: 3px;
+            
+            &:hover {
+                background: #a0a0a0;
+            }
+        }
+    }
+
+    // Estilos para los items de la app
+    .dropdown-item.o_app {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        transition: all 0.15s ease;
+        margin-bottom: 0.25rem;
+        white-space: normal; // Permitir que nombres largos se ajusten
+        
+        .o_app_icon {
+            width: 2.5rem !important; // Tamaño forzado para evitar logos gigantes
+            height: 2.5rem !important;
+            margin-right: 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .o_app_name {
+            font-weight: 500;
+            color: #212529;
+            font-size: 0.95rem;
+            flex: 1;
+        }
+        
+        &:hover {
+            background-color: #f0f1f3;
+            transform: translateX(2px);
+            
+            .o_app_icon {
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                transform: scale(1.03);
+            }
+        }
+        
+        &:active {
+            background-color: #e9ecef;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #0d6efd;
+            outline-offset: 2px;
+        }
+    }
+}
+
