@@ -75,12 +75,15 @@ class ResPartner(models.Model):
             leads = Lead.search([('partner_id', '=', partner.id)])
             if not leads:
                 continue
-            vals = {
-                'zona': partner.zona or False,
-                'direccion': partner.direccion or False,
-                'ubicacion': partner.ubicacion or False,
-                'coordenadas': partner.coordenadas or False,
-            }
+            vals = {}
+            for field in self._WIGO_INSTALLATION_FIELDS:
+                value = getattr(partner, field)
+                if value:
+                    vals[field] = value
+
+            if not vals:
+                continue
+
             leads.with_context(skip_lead_to_partner_sync=True).write(vals)
 
     # ── Planes contratados ────────────────────────────────────────

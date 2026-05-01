@@ -144,6 +144,22 @@ class CrmLead(models.Model):
             else:
                 lead.telefono_contacto = partner.phone or False
 
+    @api.onchange('partner_id')
+    def _onchange_partner_id_fill_installation_fields(self):
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                continue
+
+            if not lead.zona:
+                lead.zona = partner.zona or False
+            if not lead.direccion:
+                lead.direccion = partner.direccion or False
+            if not lead.ubicacion:
+                lead.ubicacion = partner.ubicacion or False
+            if not lead.coordenadas:
+                lead.coordenadas = partner.coordenadas or False
+
     def _inverse_telefono_contacto(self):
         for lead in self:
             partner = lead.partner_id
@@ -184,12 +200,14 @@ class CrmLead(models.Model):
             if not lead.partner_id:
                 continue
 
-            vals = {
-                'zona': lead.zona or False,
-                'direccion': lead.direccion or False,
-                'ubicacion': lead.ubicacion or False,
-                'coordenadas': lead.coordenadas or False,
-            }
+            vals = {}
+            for field in self._WIGO_INSTALLATION_FIELDS:
+                value = getattr(lead, field)
+                if value:
+                    vals[field] = value
+
+            if not vals:
+                continue
 
             lead.partner_id.with_context(skip_partner_to_lead_sync=True).write(vals)
 
