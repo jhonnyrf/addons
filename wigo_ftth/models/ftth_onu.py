@@ -48,15 +48,15 @@ class FtthOnu(models.Model):
         return super().write(vals)
 
     # PON identifiers
-    pon_sn = fields.Char(string='PON S/N')
-    tcont = fields.Char(string='T-CONT')
-    gemport = fields.Char(string='GEM Port')
-    vport = fields.Char(string='V-Port')
+    pon_sn = fields.Char(string='PON S/N', help='identifica el equipo en la red GPON')
+    tcont = fields.Char(string='T-CONT', help='Asigna el ancho de banda a una ONU')
+    gemport = fields.Char(string='GEM Port', help='canal lógico que transporta datos dentro de GPON')
+    vport = fields.Char(string='V-Port', help='Se usa para asociar servicios')
 
     # Configuración WAN / PPPoE
     pppoe_user = fields.Char(string='Usuario PPPoE', tracking=True)
     pppoe_password = fields.Char(string='Contraseña PPPoE', tracking=True)
-    vlan = fields.Char(string='VLAN', tracking=True)
+    vlan = fields.Char(string='VLAN', tracking=True,help='número que identifica el tipo de tráfico')
 
     # WiFi
     wifi_ssid = fields.Char(string='WiFi SSID')

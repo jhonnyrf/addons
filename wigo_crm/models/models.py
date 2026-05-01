@@ -144,6 +144,51 @@ class CrmLead(models.Model):
             else:
                 lead.telefono_contacto = partner.phone or False
 
+    @api.onchange('partner_id')
+    def _onchange_partner_id_sync_installation(self):
+        """Al seleccionar un `partner` en el lead, traer los datos de
+        instalación y plan si el lead no los tiene ya.
+        """
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                _logger.debug("wigo_crm: onchange partner_id - no partner for lead %s", lead.id or '(new)')
+                continue
+
+            _logger.debug(
+                "wigo_crm: onchange partner_id - lead=%s partner=%s (zona=%s direccion=%s ubicacion=%s coordenadas=%s)",
+                lead.id or '(new)', partner.id, getattr(partner, 'zona', None), getattr(partner, 'direccion', None), getattr(partner, 'ubicacion', None), getattr(partner, 'coordenadas', None)
+            )
+
+            # Campos de instalación: solo rellenar si el lead no tiene valor
+            if not lead.zona:
+                if getattr(partner, 'zona', False):
+                    lead.zona = partner.zona
+                elif getattr(partner, 'zona_id', False):
+                    # Fallback: usar nombre de zona relacionada
+                    lead.zona = partner.zona_id.name
+            if not lead.direccion and getattr(partner, 'direccion', False):
+                lead.direccion = partner.direccion
+            if not lead.ubicacion and getattr(partner, 'ubicacion', False):
+                lead.ubicacion = partner.ubicacion
+            if not lead.coordenadas and getattr(partner, 'coordenadas', False):
+                lead.coordenadas = partner.coordenadas
+
+            # Si no hay plan en el lead, intentar tomar el primer plan activo del partner
+            try:
+                plans = partner.partner_plan_ids.filtered(lambda p: p.state == 'active')
+            except Exception:
+                plans = partner.partner_plan_ids if partner.partner_plan_ids else self.env['partner.plan']
+
+            if not lead.plan_id and plans:
+                plan = plans[0]
+                if plan.plan_id:
+                    lead.plan_id = plan.plan_id.id
+                if not lead.codigo_cliente and getattr(plan, 'codigo_cliente', False):
+                    lead.codigo_cliente = plan.codigo_cliente
+
+            _logger.debug("wigo_crm: onchange partner_id - after copy lead.zona=%s lead.direccion=%s", lead.zona, lead.direccion)
+
     def _inverse_telefono_contacto(self):
         for lead in self:
             partner = lead.partner_id
