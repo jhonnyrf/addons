@@ -16,6 +16,7 @@ Módulo para personalizar el CRM de Odoo según los requerimientos de Wigo.
         'views/crm_lead_form_views.xml',
         'views/crm_lead_adjustments_views.xml',
         'views/crm_lead_kanban_views.xml',
+        'views/crm_lead_search_views.xml',
         'views/crm_menu_views.xml',
         'views/crm_stage_views.xml',
     ],

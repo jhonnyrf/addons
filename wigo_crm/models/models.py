@@ -62,53 +62,21 @@ class CrmLead(models.Model):
         readonly=True,
         copy=False,
     )
-    contract_payment_mode = fields.Selection(
-        selection=[
-            ('monthly', 'Monthly'),
-            ('yearly', 'Yearly'),
-            ('one_time', 'One Time'),
-        ],
-        string="Payment Mode",
-        help="Select the payment mode for the contract.",
-    )
-    contract_payment_mode_display = fields.Char(
-        related='contract_id.payment_mode',
-        string="Payment Mode Display",
-        store=False,
-    )
-    
-    def _get_payment_mode_badge(self):
-        for lead in self:
-            if lead.contract_id:
-                lead.contract_payment_mode = lead.contract_id.payment_mode
-            else:
-                lead.contract_payment_mode = False
-
-    @api.onchange('contract_id')
-    def _onchange_contract_id(self):
-        self._get_payment_mode_badge()
-
-    def action_view_contract(self):
-        """Override to include payment mode in the contract view."""
-        action = super(CrmLead, self).action_view_contract()
-        if self.contract_id:
-            action['context'] = {
-                'default_payment_mode': self.contract_payment_mode,
-            }
-        return action
-
-    def _compute_contract_count(self):
-        for lead in self:
-            lead.contract_count = 1 if lead.contract_id else 0
-            lead.contract_payment_mode = lead.contract_id.payment_mode if lead.contract_id else False
     contract_state = fields.Selection(
         related='contract_id.state',
         string="Estado del contrato",
         store=True,      # store=True permite filtrar/agrupar en vistas
     )
+    contract_payment_mode = fields.Selection(
+        related='contract_id.payment_mode',
+        string="Modalidad de pago",
+        store=True,
+        readonly=True,
+    )
     contract_name = fields.Char(
         related='contract_id.name',
         string="Código de contrato",
+        store=True,
     )
     contract_plan_id = fields.Many2one(
         related='contract_id.plan_id',
@@ -184,7 +152,6 @@ class CrmLead(models.Model):
                 lead.telefono_contacto = partner.phone or False
 
     @api.onchange('partner_id')
-<<<<<<< HEAD
     def _onchange_partner_id_fill_installation_fields(self):
         for lead in self:
             partner = lead.partner_id
@@ -199,51 +166,6 @@ class CrmLead(models.Model):
                 lead.ubicacion = partner.ubicacion or False
             if not lead.coordenadas:
                 lead.coordenadas = partner.coordenadas or False
-=======
-    def _onchange_partner_id_sync_installation(self):
-        """Al seleccionar un `partner` en el lead, traer los datos de
-        instalación y plan si el lead no los tiene ya.
-        """
-        for lead in self:
-            partner = lead.partner_id
-            if not partner:
-                _logger.debug("wigo_crm: onchange partner_id - no partner for lead %s", lead.id or '(new)')
-                continue
-
-            _logger.debug(
-                "wigo_crm: onchange partner_id - lead=%s partner=%s (zona=%s direccion=%s ubicacion=%s coordenadas=%s)",
-                lead.id or '(new)', partner.id, getattr(partner, 'zona', None), getattr(partner, 'direccion', None), getattr(partner, 'ubicacion', None), getattr(partner, 'coordenadas', None)
-            )
-
-            # Campos de instalación: solo rellenar si el lead no tiene valor
-            if not lead.zona:
-                if getattr(partner, 'zona', False):
-                    lead.zona = partner.zona
-                elif getattr(partner, 'zona_id', False):
-                    # Fallback: usar nombre de zona relacionada
-                    lead.zona = partner.zona_id.name
-            if not lead.direccion and getattr(partner, 'direccion', False):
-                lead.direccion = partner.direccion
-            if not lead.ubicacion and getattr(partner, 'ubicacion', False):
-                lead.ubicacion = partner.ubicacion
-            if not lead.coordenadas and getattr(partner, 'coordenadas', False):
-                lead.coordenadas = partner.coordenadas
-
-            # Si no hay plan en el lead, intentar tomar el primer plan activo del partner
-            try:
-                plans = partner.partner_plan_ids.filtered(lambda p: p.state == 'active')
-            except Exception:
-                plans = partner.partner_plan_ids if partner.partner_plan_ids else self.env['partner.plan']
-
-            if not lead.plan_id and plans:
-                plan = plans[0]
-                if plan.plan_id:
-                    lead.plan_id = plan.plan_id.id
-                if not lead.codigo_cliente and getattr(plan, 'codigo_cliente', False):
-                    lead.codigo_cliente = plan.codigo_cliente
-
-            _logger.debug("wigo_crm: onchange partner_id - after copy lead.zona=%s lead.direccion=%s", lead.zona, lead.direccion)
->>>>>>> 22bdc0b8f617fe06642d07818cd8c7c505b753ce
 
     def _inverse_telefono_contacto(self):
         for lead in self:

@@ -20,12 +20,25 @@
                 <field name="contract_id"/>
                 <field name="contract_name"/>
                 <field name="contract_plan_id"/>
+                <field name="contract_payment_mode"/>
                 <field name="stage_id"/>
             </xpath>
 
             <!-- Muestra zona, codigo de cliente y plan en la tarjeta del lead. -->
             <xpath expr="//templates/t[@t-name='card']" position="inside">
-                <div class="mt-2 small text-muted w-100">
+                <div class="position-relative mt-2 pt-2 small text-muted w-100 pe-5">
+                    <t t-if="record.contract_id.raw_value">
+                        <div class="position-absolute top-0 end-0 mt-1 me-1">
+                            <span t-if="record.contract_payment_mode.raw_value == 'prepaid'" class="badge rounded-pill text-bg-success px-2 py-1">
+                                <i class="fa fa-credit-card me-1"/>
+                                <span>Prepago</span>
+                            </span>
+                            <span t-elif="record.contract_payment_mode.raw_value == 'postpaid'" class="badge rounded-pill text-bg-warning text-dark px-2 py-1">
+                                <i class="fa fa-credit-card me-1"/>
+                                <span>Postpago</span>
+                            </span>
+                        </div>
+                    </t>
                     <div>
                         <strong>Zona:</strong>
                         <field name="zona"/>

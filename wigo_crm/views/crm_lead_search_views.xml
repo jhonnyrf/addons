@@ -1,0 +1,150 @@
+<odoo>
+
+    <record id="crm_lead_view_search_forecast_wigo_contract" model="ir.ui.view">
+        <field name="name">crm.lead.view.search.forecast.wigo.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_search_forecast"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="contract_name" string="Contrato"/>
+                <field name="contract_payment_mode" invisible="1"/>
+
+                <separator/>
+
+                <filter name="filter_wigo_contract" string="Con contrato" domain="[('contract_id', '!=', False)]"/>
+                <filter name="filter_wigo_contract_prepaid" string="Prepago" domain="[('contract_payment_mode', '=', 'prepaid')]"/>
+                <filter name="filter_wigo_contract_postpaid" string="Postpago" domain="[('contract_payment_mode', '=', 'postpaid')]"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='city']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='country']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='company']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='compaign']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='medium']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='source']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='month']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_lead_properties']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='date_closed']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="crm_lead_view_search_opportunity_wigo_contract" model="ir.ui.view">
+        <field name="name">crm.lead.view.search.opportunity.wigo.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="partner_id" string="Cliente"/>
+                <field name="zona" string="Zona"/>
+                <field name="codigo_cliente" string="Código cliente"/>
+                <field name="contract_name" string="Contrato"/>
+                <field name="contract_payment_mode" invisible="1"/>
+
+                <separator/>
+
+                <filter name="filter_wigo_contract" string="Con contrato" domain="[('contract_id', '!=', False)]"/>
+                <filter name="filter_wigo_contract_prepaid" string="Prepago" domain="[('contract_payment_mode', '=', 'prepaid')]"/>
+                <filter name="filter_wigo_contract_postpaid" string="Postpago" domain="[('contract_payment_mode', '=', 'postpaid')]"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='city']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='country']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='company']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='compaign']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='medium']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='source']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='month']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='date_closed']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_lead_properties']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="crm_lead_view_search_lead_wigo_contract" model="ir.ui.view">
+        <field name="name">crm.lead.view.search.lead.wigo.contract</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_leads_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="partner_id" string="Cliente"/>
+                <field name="zona" string="Zona"/>
+                <field name="codigo_cliente" string="Código cliente"/>
+                <field name="contract_name" string="Contrato"/>
+                <field name="contract_payment_mode" invisible="1"/>
+
+                <separator/>
+
+                <filter name="filter_wigo_contract" string="Con contrato" domain="[('contract_id', '!=', False)]"/>
+                <filter name="filter_wigo_contract_prepaid" string="Prepago" domain="[('contract_payment_mode', '=', 'prepaid')]"/>
+                <filter name="filter_wigo_contract_postpaid" string="Postpago" domain="[('contract_payment_mode', '=', 'postpaid')]"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='city']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='country']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='company']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='compaign']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='medium']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='source']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='month']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='date_closed']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_lead_properties']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
