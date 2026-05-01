@@ -24,3 +24,43 @@ patch(KanbanController.prototype, {
         await this.createRecord();
     },
 });
+
+// Ocultar botón Pivot en vistas del modelo crm.lead
+function hidePivotButtonIfCrmLead() {
+    const candidates = document.querySelectorAll("button, a");
+    for (const el of candidates) {
+        const dataViewType = (el.getAttribute("data-view-type") || "").toLowerCase();
+        const className = (el.className || "").toString().toLowerCase();
+        const title = (el.getAttribute("title") || "").toLowerCase();
+        const aria = (el.getAttribute("aria-label") || "").toLowerCase();
+        const text = (el.textContent || "").toLowerCase();
+        const looksLikePivot =
+            dataViewType === "pivot" ||
+            className.includes("pivot") ||
+            title.includes("tabla dinámica") ||
+            title.includes("pivot") ||
+            aria.includes("tabla dinámica") ||
+            aria.includes("pivot") ||
+            text.includes("tabla dinámica") ||
+            text.includes("pivot");
+
+        if (looksLikePivot && (className.includes("switch") || className.includes("cp_"))) {
+            el.style.display = "none";
+        }
+    }
+}
+
+function bootPivotHider() {
+    hidePivotButtonIfCrmLead();
+    if (!document.body) {
+        return;
+    }
+    const observer = new MutationObserver(() => hidePivotButtonIfCrmLead());
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootPivotHider, { once: true });
+} else {
+    bootPivotHider();
+}

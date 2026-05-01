@@ -13,6 +13,12 @@ button[name="action_crm_iap_mine"],
     display: none !important;
 }
 
+/* Ocultar botón Pivot en CRM (modelo crm.lead) */
+body.o_model_crm_lead button.o_cp_switch_button[data-view-type="pivot"],
+body.o_model_crm_lead [data-view-type="pivot"] {
+    display: none !important;
+}
+
 /* ================================================================
  * Zonas (wigo.zone) — Cobertura FTTH
  * Objetivo UX: filas con fondos pastel + badge consistente.

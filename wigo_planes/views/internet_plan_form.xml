@@ -11,7 +11,6 @@
             <form string="Plan de Internet">
 
                 <header>
-                    <button name="action_save_plan" type="object" string="Guardar Plan" class="btn-primary" icon="fa-save"/>
                     <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
                 </header>
 

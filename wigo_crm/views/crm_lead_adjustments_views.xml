@@ -46,7 +46,7 @@
         <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
         <field name="arch" type="xml">
             <xpath expr="//kanban" position="attributes">
-                <attribute name="quick_create_view"></attribute>
+                <attribute name="quick_create">false</attribute>
             </xpath>
         </field>
     </record>
