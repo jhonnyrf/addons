@@ -57,7 +57,7 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
         <field name="mode">primary</field>
-        <field name="priority">90</field>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
             <xpath expr="//list" position="replace">
                 <list string="Opportunities" sample="1" multi_edit="1">
@@ -74,10 +74,15 @@
                     <field name="stage_id_color" column_invisible="True"/>
                     <field name="automated_probability" column_invisible="True"/>
                     <field name="message_bounce" column_invisible="True"/>
+                    <field name="country_id" column_invisible="True"/>
+                    <field name="expected_revenue" column_invisible="True"/>
 
                     <field name="name" string="Oportunidad" readonly="1"/>
                     <field name="partner_id" string="Cliente" optional="show"/>
                     <field name="zona" optional="show"/>
+                    <field name="direccion" optional="show"/>
+                    <field name="ubicacion" optional="show"/>
+                    <field name="coordenadas" optional="show"/>
                     <field name="codigo_cliente" string="Código contrato" optional="show"/>
                     <field name="contract_name" string="Contrato" optional="show"/>
                     <field name="contract_state" string="Estado contrato" optional="show"/>
@@ -93,7 +98,6 @@
                     <field name="stage_id" optional="show" widget="badge_rotting" options="{'no_open': True}"/>
 
                     <field name="date_deadline" column_invisible="True"/>
-                    <field name="expected_revenue" column_invisible="True"/>
                     <field name="recurring_revenue_monthly" column_invisible="True"/>
                     <field name="campaign_id" column_invisible="True"/>
                     <field name="medium_id" column_invisible="True"/>
@@ -115,49 +119,83 @@
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
         <field name="mode">primary</field>
-        <field name="priority">90</field>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
-            <xpath expr="//list" position="replace">
-                <list string="Leads" sample="1" multi_edit="1">
-                    <header>
-                        <button name="%(crm.crm_lead_lost_action)d" type="action" string="Mark Lost"/>
-                    </header>
+            <!-- Agregar campos personalizados de Wigo al final de la lista -->
+            <xpath expr="//list" position="inside">
+                <field name="zona" string="Zona" optional="show"/>
+                <field name="direccion" string="Dirección" optional="show"/>
+                <field name="ubicacion" string="Ubicación" optional="show"/>
+                <field name="coordenadas" string="Coordenadas" optional="show"/>
+                <field name="plan_id" string="Plan" optional="show"/>
+            </xpath>
+            
+            <!-- Ocultar country_id -->
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
 
-                    <field name="company_id" column_invisible="True"/>
-                    <field name="user_company_ids" column_invisible="True"/>
-                    <field name="active" column_invisible="True"/>
-                    <field name="company_currency" column_invisible="True"/>
-                    <field name="color" column_invisible="True"/>
-                    <field name="stage_id_color" column_invisible="True"/>
+    <!-- Oculta explícitamente campos país e ingreso esperado en la lista de oportunidades. -->
+    <record id="crm_case_tree_view_oppor_wigo_hide_fields" model="ir.ui.view">
+        <field name="name">crm.lead.list.opportunity.wigo.hide.fields</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='expected_revenue']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
 
-                    <field name="name" string="Lead" readonly="1"/>
-                    <field name="partner_name" string="Cliente" optional="show"/>
-                    <field name="contact_name" string="Contacto" optional="show"/>
-                    <field name="email_from" optional="show"/>
-                    <field name="telefono_contacto" string="Teléfono" optional="show"/>
-                    <field name="zona" optional="show"/>
-                    <field name="codigo_cliente" string="Código contrato" optional="show"/>
-                    <field name="plan_id" string="Plan" optional="show"/>
-                    <field name="direccion" optional="hide"/>
-                    <field name="ubicacion" optional="hide"/>
-                    <field name="coordenadas" optional="hide"/>
-                    <field name="user_id" optional="show" widget="many2one_avatar_user" domain="[('share', '=', False)]"/>
-                    <field name="team_id" optional="show"/>
-                    <field name="priority" optional="hide" widget="priority"/>
-                    <field name="activity_ids" optional="hide" widget="list_activity"/>
-                    <field name="activity_user_id" optional="hide" string="Activity by" widget="many2one_avatar_user"/>
-                    <field name="my_activity_date_deadline" optional="hide" string="My Deadline" widget="remaining_days" options="{'allow_order': '1'}"/>
+    <!-- Agrega campos personalizados de Wigo a la vista lista de oportunidades activa. -->
+    <record id="crm_case_tree_view_oppor_wigo_add_fields" model="ir.ui.view">
+        <field name="name">crm.lead.list.opportunity.wigo.add.fields</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="priority">94</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="before">
+                <field name="zona" string="Zona" optional="show"/>
+                <field name="direccion" string="Dirección" optional="show"/>
+                <field name="ubicacion" string="Ubicación" optional="show"/>
+                <field name="coordenadas" string="Coordenadas" optional="show"/>
+                <field name="plan_id" string="Plan" optional="show"/>
+            </xpath>
+        </field>
+    </record>
 
-                    <field name="date_deadline" column_invisible="True"/>
-                    <field name="campaign_id" column_invisible="True"/>
-                    <field name="medium_id" column_invisible="True"/>
-                    <field name="source_id" column_invisible="True"/>
-                    <field name="probability" column_invisible="True"/>
-                    <field name="tag_ids" column_invisible="True"/>
-                    <field name="lost_reason_id" column_invisible="True"/>
-                    <field name="lead_properties" column_invisible="True"/>
-                    <field name="message_needaction" column_invisible="True"/>
-                </list>
+    <!-- Oculta explícitamente campos país e ingreso esperado en la lista de leads. -->
+    <record id="crm_case_tree_view_leads_wigo_hide_fields" model="ir.ui.view">
+        <field name="name">crm.lead.list.lead.wigo.hide.fields</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Agrega campos personalizados de Wigo a la vista lista de leads. -->
+    <record id="crm_case_tree_view_leads_wigo_add_fields" model="ir.ui.view">
+        <field name="name">crm.lead.list.lead.wigo.add.fields</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_leads"/>
+        <field name="priority">92</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="before">
+                <field name="zona" string="Zona" optional="show"/>
+                <field name="direccion" string="Dirección" optional="show"/>
+                <field name="ubicacion" string="Ubicación" optional="show"/>
+                <field name="coordenadas" string="Coordenadas" optional="show"/>
+                <field name="plan_id" string="Plan" optional="show"/>
             </xpath>
         </field>
     </record>
