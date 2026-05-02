@@ -8,11 +8,9 @@
         <field name="name">internet.plan.settings.list</field>
         <field name="model">internet.plan.settings</field>
         <field name="arch" type="xml">
-            <list string="Costos de Instalación"
-                  decoration-muted="not active">
+            <list string="Costos de Instalación" decoration-muted="not active">
                 <field name="name_installation_cost"/>
-                <field name="installation_cost" widget="monetary"
-                       options="{'currency_field': false}"/>
+                <field name="installation_cost" widget="monetary" options="{'currency_field': false}"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -27,43 +25,30 @@
         <field name="arch" type="xml">
             <form string="Costo de Instalación">
                 <header>
-                    <button name="action_save_installation_cost"
-                            type="object"
-                            string="Guardar"
-                            class="btn-primary"
-                            icon="fa-save"/>
-                    <field name="active"
-                           widget="boolean_button"
-                           options="{'terminology': 'archive'}"/>
+                    <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
                 </header>
 
                 <sheet>
-                    <widget name="web_ribbon" title="Archivado"
-                            bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger" invisible="active"/>
 
                     <div class="oe_title">
                         <label for="name_installation_cost"/>
                         <h1>
-                            <field name="name_installation_cost"
-                                   placeholder="Ej: Instalación estándar..."
-                                   class="oe_inline"/>
+                            <field name="name_installation_cost" placeholder="Ej: Instalación estándar..." class="oe_inline"/>
                         </h1>
                     </div>
 
                     <group string="Costo">
                         <label for="installation_cost"/>
                         <div class="o_row">
-                            <field name="installation_cost"
-                                   decoration-danger="installation_cost and installation_cost &lt;= 0"/>
+                            <field name="installation_cost" decoration-danger="installation_cost and installation_cost &lt;= 0"/>
                             <span class="oe_inline ms-1 text-muted">Bs</span>
                         </div>
                     </group>
 
                     <notebook>
                         <page string="Descripción" name="description">
-                            <field name="description"
-                                   placeholder="Notas adicionales sobre este costo..."
-                                   nolabel="1"/>
+                            <field name="description" placeholder="Notas adicionales sobre este costo..." nolabel="1"/>
                         </page>
                     </notebook>
 

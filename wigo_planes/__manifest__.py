@@ -42,5 +42,8 @@
         'web.assets_backend': [
             'wigo_planes/static/src/css/wigo_planes.css',
         ],
+        'web.assets_web_dark': [
+            'wigo_planes/static/src/css/wigo_planes.dark.scss',
+        ],
     },
 }

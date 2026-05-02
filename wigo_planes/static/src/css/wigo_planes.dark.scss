@@ -1,0 +1,65 @@
+/* ================================================================
+   Wigo Planes - Estilos para Modo Oscuro
+   ================================================================ */
+
+.wigo_plan_card {
+    background: linear-gradient(180deg, #2d2d2d 0%, #1e1e1e 100%) !important;
+    border-left-color: #555555 !important;
+}
+
+.wigo_plan_card:hover {
+    box-shadow: 0 4px 16px rgba(255,255,255,0.1) !important;
+}
+
+.wigo_card_fiber {
+    border-left-color: #6ee8c4 !important;
+}
+
+.wigo_card_wireless {
+    border-left-color: #5ce5ff !important;
+}
+
+.wigo_card_cable {
+    border-left-color: #ffb366 !important;
+}
+
+.wigo_badge_fiber {
+    background: #1b4d40;
+    color: #6ee8c4;
+}
+
+.wigo_badge_wireless {
+    background: #1a5f6d;
+    color: #5ce5ff;
+}
+
+.wigo_badge_cable {
+    background: #6e3d1a;
+    color: #ffb366;
+}
+
+.wigo_plan_name {
+    color: #e8e8e8 !important;
+}
+
+.wigo_plan_identifier {
+    background: #3d2d6b !important;
+    color: #b8a8e8 !important;
+}
+
+.wigo_stat_box {
+    background: #3d3d3d !important;
+    border-color: #555555 !important;
+}
+
+.wigo_stat_value {
+    color: #e8e8e8 !important;
+}
+
+.wigo_stat_label {
+    color: #a0a0a0 !important;
+}
+
+.wigo_stat_price .wigo_stat_value {
+    color: #4dd0c1 !important;
+}
