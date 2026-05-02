@@ -98,7 +98,7 @@ class WigoReciboConfig(models.Model):
         return config
 
     def action_reset_defaults(self):
-        """Restaura valores predeterminados de diseño."""
+        """Restaura valores predeterminados de diseño y recarga la vista."""
         self.ensure_one()
         self.write({
             'color_primario': '#cc0000', 'color_secundario': '#990000',
@@ -111,14 +111,14 @@ class WigoReciboConfig(models.Model):
             'ancho_banda': 8, 'border_radius': 0, 'mostrar_numero_grande': True,
             'layout_logo': 'derecha',
         })
+        # Recargar la vista para que el widget de preview muestre los nuevos valores
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Diseño restaurado',
-                'message': 'Se restauraron los valores predeterminados de diseño.',
-                'sticky': False, 'type': 'success',
-            }
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'current',
+            'flags': {'initial_mode': 'edit'},
         }
 
     @api.model

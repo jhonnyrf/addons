@@ -946,41 +946,98 @@ class WigoPagoEstado(models.Model):
     # ─────────────────────────────────────────────────────────────
     # Recibo de cobro
     # ─────────────────────────────────────────────────────────────
+    # recibo_id: stored + compute para que el frontend siempre lo tenga disponible
+    recibo_id = fields.Many2one(
+        'wigo.recibo.cobro',
+        string='Recibo de cobro',
+        compute='_compute_recibo_id',
+        compute_sudo=True,
+        copy=False,
+    )
+    
+    # recibo_generado: computed field que sincroniza automáticamente con recibo_id
     recibo_generado = fields.Boolean(
         string='Recibo generado',
-        default=False,
+        compute='_compute_recibo_generado',
         copy=False,
     )
 
+    @api.depends()
+    def _compute_recibo_id(self):
+        """Busca SIEMPRE recibos válidos (NO anulados) asociados al pago. Sin cache."""
+        Recibo = self.env['wigo.recibo.cobro']
+        for rec in self:
+            # Búsqueda fresh cada vez, SIN cache
+            recibo = Recibo.sudo().search(
+                [('pago_id', '=', rec.id), ('state', '!=', 'anulado')],
+                limit=1,
+                order='id DESC'
+            )
+            rec.recibo_id = recibo.id if recibo else False
+
+    @api.depends('recibo_id')
+    def _compute_recibo_generado(self):
+        """Sincroniza automáticamente: si existe recibo_id, entonces recibo_generado = True."""
+        for rec in self:
+            rec.recibo_generado = bool(rec.recibo_id)
+
+    def _get_or_create_recibo(self):
+        """Obtiene el recibo existente NO ANULADO o crea uno nuevo."""
+        self.ensure_one()
+        Recibo = self.env['wigo.recibo.cobro']
+        # Busca recibos VÁLIDOS (NO anulados) asociados al pago
+        recibo = Recibo.search(
+            [('pago_id', '=', self.id), ('state', '!=', 'anulado')],
+            limit=1,
+            order='id DESC'  # Más reciente primero
+        )
+        if not recibo:
+            # Si no existe ninguno válido (ej: RC-0001 anulado), crea uno nuevo con nuevo número
+            recibo = Recibo.create({'pago_id': self.id})
+            # recibo_generado se actualiza automáticamente via _compute_recibo_generado
+        return recibo
+
     def action_generar_recibo(self):
-        """Crea o abre el recibo de cobro para este pago."""
+        """Crea el recibo y abre el formulario para editarlo."""
         self.ensure_one()
         if self.estado_pago not in ('pagado', 'pendiente'):
             raise UserError(
                 'Solo se puede generar recibo para pagos confirmados (Pagado o Pendiente).'
             )
-        Recibo = self.env['wigo.recibo.cobro']
-        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
-        if not recibo:
-            recibo = Recibo.create({'pago_id': self.id})
-            self.recibo_generado = True
+        recibo = self._get_or_create_recibo()
         return {
             'type': 'ir.actions.act_window',
             'name': f'Recibo — {self.display_name}',
             'res_model': 'wigo.recibo.cobro',
             'view_mode': 'form',
             'res_id': recibo.id,
-            'target': 'new',
+            'target': 'current',
+        }
+
+    def action_abrir_recibo(self):
+        """Abre el form del recibo existente NO ANULADO (editar / imprimir)."""
+        self.ensure_one()
+        # Busca solo recibos VÁLIDOS (NO anulados)
+        recibo = self.env['wigo.recibo.cobro'].search(
+            [('pago_id', '=', self.id), ('state', '!=', 'anulado')],
+            limit=1,
+            order='id DESC'
+        )
+        if not recibo:
+            return self.action_generar_recibo()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Recibo — {self.display_name}',
+            'res_model': 'wigo.recibo.cobro',
+            'view_mode': 'form',
+            'res_id': recibo.id,
+            'target': 'current',
         }
 
     def action_imprimir_recibo(self):
-        """Genera e imprime el recibo PDF directamente."""
+        """Imprime el recibo PDF directamente (crea si no existe)."""
         self.ensure_one()
-        Recibo = self.env['wigo.recibo.cobro']
-        recibo = Recibo.search([('pago_id', '=', self.id)], limit=1)
-        if not recibo:
-            recibo = Recibo.create({'pago_id': self.id})
-            self.recibo_generado = True
+        recibo = self._get_or_create_recibo()
         return recibo.action_imprimir()
 
     # ─────────────────────────────────────────────────────────────

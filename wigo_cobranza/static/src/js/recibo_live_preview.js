@@ -90,18 +90,41 @@ export class ReciboLivePreview extends Component {
         // --- Datos del recibo ---
         const partnerName = d.partner_id && d.partner_id[1] ? d.partner_id[1] : "—";
         const numero = d.numero || "NUEVO";
-        const fechaRaw = d.fecha_pago;
-        const fecha = fechaRaw
-            ? new Date(fechaRaw + "T00:00:00").toLocaleDateString("es-BO", {
-                  day: "2-digit", month: "2-digit", year: "numeric",
-              })
-            : "—";
+        // fecha_pago en Odoo 19 puede ser string "YYYY-MM-DD", objeto Date, o false
+        let fecha = "—";
+        if (d.fecha_pago) {
+            try {
+                let dt;
+                if (d.fecha_pago instanceof Date) {
+                    dt = d.fecha_pago;
+                } else if (typeof d.fecha_pago === "string" && d.fecha_pago.includes("-")) {
+                    // "YYYY-MM-DD" → forzar interpretación local sin timezone
+                    const [y, m, day] = d.fecha_pago.split("-").map(Number);
+                    dt = new Date(y, m - 1, day);
+                } else {
+                    dt = new Date(d.fecha_pago);
+                }
+                if (!isNaN(dt.getTime())) {
+                    fecha = dt.toLocaleDateString("es-BO", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                    });
+                }
+            } catch (e) { fecha = "—"; }
+        }
         const periodo = d.periodo || "—";
         const monto = typeof d.monto === "number" ? d.monto.toFixed(2) : "0.00";
         const montoLetras = d.monto_en_letras || "";
         const descripcion = d.descripcion || "Servicio Internet";
         const codigoCli = d.codigo_cliente || "—";
-        const canal = d.canal_pago || "—";
+        // canal_pago es un campo Selection — mapear valor técnico a label
+        const canalMap = {
+            "efectivo": "Efectivo", "transferencia": "Transferencia",
+            "qr": "QR", "deposito": "Depósito", "tarjeta": "Tarjeta",
+            "tigo_money": "Tigo Money", "boliviapay": "BoliviaPay",
+        };
+        const canal = d.canal_pago
+            ? (canalMap[d.canal_pago] || d.canal_pago)
+            : "—";
         const firmaNombre = d.firma_nombre_override || cfg.firma_nombre || "Firmante";
         const firmaCargo = d.firma_cargo_override || cfg.firma_cargo || "";
         const firmaCel = d.firma_celular_override || cfg.firma_celular || "";
@@ -152,9 +175,12 @@ export class ReciboLivePreview extends Component {
         }
 
         // Logo
-        const logoHtml = cfg.logo_base64
-            ? `<img src="data:image/png;base64,${cfg.logo_base64}"
-                    style="max-height:${cfg.logo_ancho || 70}px;max-width:${(cfg.logo_ancho || 90) * 1.5}px;"/>`
+        const logoSrc = cfg.logo_base64 && cfg.logo_base64.length > 50
+            ? `data:image/png;base64,${cfg.logo_base64}`
+            : null;
+        const la = cfg.logo_ancho || 90;
+        const logoHtml = logoSrc
+            ? `<img src="${logoSrc}" style="max-height:${la}px;max-width:${la * 2}px;display:block;margin-left:auto;" onerror="this.style.display='none'"/>`
             : "";
 
         // Estado badge

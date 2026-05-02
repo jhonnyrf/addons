@@ -22,7 +22,7 @@ class WigoReciboCobro(models.Model):
     )
     pago_id = fields.Many2one(
         'wigo.pago.estado', string='Pago origen',
-        required=True, ondelete='restrict',
+        required=True, ondelete='cascade',
     )
     partner_id = fields.Many2one(
         'res.partner', string='Cliente',
@@ -104,10 +104,28 @@ class WigoReciboCobro(models.Model):
         return super().create(vals_list)
 
     def action_emitir(self):
+        """Emite el recibo (cambia a estado 'emitido') y vuelve al pago con referencia actualizada."""
         for rec in self:
             if rec.state != 'borrador':
                 raise UserError('Solo se pueden emitir recibos en borrador.')
             rec.state = 'emitido'
+            rec.message_post(
+                body="Recibo emitido exitosamente.",
+                message_type='notification',
+            )
+        # Invalida el cache del pago para que recalcule recibo_id y recibo_generado
+        self.ensure_one()
+        self.pago_id.invalidate_recordset(['recibo_id', 'recibo_generado'])
+        
+        # Retorna acción que fuerza reload del form del pago
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wigo.pago.estado',
+            'res_id': self.pago_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+            'flags': {'form': {'reload_on_button': True}},
+        }
 
     def action_volver_borrador(self):
         """Permite regresar a borrador para editar, solo si no está anulado."""
@@ -121,29 +139,47 @@ class WigoReciboCobro(models.Model):
             )
 
     def action_anular(self):
+        """Anula el recibo y vuelve al pago."""
         for rec in self:
             rec.state = 'anulado'
+            rec.message_post(
+                body="Recibo anulado.",
+                message_type='notification',
+            )
+        # Invalida el cache del pago para que recalcule recibo_id y recibo_generado
+        self.ensure_one()
+        self.pago_id.invalidate_recordset(['recibo_id', 'recibo_generado'])
+        
+        # Retorna acción que fuerza reload del form del pago
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wigo.pago.estado',
+            'res_id': self.pago_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+            'flags': {'form': {'reload_on_button': True}},
+        }
 
     def action_imprimir(self):
         """Imprime ambas copias (original + copia cliente) en un solo PDF."""
         self.ensure_one()
         if self.state == 'borrador':
-            self.action_emitir()
+            self.state = 'emitido'
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_imprimir_solo_original(self):
-        """Imprime solo la copia ORIGINAL (para la empresa)."""
+        """Imprime solo la copia ORIGINAL (para empresa)."""
         self.ensure_one()
         if self.state == 'borrador':
-            self.action_emitir()
-        return self.env.ref('wigo_cobranza.action_report_recibo_cobro_original').report_action(self)
+            self.state = 'emitido'
+        return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_imprimir_copia_cliente(self):
         """Imprime solo la COPIA CLIENTE."""
         self.ensure_one()
         if self.state == 'borrador':
-            self.action_emitir()
-        return self.env.ref('wigo_cobranza.action_report_recibo_cobro_copia').report_action(self)
+            self.state = 'emitido'
+        return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_preview(self):
         """Abre previsualización del PDF en nueva pestaña"""

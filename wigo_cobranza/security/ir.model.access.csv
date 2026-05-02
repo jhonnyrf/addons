@@ -7,6 +7,7 @@ access_pago_estado_user,wigo.pago.estado user,model_wigo_pago_estado,base.group_
 access_recibo_cobro_cobranza,wigo.recibo.cobro cobranza,model_wigo_recibo_cobro,wigo_cobranza.group_cobranza,1,1,1,1
 access_recibo_cobro_contabilidad,wigo.recibo.cobro contabilidad,model_wigo_recibo_cobro,wigo_cobranza.group_contabilidad,1,1,1,1
 access_recibo_cobro_user,wigo.recibo.cobro user,model_wigo_recibo_cobro,base.group_user,1,1,1,0
+access_recibo_viewer_user,recibo.viewer user,model_recibo_viewer,base.group_user,1,1,1,1
 access_incobrable_cobranza,wigo.incobrable cobranza,model_wigo_incobrable,wigo_cobranza.group_cobranza,1,1,1,0
 access_incobrable_contabilidad,wigo.incobrable contabilidad,model_wigo_incobrable,wigo_cobranza.group_contabilidad,1,1,1,1
 access_incobrable_user,wigo.incobrable user,model_wigo_incobrable,base.group_user,1,0,0,0

@@ -6,8 +6,7 @@ import { useService } from "@web/core/utils/hooks";
 
 /**
  * ReciboConfigPreview — Widget para la vista de configuración.
- * Renderiza una mini-preview del recibo en tiempo real al editar
- * los campos de color, tipografía, layout, etc.
+ * Renderiza una mini-preview reactiva del recibo al editar los campos.
  */
 export class ReciboConfigPreview extends Component {
     static template = "wigo_cobranza.ReciboConfigPreview";
@@ -23,8 +22,10 @@ export class ReciboConfigPreview extends Component {
 
     setup() {
         this.htmlContainer = useRef("configHtmlContainer");
+        this.orm = useService("orm");
         this.state = useState({ loading: true });
 
+        // Reaccionar a cambios en CUALQUIER campo relevante
         useEffect(
             () => { this._render(); },
             () => {
@@ -43,10 +44,40 @@ export class ReciboConfigPreview extends Component {
                     d.tabla_header_texto, d.tabla_monto_texto,
                     d.firma_nombre, d.firma_cargo, d.firma_celular,
                     d.mostrar_pie, d.texto_pie,
+                    // logo: en Odoo 19 un campo Binary en el form tiene
+                    // d.logo = false | { data: "base64...", name: "..." } | "base64string"
                     d.logo,
                 ];
             }
         );
+    }
+
+    /**
+     * Obtiene la URL de datos para el logo desde el campo Binary del record.
+     * En Odoo 19 el campo Binary puede venir como:
+     *   - false / null / undefined → sin logo
+     *   - string base64 directa
+     *   - objeto { data: "base64...", ... }
+     */
+    _getLogoSrc() {
+        const d = this.props.record.data;
+        const logo = d.logo;
+        if (!logo) return null;
+
+        // Si es objeto con propiedad data (Odoo 17+)
+        if (typeof logo === "object" && logo.data) {
+            return `data:image/png;base64,${logo.data}`;
+        }
+        // Si ya es string base64
+        if (typeof logo === "string" && logo.length > 50) {
+            return `data:image/png;base64,${logo}`;
+        }
+        // Si es un número (id de attachment), usar la URL del field
+        const recId = this.props.record.resId;
+        if (recId) {
+            return `/web/image/wigo.recibo.config/${recId}/logo`;
+        }
+        return null;
     }
 
     _render() {
@@ -97,91 +128,108 @@ export class ReciboConfigPreview extends Component {
             headerTxtColor = colorTxtP;
         }
 
+        // Logo
+        const logoSrc = this._getLogoSrc();
+        const la = d.logo_ancho || 90;
+        const logoHtml = logoSrc
+            ? `<img src="${logoSrc}" style="max-height:${la}px;max-width:${la * 2}px;display:block;margin-left:auto;" onerror="this.style.display='none'"/>`
+            : `<div style="width:${la}px;height:${Math.round(la*0.5)}px;background:rgba(255,255,255,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.6);margin-left:auto;">sin logo</div>`;
+
         const html = `
-<div style="font-family:${fuente};font-size:${Math.round(tamBase*0.9)}px;color:${colorTxtP};background:#e5e7eb;padding:8px;border-radius:4px;">
+<div style="font-family:${fuente};font-size:${Math.round(tamBase*0.9)}px;color:${colorTxtP};background:#e5e7eb;padding:6px;border-radius:4px;">
   <div style="background:${colorFondo};border:1px solid ${colorBorde};border-radius:${radius}px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
 
-    <div style="${headerBg}color:${headerTxtColor};padding:10px 14px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <div style="font-size:${Math.round(tamTitulo*0.85)}px;font-weight:${titNegrita};">RECIBO DE COBRANZA</div>
-          <div style="font-size:${Math.round(tamEmpresa*0.85)}px;font-weight:bold;margin-top:2px;">${empresaNombre}</div>
-          ${empresaSlogan ? `<div style="font-size:9px;opacity:0.85;font-style:italic;">${empresaSlogan}</div>` : ""}
-          <div style="font-size:9px;margin-top:3px;opacity:0.9;">
-            ${[empresaDireccion, empresaCiudad].filter(Boolean).join(" · ")}
-            ${empresaCelular ? ` · CEL: ${empresaCelular}` : ""}
-            ${empresaNit ? ` · NIT: ${empresaNit}` : ""}
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:13px;font-weight:bold;">Nº 0001</div>
-          <span style="background:#22c55e;color:#fff;padding:1px 6px;border-radius:10px;font-size:8px;font-weight:bold;">EMITIDO</span>
-        </div>
-      </div>
+    <!-- HEADER -->
+    <div style="${headerBg}color:${headerTxtColor};padding:8px 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td valign="top" width="62%">
+            <div style="font-size:${Math.round(tamTitulo*0.82)}px;font-weight:${titNegrita};">RECIBO DE COBRANZA</div>
+            <div style="font-size:${Math.round(tamEmpresa*0.82)}px;font-weight:bold;margin-top:2px;">${empresaNombre}</div>
+            ${empresaSlogan ? `<div style="font-size:8px;opacity:0.85;font-style:italic;">${empresaSlogan}</div>` : ""}
+            <div style="font-size:8px;margin-top:2px;opacity:0.9;line-height:1.4;">
+              ${empresaDireccion}${empresaCiudad ? "<br/>" + empresaCiudad : ""}${empresaCelular ? "<br/>CEL: " + empresaCelular : ""}${empresaNit ? " | NIT: " + empresaNit : ""}
+            </div>
+          </td>
+          <td valign="top" width="38%" align="right">
+            ${logoHtml}
+            <div style="font-size:13px;font-weight:bold;margin-top:4px;text-align:right;">Nº RC-0001</div>
+          </td>
+        </tr>
+      </table>
     </div>
 
-    <div style="padding:12px 14px;">
-      <div style="display:flex;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid ${colorBorde};">
-        <div style="flex:2;">
-          <div style="font-size:8px;text-transform:uppercase;color:${colorTxtS};">RECIBIDO DE</div>
-          <div style="font-size:12px;font-weight:bold;">Cliente Ejemplo</div>
-          <div style="font-size:9px;color:${colorTxtS};">Código: WIG-001</div>
-        </div>
-        <div style="flex:1;text-align:right;">
-          <div style="font-size:8px;text-transform:uppercase;color:${colorTxtS};">FECHA</div>
-          <div style="font-size:11px;font-weight:bold;color:${colorP};">01/05/2025</div>
-          <div style="font-size:9px;color:${colorTxtS};">Mayo/2025</div>
-        </div>
-      </div>
+    <!-- CUERPO -->
+    <div style="padding:8px 12px;">
+      <!-- Cliente / Fecha -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid ${colorBorde};">
+        <tr>
+          <td width="60%" valign="top">
+            <div style="font-size:8px;text-transform:uppercase;color:${colorTxtS};letter-spacing:0.8px;margin-bottom:1px;">RECIBIDO DE:</div>
+            <div style="font-size:11px;font-weight:bold;">Cliente Ejemplo</div>
+            <div style="font-size:9px;color:${colorTxtS};">Código: WIG-001</div>
+          </td>
+          <td width="40%" valign="top" align="right">
+            <div style="font-size:8px;text-transform:uppercase;color:${colorTxtS};letter-spacing:0.8px;margin-bottom:1px;">FECHA:</div>
+            <div style="font-size:11px;font-weight:bold;color:${colorP};">01/05/2026</div>
+            <div style="font-size:9px;color:${colorTxtS};">Mayo/2026</div>
+          </td>
+        </tr>
+      </table>
 
-      <table style="width:100%;border-collapse:collapse;font-size:${Math.round(tamBase*0.85)}px;margin-bottom:8px;">
+      <!-- Tabla -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:${Math.round(tamBase*0.85)}px;margin-bottom:6px;">
         <thead>
           <tr style="background:${colorP};color:#fff;">
             <th style="padding:5px 8px;text-align:left;">${tablaHdr}</th>
-            <th style="padding:5px 8px;text-align:right;">${tablaMontoHdr}</th>
+            <th style="padding:5px 8px;text-align:right;width:110px;white-space:nowrap;">${tablaMontoHdr}</th>
           </tr>
         </thead>
         <tbody>
-          <tr style="border-bottom:1px solid ${colorBorde};">
-            <td style="padding:7px 8px;">Servicio Internet Mayo/2025</td>
-            <td style="padding:7px 8px;text-align:right;">150.00</td>
+          <tr>
+            <td style="padding:6px 8px;border-bottom:1px solid ${colorBorde};">Servicio Internet Mayo/2026</td>
+            <td style="padding:6px 8px;text-align:right;border-bottom:1px solid ${colorBorde};">150,00</td>
           </tr>
         </tbody>
         <tfoot>
-          <tr>
-            <td style="padding:6px 8px;font-weight:bold;">TOTAL</td>
-            <td style="padding:6px 8px;text-align:right;font-weight:bold;color:${colorP};border-top:2px solid ${colorP};">150.00 Bs.</td>
+          <tr style="background:${colorFondoMonto};">
+            <td style="padding:5px 8px;font-size:9px;color:${colorTxtP};"><b>SON:</b> Ciento cincuenta 00/100 Bolivianos</td>
+            <td style="padding:5px 8px;text-align:right;font-weight:bold;color:${colorP};border-top:2px solid ${colorP};white-space:nowrap;">TOTAL BS.&nbsp;&nbsp;150,00</td>
           </tr>
         </tfoot>
       </table>
 
-      <div style="background:${colorFondoMonto};border-left:3px solid ${colorP};padding:7px 10px;border-radius:${radius}px;margin-bottom:8px;font-size:9px;">
-        <b>SON:</b> Ciento cincuenta 00/100 Bolivianos
-      </div>
+      ${mostrarBanda ? `<div style="background:${colorP};height:${anchoBanda}px;border-radius:2px;margin:6px 0 8px 0;"></div>` : '<div style="margin-bottom:10px;"></div>'}
 
-      ${mostrarBanda ? `<div style="background:${colorP};height:${anchoBanda}px;border-radius:${radius}px;margin-bottom:10px;"></div>` : ""}
+      <!-- Firmas -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="44%" valign="bottom">
+            <div style="height:20px;"></div>
+            <div style="border-top:1px solid ${colorBorde};padding-top:5px;text-align:center;">
+              <div style="font-weight:bold;font-size:10px;">${firmaNombre}</div>
+              <div style="font-size:9px;color:${colorTxtS};">${firmaCargo}</div>
+              ${firmaCel ? `<div style="font-size:8px;color:${colorTxtS};">CEL: ${firmaCel}</div>` : ""}
+            </div>
+          </td>
+          <td width="12%"></td>
+          <td width="44%" valign="bottom">
+            <div style="height:20px;"></div>
+            <div style="border-top:1px solid ${colorBorde};padding-top:5px;text-align:center;">
+              <div style="font-weight:bold;font-size:10px;">ENTREGUE CONFORME</div>
+              <div style="font-size:9px;color:${colorTxtS};margin-top:3px;text-align:left;">Nombre: ________________</div>
+              <div style="font-size:9px;color:${colorTxtS};margin-top:2px;text-align:left;">CI: ________________</div>
+            </div>
+          </td>
+        </tr>
+      </table>
 
-      <div style="display:flex;gap:10px;font-size:9px;">
-        <div style="flex:1;text-align:center;border-top:1px solid ${colorBorde};padding-top:6px;">
-          <div style="font-weight:bold;">${firmaNombre}</div>
-          <div style="color:${colorTxtS};">${firmaCargo}</div>
-          ${firmaCel ? `<div style="color:${colorTxtS};">CEL: ${firmaCel}</div>` : ""}
-        </div>
-        <div style="flex:1;text-align:center;border-top:1px solid ${colorBorde};padding-top:6px;">
-          <div style="font-weight:bold;">ENTREGUE CONFORME</div>
-          <div style="color:${colorTxtS};">Nombre: ___________</div>
-          <div style="color:${colorTxtS};">CI: ___________</div>
-        </div>
-      </div>
-
-      ${mostrarPie && textoPie
-        ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:${colorTxtS};border-top:1px dashed ${colorBorde};padding-top:6px;">${textoPie}</div>`
-        : ""}
+      ${mostrarPie && textoPie ? `<div style="text-align:center;margin-top:8px;font-size:9px;color:${colorTxtS};border-top:1px dashed ${colorBorde};padding-top:6px;">${textoPie}</div>` : ""}
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:4px;font-size:9px;color:#999;">
-    ✅ Vista previa en tiempo real · Refleja los cambios al instante
+  <div style="text-align:center;margin-top:3px;font-size:9px;color:#999;">
+    ✅ Vista previa en tiempo real
   </div>
 </div>`;
 

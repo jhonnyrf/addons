@@ -23,6 +23,7 @@
     'data': [
         'security/security.xml',
         'security/ir.model.access.csv',
+        'data/paperformat_recibo.xml',
         'data/cron.xml',
         'data/sequences.xml',
         'reports/report_recibo_cobro.xml',

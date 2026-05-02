@@ -17,8 +17,7 @@
                 <field name="fecha_pago"/>
                 <field name="canal_pago"/>
                 <field name="state"/>
-                <progressbar field="state"
-                             colors='{"borrador": "warning", "emitido": "success", "anulado": "danger"}'/>
+                <progressbar field="state" colors='{"borrador": "warning", "emitido": "success", "anulado": "danger"}'/>
                 <templates>
                     <t t-name="card">
                         <main>
@@ -31,17 +30,15 @@
                                         <field name="periodo"/>
                                     </div>
                                 </div>
-                                <field name="state" widget="badge"
-                                       decoration-success="state == 'emitido'"
-                                       decoration-warning="state == 'borrador'"
-                                       decoration-danger="state == 'anulado'"/>
+                                <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'borrador'" decoration-danger="state == 'anulado'"/>
                             </div>
                             <div class="fw-bold mb-1">
                                 <i class="fa fa-user me-1 text-muted"/>
                                 <field name="partner_id"/>
                             </div>
                             <div class="text-muted" style="font-size:11px;">
-                                <i class="fa fa-id-card me-1"/>Código: <field name="codigo_cliente"/>
+                                <i class="fa fa-id-card me-1"/>
+Código: <field name="codigo_cliente"/>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <span class="fw-bold text-success" style="font-size:14px;">
@@ -52,18 +49,10 @@
                                     <field name="fecha_pago"/>
                                 </span>
                             </div>
-                            <div class="text-muted mt-1" style="font-size:11px;">
-                                <i class="fa fa-credit-card me-1"/>
-                                <field name="canal_pago"/>
-                            </div>
                         </main>
                         <footer class="d-flex justify-content-end gap-2">
-                            <button name="action_emitir" string="✅ Emitir" type="object"
-                                    class="btn btn-sm btn-success"
-                                    invisible="state != 'borrador'"/>
-                            <button name="action_imprimir" string="🖨️ PDF Completo" type="object"
-                                    class="btn btn-sm btn-primary"
-                                    invisible="state == 'anulado'"/>
+                            <button name="action_emitir" string="✅ Emitir" type="object" class="btn btn-sm btn-success" invisible="state != 'borrador'"/>
+                            <button name="action_imprimir" string="🖨️ Imprimir" type="object" class="btn btn-sm btn-primary" invisible="state == 'anulado'"/>
                         </footer>
                     </t>
                 </templates>
@@ -78,10 +67,7 @@
         <field name="name">wigo.recibo.cobro.list</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
-            <list string="Recibos de Cobro"
-                  decoration-success="state == 'emitido'"
-                  decoration-muted="state == 'anulado'"
-                  decoration-warning="state == 'borrador'">
+            <list string="Recibos de Cobro" decoration-success="state == 'emitido'" decoration-muted="state == 'anulado'" decoration-warning="state == 'borrador'">
                 <field name="numero"/>
                 <field name="partner_id"/>
                 <field name="codigo_cliente"/>
@@ -90,76 +76,68 @@
                 <field name="canal_pago" optional="show"/>
                 <field name="fecha_pago"/>
                 <field name="registrado_por" optional="hide"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'emitido'"
-                       decoration-warning="state == 'borrador'"
-                       decoration-danger="state == 'anulado'"/>
-                <button name="action_imprimir" string="🖨️ PDF" type="object"
-                        invisible="state == 'anulado'"/>
+                <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'borrador'" decoration-danger="state == 'anulado'"/>
+                <button name="action_imprimir" string="🖨️ PDF" type="object" invisible="state == 'anulado'"/>
             </list>
         </field>
     </record>
 
     <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW — Con previsualización en tiempo real (OWL)
+         FORM VIEW
+         NOTA Odoo 19: el form NO tiene campos readonly globales por estado.
+         En su lugar usamos grupos condicionales para mostrar/ocultar secciones.
+         Los botones de acción en el header siempre son clickeables.
     ══════════════════════════════════════════════════════════ -->
     <record id="view_recibo_cobro_form" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.form</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
-            <form string="Recibo de Cobro" class="o_form_sheet_bg">
+            <form string="Recibo de Cobro">
                 <header>
-                    <!-- Estado: BORRADOR -->
-                    <button name="action_emitir" string="✅ Emitir Recibo"
-                            type="object" class="btn-success"
-                            invisible="state != 'borrador'"/>
+                    <!-- BORRADOR: emitir -->
+                    <button name="action_emitir" string="✅ Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
 
-                    <!-- Estado: EMITIDO — imprimir y editar -->
-                    <button name="action_imprimir" string="🖨️ Imprimir Ambas Copias"
-                            type="object" class="btn-primary"
-                            invisible="state != 'emitido'"/>
-                    <button name="action_imprimir_solo_original" string="📄 Solo Original"
-                            type="object" class="btn-secondary"
-                            invisible="state != 'emitido'"/>
-                    <button name="action_imprimir_copia_cliente" string="📋 Solo Copia Cliente"
-                            type="object" class="btn-secondary"
-                            invisible="state != 'emitido'"/>
-                    <button name="action_volver_borrador" string="✏️ Editar Recibo"
-                            type="object" class="btn-warning"
-                            invisible="state != 'emitido'"
-                            confirm="¿Desea regresar este recibo a borrador para editar? Deberá volver a emitirlo antes de imprimir."/>
+                    <!-- EMITIDO: imprimir -->
+                    <button name="action_imprimir" string="🖨️ Imprimir" type="object" class="btn-primary" invisible="state != 'emitido'"/>
 
-                    <!-- Anular (disponible en borrador y emitido) -->
-                    <button name="action_anular" string="❌ Anular"
-                            type="object" class="btn-danger"
-                            invisible="state == 'anulado'"
-                            confirm="¿Confirma anular este recibo? Esta acción no se puede deshacer."/>
+                    <!-- EMITIDO: editar -->
+                    <button name="action_volver_borrador" string="✏️ Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/>
 
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="borrador,emitido,anulado"/>
+                    <!-- Anular -->
+                    <button name="action_anular" string="❌ Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
                 </header>
 
                 <sheet>
                     <div class="row g-0">
 
-                        <!-- ─── COLUMNA IZQUIERDA: formulario (55%) ─── -->
+                        <!-- ─── IZQUIERDA: datos del recibo ─── -->
                         <div class="col-lg-6 pe-3">
 
-                            <div class="oe_title">
-                                <h1>
-                                    Recibo Nº
-                                    <field name="numero" readonly="1" class="ms-2"/>
+                            <div class="oe_title mb-3">
+                                <h1 class="d-flex align-items-center gap-2">
+                                    <span class="text-muted" style="font-size:16px;">Recibo Nº</span>
+                                    <field name="numero" readonly="1"/>
                                 </h1>
+                            </div>
+
+                            <!-- Alerta anulado -->
+                            <div class="alert alert-danger" style="font-size:12px;" invisible="state != 'anulado'">
+                                <i class="fa fa-ban me-2"/>
+                                Este recibo está <strong>ANULADO</strong> y no puede modificarse.
                             </div>
 
                             <!-- DATOS DEL PAGO -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">📋 Datos del Pago</div>
+                                <div class="card-header fw-bold bg-light py-2">
+                                    <i class="fa fa-file-text-o me-2 text-primary"/>
+Datos del Pago
+                                </div>
                                 <div class="card-body p-2">
                                     <group col="2">
                                         <group>
-                                            <field name="pago_id" options="{'no_create': True}"
-                                                   readonly="state != 'borrador'"/>
+                                            <field name="pago_id" options="{'no_create': True}" readonly="state != 'borrador'"/>
                                             <field name="partner_id" readonly="1"/>
                                             <field name="codigo_cliente" readonly="1"/>
                                         </group>
@@ -174,107 +152,84 @@
 
                             <!-- MONTO -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">💰 Monto</div>
+                                <div class="card-header fw-bold bg-light py-2">
+                                    <i class="fa fa-bolivianoSign me-2 text-success"/>
+💰 Monto
+                                </div>
                                 <div class="card-body p-2">
                                     <group>
-                                        <field name="monto" readonly="1" widget="monetary"/>
+                                        <field name="monto" readonly="1"/>
                                         <field name="monto_en_letras" readonly="1"/>
                                     </group>
                                 </div>
                             </div>
 
-                            <!-- DETALLE EDITABLE -->
+                            <!-- DESCRIPCIÓN DEL SERVICIO -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">
-                                    📝 Detalle del Servicio
-                                    <small class="text-muted fw-normal ms-2">(editable en borrador)</small>
+                                <div class="card-header fw-bold bg-light py-2">
+                                    <i class="fa fa-pencil me-2 text-warning"/>
+📝 Descripción del servicio
+                                    <small class="text-muted fw-normal ms-2">(editable)</small>
                                 </div>
                                 <div class="card-body p-2">
-                                    <group>
-                                        <field name="descripcion" nolabel="1"
-                                               readonly="state != 'borrador'"
-                                               placeholder="Ej: Servicio Internet Mayo/2025 — Plan 20 Mbps"/>
-                                    </group>
-                                    <div class="text-muted" style="font-size:11px;padding:4px 8px;">
-                                        💡 Puedes escribir una descripción más detallada que aparecerá en el recibo.
+                                    <field name="descripcion" nolabel="1" readonly="state == 'anulado'" placeholder="Ej: Servicio Internet Mayo/2025 — Plan 20 Mbps"/>
+                                    <div class="text-muted mt-1" style="font-size:11px;">
+                                        <i class="fa fa-info-circle me-1"/>
+                                        Puedes editar la descripción aunque el recibo esté emitido.
+                                        Usa <strong>✏️ Editar</strong> en el header para cambiar otros datos.
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- FIRMA OVERRIDE -->
+                            <!-- FIRMANTE -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">
-                                    ✍️ Firmante
-                                    <small class="text-muted fw-normal ms-2">(dejar vacío = usar configuración global)</small>
+                                <div class="card-header fw-bold bg-light py-2">
+                                    <i class="fa fa-pencil-square-o me-2"/>
+✍️ Firmante
+                                    <small class="text-muted fw-normal ms-2">(vacío = usa configuración global)</small>
                                 </div>
                                 <div class="card-body p-2">
                                     <group col="2">
                                         <group>
-                                            <field name="firma_nombre_override"
-                                                   placeholder="Lic. Patricia Villarroel"
-                                                   readonly="state != 'borrador'"/>
-                                            <field name="firma_cargo_override"
-                                                   placeholder="CONTABILIDAD"
-                                                   readonly="state != 'borrador'"/>
+                                            <field name="firma_nombre_override" placeholder="Lic. Patricia Villarroel" readonly="state == 'anulado'"/>
+                                            <field name="firma_cargo_override" placeholder="CONTABILIDAD" readonly="state == 'anulado'"/>
                                         </group>
                                         <group>
-                                            <field name="firma_celular_override"
-                                                   placeholder="68582771"
-                                                   readonly="state != 'borrador'"/>
+                                            <field name="firma_celular_override" placeholder="68582771" readonly="state == 'anulado'"/>
                                         </group>
                                     </group>
                                 </div>
-                            </div>
-
-                            <!-- AVISO ESTADO EMITIDO -->
-                            <div class="alert alert-info" style="font-size:12px;"
-                                 invisible="state != 'emitido'">
-                                <i class="fa fa-info-circle me-2"/>
-                                <strong>Recibo emitido.</strong> Para modificar datos usa
-                                <strong>✏️ Editar Recibo</strong> (lo regresa a borrador).
-                                Luego vuelve a emitir e imprimir.
-                            </div>
-
-                            <div class="alert alert-danger" style="font-size:12px;"
-                                 invisible="state != 'anulado'">
-                                <i class="fa fa-ban me-2"/>
-                                Este recibo ha sido <strong>anulado</strong> y no puede modificarse.
                             </div>
 
                             <field name="registrado_por" readonly="1" invisible="1"/>
                         </div>
 
-                        <!-- ─── COLUMNA DERECHA: preview en tiempo real (45%) ─── -->
+                        <!-- ─── DERECHA: vista previa en tiempo real ─── -->
                         <div class="col-lg-6 ps-2">
                             <div style="position: sticky; top: 64px;">
-                                <!-- Header de la preview -->
                                 <div style="background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
                                             color: white; padding: 10px 14px; border-radius: 8px 8px 0 0;
                                             display: flex; align-items: center; justify-content: space-between;">
                                     <span style="font-weight: bold; font-size: 13px;">
-                                        <i class="fa fa-eye me-2"/>Vista Previa en Tiempo Real
+                                        <i class="fa fa-eye me-2"/>
+Vista Previa en Tiempo Real
                                     </span>
-                                    <span style="font-size: 11px; opacity: 0.8;">
-                                        Se actualiza al cambiar datos
-                                    </span>
+                                    <span style="font-size: 11px; opacity: 0.8;">Se actualiza al cambiar datos</span>
                                 </div>
-
-                                <!-- Contenedor del widget OWL de preview -->
                                 <div style="border: 1px solid #ddd; border-top: none;
                                             border-radius: 0 0 8px 8px; overflow: hidden;
-                                            max-height: 78vh; overflow-y: auto;">
+                                            max-height: 75vh; overflow-y: auto;">
                                     <widget name="recibo_live_preview"/>
                                 </div>
-
-                                <!-- Info -->
                                 <div class="text-muted mt-2" style="font-size: 11px; text-align: center;">
-                                    <i class="fa fa-info-circle me-1"/>
-                                    Diseño y colores: <strong>⚙️ Configuración → Configurar Recibo</strong>
+                                    <i class="fa fa-cog me-1"/>
+Diseño y colores:
+                                    <strong>Configuración → Configurar Recibo</strong>
                                 </div>
                             </div>
                         </div>
 
-                    </div><!-- /row -->
+                    </div>                    <!-- /row -->
                 </sheet>
 
                 <chatter/>
@@ -299,17 +254,11 @@
                 <filter name="borradores" string="Borradores" domain="[('state','=','borrador')]"/>
                 <filter name="anulados" string="Anulados" domain="[('state','=','anulado')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual"
-                        domain="[('fecha_pago','&gt;=', (context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="mes_actual" string="Mes actual" domain="[('fecha_pago','&gt;=',(context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
                 <separator/>
-                <filter name="group_partner" string="Agrupar por Cliente"
-                        context="{'group_by': 'partner_id'}"/>
-                <filter name="group_periodo" string="Agrupar por Período"
-                        context="{'group_by': 'periodo'}"/>
-                <filter name="group_canal" string="Agrupar por Canal"
-                        context="{'group_by': 'canal_pago'}"/>
-                <filter name="group_state" string="Agrupar por Estado"
-                        context="{'group_by': 'state'}"/>
+                <filter name="group_partner" string="Por Cliente" context="{'group_by':'partner_id'}"/>
+                <filter name="group_periodo" string="Por Período" context="{'group_by':'periodo'}"/>
+                <filter name="group_state" string="Por Estado" context="{'group_by':'state'}"/>
             </search>
         </field>
     </record>
@@ -322,11 +271,8 @@
         <field name="res_model">wigo.recibo.cobro</field>
         <field name="view_mode">kanban,list,form</field>
         <field name="search_view_id" ref="view_recibo_cobro_search"/>
-        <field name="context">{'search_default_emitidos': 0}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No hay recibos generados aún.
-            </p>
+            <p class="o_view_nocontent_smiling_face">No hay recibos generados aún.</p>
             <p>Los recibos se generan desde el formulario de pago del cliente.</p>
         </field>
     </record>

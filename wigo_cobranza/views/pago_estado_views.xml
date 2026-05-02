@@ -40,12 +40,41 @@
                 <header>
                     <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
                     <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['pagado', 'al_dia', 'mora']"/>
-                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
-                    <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>
-                    <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
+
+                    <!-- Orden: Editar valores | Ver Recibo (si existe) | Generar Recibo (si no existe) | Imprimir Recibo | Registrar Factura -->
+                    <button name="action_editar_valores_contables"
+                            string="Editar valores contables"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="estado_pago != 'pagado'"/>
+
+                    <!-- Ver Recibo: solo visible cuando ya se generó el recibo -->
+                    <button name="action_abrir_recibo"
+                            string="Ver Recibo"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="estado_pago != 'pagado' or not recibo_generado"/>
+
+                    <!-- Imprimir Recibo: solo visible cuando ya se generó -->
+                    <button name="action_imprimir_recibo"
+                            string="Imprimir Recibo"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="estado_pago != 'pagado' or not recibo_generado"/>
+
+                    <!-- Generar Recibo: solo visible cuando NO existe aún -->
+                    <button name="action_generar_recibo"
+                            string="Generar Recibo"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="estado_pago != 'pagado' or recibo_generado"/>
+
                     <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
                     <button name="action_open_contract_crm" string="Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
+                    <!-- Campos necesarios para condiciones invisible -->
+                    <field name="recibo_generado" invisible="1"/>
+                    <field name="recibo_id" invisible="1"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
