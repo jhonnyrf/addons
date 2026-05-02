@@ -112,7 +112,7 @@
                 <field name="customer_code"/>
                 <field name="plan_id"/>
                 <field name="installer_id"/>
-                <field name="scheduled_date"/>
+                <field name="execution_date"/>
 
                 <field name="state" widget="badge" decoration-muted="state in ['pending','deactivation_executed','cancelled']" decoration-warning="state == 'assigned'" decoration-info="state == 'in_field'" decoration-primary="state == 'installed'" decoration-success="state == 'active'" decoration-danger="state == 'incident'"/>
             </list>
@@ -132,19 +132,22 @@
                 <header>
                     <button name="action_assign" type="object" string="Asignar" class="btn-primary" invisible="state != 'pending'"/>
 
+                    <button name="action_print_work_order_pdf" type="object" string="Imprimir OT" class="btn-secondary" invisible="state != 'assigned'"/>
+
                     <button name="action_in_field" type="object" string="Enviar a campo" class="btn-primary" invisible="state != 'assigned'"/>
 
-                    <button name="action_installed" type="object" string="Equipo instalado" class="btn-primary" invisible="state != 'in_field'"/>
+                    <button name="action_installed" type="object" string="Equipo instalado" class="btn-primary" invisible="work_type == 'deactivation' or state != 'in_field'"/>
 
-                    <button name="action_activate" type="object" string="✓ Activar cliente" class="btn-success" invisible="state != 'installed'" confirm="¿Confirmar activación? Se creará la ficha técnica del cliente."/>
+                    <button name="action_activate" type="object" string="✓ Activar cliente" class="btn-success" invisible="work_type == 'deactivation' or state != 'installed'" confirm="¿Confirmar activación? Se creará la ficha técnica del cliente."/>
 
-                    <button name="action_incident" type="object" string="Registrar incidencia" class="btn-warning" invisible="state in ['pending','active','deactivation_executed','incident','cancelled']"/>
+                    <button name="action_incident" type="object" string="Registrar incidencia" class="btn-warning" invisible="work_type == 'deactivation' or state in ['pending','active','deactivation_executed','incident','cancelled']"/>
 
-                    <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state in ['deactivation_executed','cancelled']" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
+                    <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state != 'in_field'" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
 
                     <button name="action_cancel" type="object" string="Cancelar OT" class="btn-secondary" invisible="state in ['active','deactivation_executed','cancelled']" confirm="¿Cancelar esta orden de trabajo? Se liberarán los recursos asociados (subinterfaz, puerto de caja, ONU)."/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active" readonly="state in ['active', 'cancelled']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,installed,active" invisible="work_type == 'deactivation'" readonly="state in ['active', 'cancelled']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,assigned,in_field,deactivation_executed" invisible="work_type != 'deactivation'" readonly="state in ['deactivation_executed', 'cancelled']"/>
                 </header>
 
                 <sheet readonly="state == 'active'">
@@ -174,7 +177,7 @@
                     <!-- SUMMARY (arriba: lectura rápida) -->
                     <group col="4">
                         <group string="OT / Cliente" colspan="2">
-                            <field name="work_type"/>
+                            <field name="work_type" readonly="1"/>
                             <field name="contract_id" domain="[('state', '=', 'active')]" readonly="state == 'active'"/>
 
                             <field name="partner_id" readonly="1"/>
@@ -183,7 +186,7 @@
                         </group>
 
                         <group string="Planificación" colspan="2">
-                            <field name="scheduled_date" readonly="1" force_save="1"/>
+                            <field name="scheduled_date" readonly="1" force_save="1" invisible="work_type == 'deactivation'"/>
                             <field name="execution_date" readonly="1"/>
 
                             <field name="installer_id" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager" readonly="state == 'active'"/>
@@ -208,13 +211,13 @@
                         <page string="Datos técnicos" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
                             <group col="4">
                                 <group string="Selección" colspan="2">
-                                    <field name="zone_id" readonly="state == 'active'"/>
+                                    <field name="zone_id" readonly="state == 'active' or work_type == 'deactivation'"/>
 
-                                    <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id or state == 'active'" options="{'no_create': True}"/>
+                                    <field name="box_group_id" domain="[('zone_id','=',zone_id)]" readonly="not zone_id or state == 'active' or work_type == 'deactivation'" options="{'no_create': True}"/>
 
-                                    <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id or state == 'active'" options="{'no_create': True}"/>
+                                    <field name="box_id" domain="[('box_group_id','=',box_group_id)]" readonly="not box_group_id or state == 'active' or work_type == 'deactivation'" options="{'no_create': True}"/>
 
-                                    <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id or state == 'active'" options="{'no_create': True}"/>
+                                    <field name="box_port_id" domain="[('box_id','=',box_id),('state','=','occupied')]" readonly="not box_id or state == 'active' or work_type == 'deactivation'" options="{'no_create': True}"/>
                                 </group>
 
                                 <group string="Ruta calculada" colspan="2">
@@ -252,14 +255,19 @@
                             </group>
                         </page>
 
+                        <page string="Accesorios" invisible="work_type == 'deactivation'">
+                            <field name="work_order_accessories" readonly="state == 'active'">
+                                <list editable="bottom">
+                                    <field name="accesorio_id" domain="[('active', '=', True), ('cantidad_disponible', '&gt;', 0)]"/>
+                                    <field name="cantidad"/>
+                                    <field name="unidad" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
                         <page string="Notas">
-                            <group col="2">
-                                <group string="Accesorios">
-                                    <field name="accessories" nolabel="1"/>
-                                </group>
-                                <group string="Observaciones">
-                                    <field name="notes" nolabel="1"/>
-                                </group>
+                            <group>
+                                <field name="notes" nolabel="1"/>
                             </group>
                             <group string="Cancelación" invisible="state != 'cancelled'">
                                 <field name="cancellation_reason" nolabel="1" readonly="1"/>
@@ -280,19 +288,19 @@
         </field>
     </record>
 
-<!-- ==========================================================================
+    <!-- ==========================================================================
           ACTION
      ========================================================================== -->
-     <record id="action_ftth_work_order" model="ir.actions.act_window">
-         <field name="name">Órdenes de Trabajo</field>
-         <field name="res_model">wigo.ftth.work.order</field>
-         <field name="view_mode">list,form</field>
-         <field name="search_view_id" ref="view_ftth_work_order_search"/>
-         <field name="context">{'search_default_filter_active': 1}</field>
-         <field name="help" type="html">
-             <p class="o_view_nocontent_smiling_face">No hay órdenes de trabajo</p>
-             <p>Se crean automáticamente al ganar un lead en el CRM.</p>
-         </field>
-     </record>
+    <record id="action_ftth_work_order" model="ir.actions.act_window">
+        <field name="name">Órdenes de Trabajo</field>
+        <field name="res_model">wigo.ftth.work.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_work_order_search"/>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay órdenes de trabajo</p>
+            <p>Se crean automáticamente al ganar un lead en el CRM.</p>
+        </field>
+    </record>
 
 </odoo>

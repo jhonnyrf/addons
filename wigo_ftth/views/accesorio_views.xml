@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         ACCESORIO — Catálogo
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_ftth_accesorio_list" model="ir.ui.view">
+        <field name="name">ftth.accesorio.list</field>
+        <field name="model">ftth.accesorio</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo de accesorios" decoration-muted="not active">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="tipo_unidad" string="Unidad"/>
+                <field name="cantidad_disponible" string="Stock disponible"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_accesorio_form" model="ir.ui.view">
+        <field name="name">ftth.accesorio.form</field>
+        <field name="model">ftth.accesorio</field>
+        <field name="arch" type="xml">
+            <form string="Accesorio FTTH">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Nombre del accesorio"/>
+                        <h1>
+                            <field name="name" placeholder="Ej: Cable Drop, Conectores..."/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="Información básica">
+                            <field name="codigo" placeholder="SKU único" readonly="1"/>
+                            <field name="cantidad_disponible"/>
+                            <field name="tipo_unidad" widget="radio"/>
+                        </group>
+                        <group string="Estado">
+                            <field name="active" widget="boolean"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!--   <page string="Stock" name="stock">
+                            <field name="stock_id">
+                                <list editable="bottom">
+                                    <field name="cantidad_disponible" string="Cantidad disponible"/>
+                                </list>
+                            </field>
+                        </page> -->
+                        <page string="Notas" name="notes">
+                            <group>
+                                <field name="notas" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_accesorio_search" model="ir.ui.view">
+        <field name="name">ftth.accesorio.search</field>
+        <field name="model">ftth.accesorio</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="codigo"/>
+                <separator/>
+                <filter string="Activos" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inactivos" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Metros" name="metros" domain="[('tipo_unidad', '=', 'm')]"/>
+                <filter string="Unidades" name="unidades" domain="[('tipo_unidad', '=', 'unidad')]"/>
+                <separator/>
+                <filter string="Agrupar por tipo de unidad" name="group_tipo" context="{'group_by': 'tipo_unidad'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_accesorio" model="ir.actions.act_window">
+        <field name="name">Catálogo de accesorios</field>
+        <field name="res_model">ftth.accesorio</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_accesorio_search"/>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+            Catálogo de accesorios
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         STOCK DE ACCESORIO — Control de inventario
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_ftth_stock_accesorio_list" model="ir.ui.view">
+        <field name="name">ftth.stock.accesorio.list</field>
+        <field name="model">ftth.stock.accesorio</field>
+        <field name="arch" type="xml">
+            <list string="Stock de accesorios" create="false" decoration-danger="cantidad_disponible &lt; 5" decoration-warning="cantidad_disponible &lt; 20">
+                <field name="accesorio_id" string="Accesorio"/>
+                <field name="cantidad_disponible" string="Disponible"/>
+                <field name="unidad"/>
+                <field name="fecha_actualizacion" string="Última actualización"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_stock_accesorio_form" model="ir.ui.view">
+        <field name="name">ftth.stock.accesorio.form</field>
+        <field name="model">ftth.stock.accesorio</field>
+        <field name="arch" type="xml">
+            <form string="Stock de accesorio" create="false">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="accesorio_id" string="Accesorio"/>
+                        <h1>
+                            <field name="accesorio_id"/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="Información de stock">
+                            <field name="cantidad_disponible" string="Cantidad disponible"/>
+                            <field name="unidad" readonly="1"/>
+                        </group>
+                        <group string="Auditoría">
+                            <field name="fecha_actualizacion" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Historial de movimientos" name="movimientos">
+                            <field name="movimiento_ids" readonly="1">
+                                <list>
+                                    <field name="tipo_movimiento" widget="badge" decoration-success="tipo_movimiento == 'entrada'" decoration-danger="tipo_movimiento == 'salida'" decoration-info="tipo_movimiento == 'ajuste'"/>
+                                    <field name="cantidad"/>
+                                    <field name="fecha"/>
+                                    <field name="referencia"/>
+                                    <field name="usuario_id"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_stock_accesorio_search" model="ir.ui.view">
+        <field name="name">ftth.stock.accesorio.search</field>
+        <field name="model">ftth.stock.accesorio</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="accesorio_id"/>
+                <separator/>
+                <filter string="Stock bajo (&lt;5)" name="stock_bajo" domain="[('cantidad_disponible', '&lt;', 5)]"/>
+                <filter string="Stock crítico (&lt;20)" name="stock_critico" domain="[('cantidad_disponible', '&lt;', 20)]"/>
+                <separator/>
+                <filter string="Agrupar por unidad" name="group_unidad" context="{'group_by': 'unidad'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_stock_accesorio" model="ir.actions.act_window">
+        <field name="name">Stock de accesorios</field>
+        <field name="res_model">ftth.stock.accesorio</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_stock_accesorio_search"/>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+             Stock de accesorios
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MOVIMIENTO DE ACCESORIO — Historial
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_ftth_movimiento_accesorio_list" model="ir.ui.view">
+        <field name="name">ftth.movimiento.accesorio.list</field>
+        <field name="model">ftth.movimiento.accesorio</field>
+        <field name="arch" type="xml">
+            <list string="Movimientos de accesorios" decoration-success="tipo_movimiento == 'entrada'" decoration-danger="tipo_movimiento == 'salida'" decoration-info="tipo_movimiento == 'ajuste'">
+                <field name="accesorio_id" string="Accesorio"/>
+                <field name="tipo_movimiento" widget="badge" decoration-success="tipo_movimiento == 'entrada'" decoration-danger="tipo_movimiento == 'salida'" decoration-info="tipo_movimiento == 'ajuste'"/>
+                <field name="cantidad"/>
+                <field name="fecha"/>
+                <field name="referencia" string="Referencia"/>
+                <field name="usuario_id" string="Usuario"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_movimiento_accesorio_form" model="ir.ui.view">
+        <field name="name">ftth.movimiento.accesorio.form</field>
+        <field name="model">ftth.movimiento.accesorio</field>
+        <field name="arch" type="xml">
+            <form string="Movimiento de accesorio">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="accesorio_id" string="Accesorio"/>
+                        <h1>
+                            <field name="accesorio_id"/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="Tipo de movimiento">
+                            <field name="tipo_movimiento" widget="radio"/>
+                        </group>
+                        <group string="Cantidad">
+                            <field name="cantidad"/>
+                        </group>
+                    </group>
+
+                    <group col="2">
+                        <group string="Información del movimiento">
+                            <field name="fecha" readonly="1"/>
+                            <field name="usuario_id" readonly="1"/>
+                        </group>
+                        <group string="Referencia">
+                            <field name="referencia" placeholder="Motivo o documento de referencia"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_movimiento_accesorio_search" model="ir.ui.view">
+        <field name="name">ftth.movimiento.accesorio.search</field>
+        <field name="model">ftth.movimiento.accesorio</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="accesorio_id"/>
+                <field name="referencia"/>
+                <separator/>
+                <filter string="Entradas" name="entrada" domain="[('tipo_movimiento', '=', 'entrada')]"/>
+                <filter string="Salidas" name="salida" domain="[('tipo_movimiento', '=', 'salida')]"/>
+                <filter string="Ajustes" name="ajuste" domain="[('tipo_movimiento', '=', 'ajuste')]"/>
+                <separator/>
+                <filter string="Agrupar por tipo" name="group_tipo" context="{'group_by': 'tipo_movimiento'}"/>
+                <filter string="Agrupar por accesorio" name="group_accesorio" context="{'group_by': 'accesorio_id'}"/>
+                <filter string="Agrupar por usuario" name="group_usuario" context="{'group_by': 'usuario_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_movimiento_accesorio" model="ir.actions.act_window">
+        <field name="name">Movimientos de accesorios</field>
+        <field name="res_model">ftth.movimiento.accesorio</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_movimiento_accesorio_search"/>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+             Movimiento de accesorios
+            </p>
+        </field>
+    </record>
+
+</odoo>

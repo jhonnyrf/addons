@@ -29,6 +29,8 @@
                 <sheet>
                     <field name="updated_contract_id" invisible="1"/>
 
+
+
                     <!-- Ribbon si fue reemplazado -->
                     <widget name="web_ribbon" title="Reemplazado" bg_color="text-bg-secondary" invisible="not is_superseded"/>
 
@@ -53,7 +55,9 @@
 .
                         </span>
                     </div>
-
+                    <group string="Motivo de cambio de plan" invisible="not is_superseded">
+                        <field name="plan_change_note" readonly="1"/>
+                    </group>
                     <notebook>
 
                         <!-- ╔══════════════════════════════════╗

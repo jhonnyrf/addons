@@ -215,6 +215,13 @@ class CustomerContract(models.Model):
         help='True cuando este contrato fue reemplazado por un cambio de plan.',
     )
 
+    plan_change_note = fields.Text(
+        string='Motivo cambio de plan',
+        readonly=True,
+        copy=False,
+        help='Motivo proporcionado al realizar un cambio de plan (se guarda en el contrato original).',
+    )
+
     # =========================================================
     # FECHAS
     # =========================================================
@@ -607,6 +614,7 @@ class CustomerContract(models.Model):
             'state': 'terminated',
             'termination_date': today,
             'is_superseded': True,
+            'plan_change_note': note or False,
         })
         self.message_post(
             body=f"Contrato reemplazado por cambio de plan a <b>{new_plan.name}</b>."

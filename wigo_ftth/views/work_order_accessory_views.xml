@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         WORK ORDER ACCESSORIES — Vistas
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <record id="view_ftth_work_order_accessory_list" model="ir.ui.view">
+        <field name="name">ftth.work.order.accessory.list</field>
+        <field name="model">ftth.work.order.accessory</field>
+        <field name="arch" type="xml">
+            <list string="Accesorios de OT">
+                <field name="work_order_id"/>
+                <field name="accesorio_id"/>
+                <field name="cantidad"/>
+                <field name="unidad"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_work_order_accessory_form" model="ir.ui.view">
+        <field name="name">ftth.work.order.accessory.form</field>
+        <field name="model">ftth.work.order.accessory</field>
+        <field name="arch" type="xml">
+            <form string="Accesorio de OT">
+                <sheet>
+                    <group col="2">
+                        <group string="Accesorio">
+                            <field name="work_order_id" readonly="1"/>
+                            <field name="accesorio_id" domain="[('active', '=', True), ('cantidad_disponible', '>', 0)]"/>
+                        </group>
+                        <group string="Cantidad">
+                            <field name="cantidad"/>
+                            <field name="unidad" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ftth_work_order_accessory_search" model="ir.ui.view">
+        <field name="name">ftth.work.order.accessory.search</field>
+        <field name="model">ftth.work.order.accessory</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="work_order_id"/>
+                <field name="accesorio_id"/>
+                <separator/>
+                <filter string="Metros" name="metros" domain="[('unidad', '=', 'm')]"/>
+                <filter string="Unidades" name="unidades" domain="[('unidad', '=', 'unidad')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ftth_work_order_accessory" model="ir.actions.act_window">
+        <field name="name">Accesorios de OT</field>
+        <field name="res_model">ftth.work.order.accessory</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_work_order_accessory_search"/>
+        <field name="domain">[]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+             Accesorios de órdenes de trabajo
+            </p>
+        </field>
+    </record>
+
+</odoo>

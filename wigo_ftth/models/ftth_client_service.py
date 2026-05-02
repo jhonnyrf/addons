@@ -160,6 +160,13 @@ class FtthClientService(models.Model):
     lead_id = fields.Many2one('crm.lead', string='Lead origen', readonly=True)
     work_order_id = fields.Many2one('wigo.ftth.work.order', string='OT origen', readonly=True)
 
+    work_order_accessory_ids = fields.One2many(
+        'ftth.work.order.accessory',
+        compute='_compute_work_order_accessory_ids',
+        string='Accesorios utilizados',
+        readonly=True,
+    )
+
     def _compute_ruta(self):
         for r in self:
             partes = []
@@ -209,6 +216,10 @@ class FtthClientService(models.Model):
             self.sudo().write(cleaned_vals)
         return True
 
+    def _compute_work_order_accessory_ids(self):
+        for record in self:
+            record.work_order_accessory_ids = record.work_order_id.work_order_accessories if record.work_order_id else False
+
     def action_view_work_order(self):
         self.ensure_one()
         return {
@@ -217,6 +228,63 @@ class FtthClientService(models.Model):
             'res_model': 'wigo.ftth.work.order',
             'view_mode': 'form',
             'res_id': self.work_order_id.id,
+        }
+
+    def action_create_deactivation_work_order(self):
+        """Crear una Orden de Trabajo de tipo Baja/Retiro desde la ficha técnica.
+
+        El OT resultante tendrá `work_type='deactivation'`, no contendrá accesorios ni
+        fecha programada, y no llevará instalador ni responsable técnico.
+        """
+        self.ensure_one()
+        wo_model = self.env['wigo.ftth.work.order']
+
+        # Try to find an active contract for this partner so related fields populate
+        contract = self.env['customer.contract'].sudo().search([
+            ('partner_id', '=', self.partner_id.id),
+            ('state', '=', 'active')
+        ], limit=1)
+
+        # Fill contact phone using partner data (independent field on WO)
+        partner_phone = False
+        if self.partner_id:
+            partner_phone = self.partner_id.phone or False
+
+        vals = {
+            'work_type': 'deactivation',
+            'contract_id': contract.id if contract else False,
+            'customer_code': contract.name if contract else (self.codigo_cliente or False),
+            'address': self.link_ubicacion or False,
+            'location_link': self.link_ubicacion or False,
+            'node_id': self.nodo_id.id if self.nodo_id else False,
+            'olt_id': self.olt_id.id if self.olt_id else False,
+            'olt_port_id': self.olt_port_id.id if self.olt_port_id else False,
+            'subinterface_id': self.subinterface_id.id if self.subinterface_id else False,
+            'odn_id': self.odn_id.id if self.odn_id else False,
+            'box_group_id': self.box_group_id.id if self.box_group_id else False,
+            'box_id': self.box_id.id if self.box_id else False,
+            'box_port_id': self.box_port_id.id if self.box_port_id else False,
+            'onu_id': self.onu_id.id if self.onu_id else False,
+            'notes': self.observaciones or False,
+            'client_service_id': self.id,
+        }
+
+        if partner_phone:
+            vals['contact_phone'] = partner_phone
+
+        # Create with explicit context flag to allow deactivation creation
+        # Use skip_onu_sync to avoid triggering ONU sync during write
+        wo = wo_model.with_context(allow_deactivation_create=True).create(vals)
+
+        # Link back the created OT using skip_onu_sync context to avoid unnecessary sync
+        self.with_context(skip_onu_sync=True).write({'work_order_id': wo.id})
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Orden de Trabajo Baja',
+            'res_model': 'wigo.ftth.work.order',
+            'view_mode': 'form',
+            'res_id': wo.id,
         }
 
     @api.model_create_multi
@@ -251,26 +319,28 @@ class FtthClientService(models.Model):
         onu_vals = {}
         onu_fields = self.onu_id._fields
         for service_field, onu_field in self._ONU_SYNC_FIELD_MAP.items():
-            if onu_field in onu_fields:
+            if service_field in self._fields and onu_field in onu_fields:
                 onu_vals[onu_field] = self[service_field]
         return onu_vals
 
     def _sync_onu_configuration(self, trigger_vals=None):
-        if self.env.context.get('skip_onu_sync'):
-            return
-
+        """Sincroniza campos de configuración de ONU cuando se actualiza la ficha técnica."""
         for record in self:
             if not record.onu_id:
                 continue
 
-            if trigger_vals is None or 'onu_id' in trigger_vals:
-                onu_vals = record._get_onu_sync_vals()
-            else:
+            if trigger_vals:
+                # Sync only the fields that were modified and exist in the mapping
                 onu_vals = {}
                 onu_fields = record.onu_id._fields
                 for service_field, onu_field in record._ONU_SYNC_FIELD_MAP.items():
                     if service_field in trigger_vals and onu_field in onu_fields:
                         onu_vals[onu_field] = record[service_field]
 
-            if onu_vals:
-                record.onu_id.sudo().with_context(skip_onu_sync=True).write(onu_vals)
+                if onu_vals:
+                    record.onu_id.sudo().with_context(skip_onu_sync=True).write(onu_vals)
+            else:
+                # Sync all mapped fields
+                onu_vals = record._get_onu_sync_vals()
+                if onu_vals:
+                    record.onu_id.sudo().with_context(skip_onu_sync=True).write(onu_vals)

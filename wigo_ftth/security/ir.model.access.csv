@@ -13,10 +13,15 @@ access_ftth_box_port_user,wigo.ftth.box.port user,model_wigo_ftth_box_port,base.
 access_ftth_subinterface_user,wigo.ftth.subinterface user,model_wigo_ftth_subinterface,base.group_user,1,1,1,1
 access_ftth_onu_user,wigo.ftth.onu user,model_wigo_ftth_onu,base.group_user,1,1,1,1
 access_ftth_onu_batch_user,wigo.ftth.onu.batch user,model_wigo_ftth_onu_batch,base.group_user,1,1,1,1
+access_ftth_accesorio_user,ftth.accesorio user,model_ftth_accesorio,base.group_user,1,1,1,1
+access_ftth_stock_accesorio_user,ftth.stock.accesorio user,model_ftth_stock_accesorio,base.group_user,1,1,1,1
+access_ftth_movimiento_accesorio_user,ftth.movimiento.accesorio user,model_ftth_movimiento_accesorio,base.group_user,1,1,1,1
 access_ftth_installer_user,wigo.ftth.installer user,model_wigo_ftth_installer,base.group_user,1,1,1,1
 access_ftth_additional_equipment_user,wigo.ftth.additional.equipment user,model_wigo_ftth_additional_equipment,base.group_user,1,1,1,1
 access_ftth_work_order_user,wigo.ftth.work.order user,model_wigo_ftth_work_order,base.group_user,1,1,1,1
+access_ftth_work_order_accessory_user,ftth.work.order.accessory user,model_ftth_work_order_accessory,base.group_user,1,1,1,1
 access_ftth_client_service_user,wigo.ftth.client.service user,model_wigo_ftth_client_service,base.group_user,1,1,1,1
+access_ftth_work_order_print_config_manager,wigo.ftth.work.order.print.config manager,model_wigo_ftth_work_order_print_config,base.group_system,1,1,1,0
 access_generate_ports_wizard,access_generate_ports_wizard,model_wigo_ftth_generate_ports_wizard,base.group_user,1,1,1,1
 access_generate_boxes_wizard,access_generate_boxes_wizard,model_generate_boxes_wizard,base.group_user,1,1,1,1
 access_generate_subinterfaces_wizard,access_generate_subinterfaces_wizard,model_wigo_ftth_generate_subinterfaces_wizard,base.group_user,1,1,1,1

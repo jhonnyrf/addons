@@ -141,10 +141,19 @@ class FtthWorkOrder(models.Model):
     )
 
     # ==========================================================================
+    # Accessories Used
+    # ==========================================================================
+    work_order_accessories = fields.One2many(
+        'ftth.work.order.accessory',
+        'work_order_id',
+        string='Accesorios utilizados',
+        help='Accesorios utilizados en la instalación.',
+    )
+
+    # ==========================================================================
     # Extras
     # ==========================================================================
-    accessories = fields.Text(string='Accesorios entregados')
-    notes = fields.Text(string='Observaciones')
+    notes = fields.Html(string='Observaciones')
     cancellation_reason = fields.Text(string='Motivo de cancelación', tracking=True)
 
     client_service_id = fields.Many2one(
@@ -160,9 +169,21 @@ class FtthWorkOrder(models.Model):
     def create(self, vals_list):
         sequence = self.env['ir.sequence']
         for vals in vals_list:
+            # Disallow creating deactivation OTs from generic UI; must come from ficha técnica
+            if vals.get('work_type') == 'deactivation' and not self.env.context.get('allow_deactivation_create'):
+                raise ValidationError('No está permitido crear Órdenes de Trabajo de tipo Baja desde la lista. Use la ficha técnica para iniciar una baja.')
+
             if not vals.get('name') or vals.get('name') == 'Nueva OT':
                 vals['name'] = sequence.next_by_code('wigo.ftth.work.order') or '/'
         return super().create(vals_list)
+
+    def write(self, vals):
+        # Prevent changing the work_type to 'deactivation' from generic UI.
+        if vals.get('work_type') == 'deactivation' and not self.env.context.get('allow_deactivation_create'):
+            for rec in self:
+                if rec.work_type != 'deactivation':
+                    raise ValidationError('No está permitido cambiar el tipo de OT a Baja desde aquí. Use la ficha técnica para iniciar una baja.')
+        return super().write(vals)
 
     # ==========================================================================
     # Onchange Methods
@@ -260,6 +281,11 @@ class FtthWorkOrder(models.Model):
 
             record.write({'state': 'assigned'})
 
+            if record.work_type == 'deactivation':
+                # En bajas no se reservan ni se revalidan recursos de topología;
+                # el flujo solo avanza de estado para ejecutar la liberación luego.
+                continue
+
             # Recursos quedan "apartados" para esta OT
             if record.subinterface_id:
                 record.subinterface_id.sudo().write({'state': 'allocated'})
@@ -274,12 +300,18 @@ class FtthWorkOrder(models.Model):
                 })
 
     def _validate_assignment(self, record):
+        if not record.installer_id:
+            raise ValidationError("Debe asignar un instalador antes de pasar a Asignada.")
+
+        if record.work_type == 'deactivation':
+            # En bajas los datos topológicos vienen heredados desde la ficha técnica.
+            # No se valida ni se bloquea por disponibilidad de infraestructura.
+            return
+
         if not record.onu_id:
             raise ValidationError("Debe asignar una ONU antes de pasar a Asignada.")
         if not record.subinterface_id:
             raise ValidationError("Debe asignar una subinterfaz OLT antes de pasar a Asignada.")
-        if not record.installer_id:
-            raise ValidationError("Debe asignar un instalador antes de pasar a Asignada.")
 
         # Disponibilidad de recursos
         if record.subinterface_id.state != 'occupied':
@@ -311,6 +343,28 @@ class FtthWorkOrder(models.Model):
             record.write({'state': 'active'})
             record._create_or_update_client_service()
             record._sync_resources_on_activation()
+            record._deduct_accessories_stock()
+
+    def _deduct_accessories_stock(self):
+        """Descuenta del stock los accesorios utilizados cuando se activa la OT."""
+        self.ensure_one()
+        for accessory_line in self.work_order_accessories:
+            try:
+                stock = accessory_line.accesorio_id.stock_id[:1]
+                if stock:
+                    stock.disminuir_stock(
+                        accessory_line.cantidad,
+                        referencia=f'OT: {self.name}'
+                    )
+                else:
+                    _logger.warning(
+                        'No se encontró stock para accesorio %s en OT %s',
+                        accessory_line.accesorio_id.name,
+                        self.name
+                    )
+            except ValidationError as e:
+                _logger.error('Error al descontar stock: %s', str(e))
+                raise
 
     def _sync_resources_on_activation(self):
         self.ensure_one()
@@ -333,7 +387,10 @@ class FtthWorkOrder(models.Model):
     def action_execute_deactivation(self):
         for record in self:
             record._release_resources()
-            record.write({'state': 'deactivation_executed'})
+            record.write({
+                'state': 'deactivation_executed',
+                'execution_date': fields.Datetime.now(),
+            })
 
     def action_cancel(self):
         """Cancelar la OT y liberar los recursos asociados."""
@@ -518,3 +575,8 @@ class FtthWorkOrder(models.Model):
             'view_mode': 'form',
             'res_id': self.client_service_id.id,
         }
+
+    def action_print_work_order_pdf(self):
+        """Imprimir planilla OT con el diseño configurable."""
+        self.ensure_one()
+        return self.env.ref('wigo_ftth.action_report_ftth_work_order').report_action(self)

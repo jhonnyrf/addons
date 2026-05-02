@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_ftth_work_order_document">
+        <t t-call="web.html_container">
+
+            <meta charset="utf-8"/>
+            <t t-foreach="docs" t-as="o">
+                <t t-set="cfg" t-value="o.env['wigo.ftth.work.order.print.config'].get_config()"/>
+                <t t-set="company" t-value="o.env.company"/>
+                <t t-set="contract" t-value="o.contract_id"/>
+                <t t-set="partner" t-value="(contract and contract.partner_id) or o.partner_id"/>
+                <t t-set="partner_sudo" t-value="partner.sudo() if partner else False"/>
+                <t t-set="onu" t-value="o.onu_id.sudo() if o.onu_id else False"/>
+                <t t-set="service_name" t-value="(contract and contract.plan_id and contract.plan_id.display_name) or (o.plan_id and o.plan_id.display_name) or ''"/>
+                <t t-set="razon_social" t-value="(contract and contract.contact_name) or (partner and partner.name) or ''"/>
+                <t t-set="contact_name" t-value="(contract and contract.contact_name) or (partner and partner.name) or ''"/>
+                <t t-set="mobile" t-value="(contract and contract.mobile) or o.contact_phone or (partner and partner.mobile) or ''"/>
+                <t t-set="phone" t-value="(contract and contract.phone) or (partner and partner.phone) or ''"/>
+                <t t-set="email" t-value="(contract and contract.email) or (partner and partner.email) or ''"/>
+                <t t-set="address" t-value="(contract and contract.address) or o.address or (partner and partner.street) or ''"/>
+                <t t-set="coordinates" t-value="(contract and contract.coordinates) or (partner_sudo and partner_sudo.coordenadas) or ''"/>
+                <t t-set="city" t-value="(partner and partner.city) or (partner and partner.state_id and partner.state_id.name) or ''"/>
+                <t t-set="zone_name" t-value="(o.zone_id and o.zone_id.name) or o.reference_zone or ''"/>
+                <t t-set="date_value" t-value="o.execution_date or o.scheduled_date"/>
+                <t t-set="date_day" t-value="date_value and date_value.strftime('%d') or ''"/>
+                <t t-set="date_month" t-value="date_value and date_value.strftime('%m') or ''"/>
+                <t t-set="date_year" t-value="date_value and date_value.strftime('%Y') or ''"/>
+                <t t-set="date_hour" t-value="date_value and date_value.strftime('%H:%M') or ''"/>
+                <t t-set="is_installation" t-value="o.work_type == 'installation'"/>
+                <t t-set="lan_user" t-value="onu.pppoe_user or ''"/>
+                <t t-set="wifi_ssid" t-value="onu.wifi_ssid or ''"/>
+                <t t-set="wifi_password" t-value="onu.wifi_password or onu.pppoe_password or ''"/>
+                <t t-set="nap_identifier" t-value="(o.box_id and o.box_id.identifier) or ''"/>
+                <t t-set="port_number" t-value="(o.box_port_id and o.box_port_id.port_number) or ''"/>
+                <t t-set="sub_code" t-value="(o.subinterface_id and o.subinterface_id.code) or ''"/>
+                <t t-set="cp" t-value="cfg.color_primario or '#7a3f98'"/>
+                <t t-set="cs" t-value="cfg.color_secundario or '#b564d6'"/>
+                <t t-set="cht" t-value="cfg.color_texto_header or '#ffffff'"/>
+                <t t-set="cb" t-value="cfg.color_borde or '#cfcfd6'"/>
+                <t t-set="cbg" t-value="cfg.color_fondo or '#ffffff'"/>
+                <t t-set="ct" t-value="cfg.color_texto or '#1f1f1f'"/>
+                <t t-set="ff" t-value="cfg.fuente_familia or 'Arial, sans-serif'"/>
+                <t t-set="fb" t-value="cfg.tamano_fuente_base or 10"/>
+                <t t-set="ft" t-value="cfg.tamano_titulo or 17"/>
+                <t t-set="la" t-value="cfg.logo_ancho or 96"/>
+
+                <style>
+                    @page {
+                        size: A4 portrait;
+                        margin: 5mm 5mm 5mm 5mm;
+                    }
+                    .ftth-ot-page {
+                        font-family: Arial, sans-serif;
+                        font-size: 9px;
+                        line-height: 1.08;
+                        color: #222;
+                        width: 100%;
+                        page-break-inside: avoid;
+                    }
+                    .ftth-ot-page table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        table-layout: fixed;
+                    }
+                    .ftth-ot-page th,
+                    .ftth-ot-page td {
+                        border: 1px solid #d1d1d6;
+                        padding: 2px 4px;
+                        vertical-align: middle;
+                        word-wrap: break-word;
+                    }
+                    .ftth-ot-title {
+                        font-weight: 800;
+                        text-transform: uppercase;
+                        line-height: 1.02;
+                    }
+                    .ftth-ot-section {
+                        text-align: center;
+                        font-weight: 700;
+                        padding: 3px 6px;
+                        margin-top: 4px;
+                    }
+                    .ftth-ot-headcell {
+                        background: #ead1f2;
+                        font-weight: 700;
+                        text-align: center;
+                    }
+                    .ftth-ot-muted {
+                        color: #444;
+                    }
+                    .ftth-ot-sign {
+                        border-top: 1px solid #3d73c9;
+                        margin: 0 25px 3px;
+                        height: 1px;
+                    }
+                </style>
+
+                <div class="ftth-ot-page" t-attf-style="font-family:#{ff}; font-size:#{fb}px; color:#{ct}; background:#{cbg}; border:1px solid #{cb}; padding:4px;">
+                    <table style="margin-bottom:4px;">
+                        <tr>
+                            <td width="27%" style="border:none; padding:2px 4px; vertical-align:middle;">
+                                <t t-if="cfg.usar_logo_imagen and (cfg.logo or company.logo)">
+                                    <img t-att-src="image_data_uri(cfg.logo or company.logo)" t-attf-style="max-height:#{la}px; max-width:#{int(la) * 1.8}px;"/>
+                                </t>
+                            </td>
+                            <td width="39%" style="border:none; padding:2px 4px; text-align:center; vertical-align:middle;">
+                                <div class="ftth-ot-title" t-attf-style="font-size:#{ft}px;">ORDEN DE TRABAJO FTTH</div>
+                                <div class="ftth-ot-title" t-attf-style="font-size:#{fb + 1}px;">PLANILLA DE INSTALACIÓN / BAJA</div>
+                            </td>
+                            <td width="34%" style="border:none; padding:0; vertical-align:top;">
+                                <table style="font-size:9px;">
+                                    <tr>
+                                        <th class="ftth-ot-headcell" style="width:32%;">CONTRATO</th>
+                                        <td style="text-align:center; font-weight:700;">
+                                            <t t-out="(o.contract_id and o.contract_id.name) or o.name or ''"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ftth-ot-headcell">CIUDAD</th>
+                                        <th class="ftth-ot-headcell" style="width:14%;">DIA</th>
+                                        <th class="ftth-ot-headcell" style="width:14%;">MES</th>
+                                        <th class="ftth-ot-headcell" style="width:20%;">AÑO</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align:center;">
+                                            <t t-out="city"/>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <t t-out="date_day"/>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <t t-out="date_month"/>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <t t-out="date_year"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ftth-ot-headcell">Hora:</th>
+                                        <td colspan="3" style="text-align:center;">
+                                            <t t-out="date_hour"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ftth-ot-headcell" colspan="3" style="text-align:left;">Instalación</th>
+                                        <td style="text-align:center;">
+                                            <t t-out="'X' if is_installation else ''"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ftth-ot-headcell" colspan="3" style="text-align:left;">Traslado Interno</th>
+                                        <td style="text-align:center;">&#160;</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="ftth-ot-headcell" colspan="3" style="text-align:left;">Traslado Externo</th>
+                                        <td style="text-align:center;">&#160;</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table style="margin-bottom:4px; font-size:9px;">
+                        <tr>
+                            <th class="ftth-ot-headcell" style="width:12%;">SERVICIO</th>
+                            <td colspan="7" style="text-align:center;">
+                                <t t-out="service_name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ftth-ot-headcell">Razón Social</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="razon_social"/>
+                            </td>
+                            <th class="ftth-ot-headcell" style="width:12%;">Zona</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="zone_name"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ftth-ot-headcell">Nombre</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="contact_name"/>
+                            </td>
+                            <th class="ftth-ot-headcell">email</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="email"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ftth-ot-headcell">Celular</th>
+                            <td colspan="1" style="text-align:center;">
+                                <t t-out="mobile"/>
+                            </td>
+                            <th class="ftth-ot-headcell">Teléfono</th>
+                            <td colspan="1" style="text-align:center;">
+                                <t t-out="phone"/>
+                            </td>
+                            <th class="ftth-ot-headcell">Dirección</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="address"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="ftth-ot-section" t-attf-style="background:#{cp}; color:#{cht};">DATOS TÉCNICOS DEL SERVICIO</div>
+                    <table style="margin-bottom:4px; font-size:9px;">
+                        <tr>
+                            <th class="ftth-ot-headcell" style="width:14%;">PLAN</th>
+                            <td style="text-align:center;">
+                                <t t-out="service_name"/>
+                            </td>
+                            <th class="ftth-ot-headcell" style="width:14%;">RUTA</th>
+                            <td style="text-align:center;">
+                                <t t-out="(o.odn_id and o.odn_id.name) or ''"/>
+                            </td>
+                            <th class="ftth-ot-headcell" style="width:14%;">NAP</th>
+                            <td style="text-align:center;">
+                                <t t-out="nap_identifier"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="ftth-ot-headcell">LAN USUARIO</th>
+                            <td style="text-align:center;">
+                                <t t-out="lan_user"/>
+                            </td>
+                            <th class="ftth-ot-headcell">PUERTO NAP</th>
+                            <td style="text-align:center;">
+                                <t t-out="port_number"/>
+                            </td>
+                            <th class="ftth-ot-headcell">W. Rx (dBm)</th>
+                            <td style="text-align:center;">&#160;</td>
+                        </tr>
+                        <tr>
+                            <th class="ftth-ot-headcell">Dirección</th>
+                            <td colspan="3" style="text-align:center;">
+                                <t t-out="address"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="ftth-ot-section" t-attf-style="background:#{cp}; color:#{cht};">MATERIAL</div>
+                    <table style="margin-bottom:4px; font-size:9px;">
+                        <thead>
+                            <tr>
+                                <th class="ftth-ot-headcell" style="width:24%;">DESCRIPCIÓN</th>
+                                <th class="ftth-ot-headcell" style="width:8%;">CANT.</th>
+                                <th class="ftth-ot-headcell" style="width:24%;">DESCRIPCIÓN</th>
+                                <th class="ftth-ot-headcell" style="width:12%;">Unidad</th>
+                                <th class="ftth-ot-headcell" style="width:8%;">CANT.</th>
+                                <th class="ftth-ot-headcell">Número de Cobranzas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="(o.work_order_accessories or [])[:5]" t-as="acc">
+                                <td>
+                                    <t t-out="acc.accesorio_id.name or ''"/>
+                                </td>
+                                <td style="text-align:center;">
+                                    <t t-out="acc.cantidad"/>
+                                </td>
+                                <td>
+                                    <t t-out="''"/>
+                                </td>
+                                <td style="text-align:center;">
+                                    <t t-out="acc.unidad or ''"/>
+                                </td>
+                                <td style="text-align:center;">&#160;</td>
+                                <td style="text-align:center;">&#160;</td>
+                            </tr>
+                            <tr t-if="not o.work_order_accessories">
+                                <td style="height:16px;">&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" style="border:none;"></td>
+                                <td style="text-align:center;">
+                                    <t t-if="cfg.qr_cobranzas">
+                                        <img t-att-src="image_data_uri(cfg.qr_cobranzas)" style="max-height:60px; max-width:60px;"/>
+                                    </t>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="ftth-ot-section" t-attf-style="background:#{cp}; color:#{cht};">EQUIPOS INSTALADOS</div>
+                    <table style="margin-bottom:4px; font-size:9px;">
+                        <thead>
+                            <tr>
+                                <th class="ftth-ot-headcell" style="width:14%;">EQUIPO</th>
+                                <th class="ftth-ot-headcell" style="width:14%;">MARCA</th>
+                                <th class="ftth-ot-headcell" style="width:20%;">MODELO</th>
+                                <th class="ftth-ot-headcell" style="width:26%;">NRO DE SERIE</th>
+                                <th class="ftth-ot-headcell">NRO DE SERIE (PON S/N)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align:center;">ONU/ONT</td>
+                                <td style="text-align:center;">
+                                    <t t-out="o.onu_marca or ''"/>
+                                </td>
+                                <td style="text-align:center;">
+                                    <t t-out="o.onu_modelo or ''"/>
+                                </td>
+                                <td style="text-align:center;">
+                                    <t t-out="o.onu_serial_number or ''"/>
+                                </td>
+                                <td style="text-align:center;">
+                                    <t t-out="o.onu_pon_sn or ''"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="height:16px;">&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="ftth-ot-section" t-attf-style="background:#{cp}; color:#{cht};">OBSERVACIONES</div>
+                    <div style="border:1px solid #d1d1d6; min-height:58px; padding:4px 6px; margin-bottom:4px; font-size:9px; line-height:1.05;">
+                        <span t-if="o.notes" t-out="o.notes"/>
+                        <span t-else="">&#160;</span>
+                    </div>
+
+                    <table style="margin-top:4px; font-size:9px;">
+                        <tr>
+                            <th class="ftth-ot-headcell" style="width:72%;">CONFORMIDAD DEL CLIENTE</th>
+                            <th class="ftth-ot-headcell">Número de Atención/Soporte</th>
+                        </tr>
+                        <tr>
+                            <td style="padding:5px 6px; text-align:justify; vertical-align:top;">
+                                El cliente/responsable de recepción del servicio, previa verificación, declara haber recibido el servicio de internet Wigo-Fast de ASSISCORP S.R.L. Con las características descritas arriba, además del equipo instalado en sus ambientes, se compromete al cuidado y buen uso de los equipos entregados en calidad de comodato. En conformidad firma al pie.
+                            </td>
+                            <td style="padding:5px 6px; text-align:center; vertical-align:middle; font-weight:700;">
+                                Para Soporte Técnico comuníquese al:<br/>
+                            <t t-out="cfg.empresa_telefono or company.phone or ''"/>
+                            <br/>
+                            <t t-if="cfg.qr_soporte">
+                                <img t-att-src="image_data_uri(cfg.qr_soporte)" style="max-height:60px; max-width:60px; margin-top:4px;"/>
+                            </t>
+                        </td>
+                    </tr>
+                </table>
+
+                <table style="margin-top:8px; font-size:9px;">
+                    <tr>
+                        <td width="50%" align="center" style="border:none; padding-top:12px; vertical-align:bottom;">
+                            <div class="ftth-ot-sign"></div>
+                            <div style="font-weight:700;">Firma Cliente / Responsable</div>
+                            <div style="margin-top:2px; text-align:left; font-weight:700;">Nombre y Apellido:</div>
+                            <div style="margin-top:2px; text-align:left; font-weight:700;">Documento de Identidad:</div>
+                        </td>
+                        <td width="50%" align="center" style="border:none; padding-top:12px; vertical-align:bottom;">
+                            <div class="ftth-ot-sign"></div>
+                            <div style="font-weight:700;">Firma Responsable ASSISCORP S.R.L.</div>
+                            <div style="margin-top:2px; font-weight:700;">Nombre y Apellido:</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </t>
+
+    </t>
+</template>
+
+<record id="action_report_ftth_work_order" model="ir.actions.report">
+    <field name="name">Orden de Trabajo FTTH (PDF)</field>
+    <field name="model">wigo.ftth.work.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">wigo_ftth.report_ftth_work_order_document</field>
+    <field name="report_file">wigo_ftth.report_ftth_work_order_document</field>
+    <field name="print_report_name">'OT_%s' % (object.name)</field>
+    <field name="binding_model_id" ref="model_wigo_ftth_work_order"/>
+    <field name="binding_type">report</field>
+</record>
+
+</odoo>

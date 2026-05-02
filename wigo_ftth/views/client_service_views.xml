@@ -45,6 +45,10 @@
                         <button name="action_sync_from_work_order" type="object" class="oe_stat_button" icon="fa-refresh" invisible="not work_order_id">
                             <span class="o_stat_text">Actualizar datos</span>
                         </button>
+
+                        <button name="action_create_deactivation_work_order" type="object" class="oe_stat_button" icon="fa-trash" invisible="estado_servicio != 'active'">
+                            <span class="o_stat_text">Dar de baja</span>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -129,6 +133,16 @@
                                     <field name="box_port_id" readonly="1"/>
                                 </group>
                             </group>
+                        </page>
+
+                        <page string="Accesorios" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
+                            <field name="work_order_accessory_ids">
+                                <list>
+                                    <field name="accesorio_id"/>
+                                    <field name="cantidad"/>
+                                    <field name="unidad" readonly="1"/>
+                                </list>
+                            </field>
                         </page>
 
                         <page string="Configuración" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
