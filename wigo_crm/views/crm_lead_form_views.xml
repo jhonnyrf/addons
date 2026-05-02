@@ -35,7 +35,7 @@
 
             <!-- Agrega boton estadistico para abrir contrato y mostrar cantidad asociada. -->
             <xpath expr="//div[@name='button_box']" position="inside">
-                <button name="action_open_contract" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="not contract_id">
+                <button name="action_open_contract" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="not active_contract_id">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
                             <field name="contract_count"/>
@@ -95,14 +95,14 @@
                 <!-- Resumen del contrato enlazado; visible solo cuando existe contract_id. -->
                 <group name="wigo_contract_summary" string="Resumen del Contrato" invisible="not contract_id">
                     <group>
-                        <field name="contract_name" placeholder="CF-001" invisible="won_status != 'won'"/>
+                        <field name="active_contract_name" placeholder="CF-001" invisible="won_status != 'won'"/>
 
-                        <field name="contract_state" widget="badge" decoration-info="contract_state == 'draft'" decoration-warning="contract_state == 'pending'" decoration-success="contract_state in ('signed', 'active')" decoration-muted="contract_state == 'terminated'" readonly="1"/>
-                        <field name="contract_plan_id" readonly="1"/>
+                        <field name="active_contract_state" widget="badge" decoration-info="active_contract_state == 'draft'" decoration-warning="active_contract_state == 'pending'" decoration-success="active_contract_state in ('signed', 'active')" decoration-muted="active_contract_state == 'terminated'" readonly="1"/>
+                        <field name="active_contract_plan_id" readonly="1"/>
                     </group>
                     <group>
-                        <field name="contract_date" readonly="1"/>
-                        <field name="contract_installation_date" readonly="1"/>
+                        <field name="active_contract_date" readonly="1"/>
+                        <field name="active_contract_installation_date" readonly="1"/>
                     </group>
                     <group>
                         <!-- Abre el formulario completo del contrato relacionado. -->

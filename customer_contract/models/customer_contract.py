@@ -642,6 +642,23 @@ class CustomerContract(models.Model):
         # 3. Vincular contrato actual → nuevo
         self.write({'next_contract_id': new_contract.id})
 
+        # 3.b Actualizar referencias en CRM: si existe la oportunidad origen,
+        # debe apuntar al nuevo contrato para que el CRM muestre el estado/plan
+        # correcto (evita seguir mostrando el contrato finalizado).
+        try:
+            Lead = self.env['crm.lead']
+            lead_records = self.lead_id
+            if not lead_records:
+                lead_records = Lead.search([('contract_id', '=', self.id)])
+
+            if lead_records:
+                # Reasignar la oportunidad al contrato nuevo desde la API del CRM.
+                # Esto mantiene sincronizados los campos visibles de la tarjeta.
+                lead_records.sync_contract_reference(new_contract)
+                new_contract.write({'lead_id': lead_records[:1].id})
+        except Exception:
+            _logger.exception('Error actualizando leads al cambiar plan del contrato %s', self.id)
+
         # 4. Actualizar partner.plan si existe el vínculo (contactos_ext opcional)
         if self.partner_plan_id and 'partner.plan' in self.env:
             partner_plan = self.env['partner.plan'].browse(self.partner_plan_id)

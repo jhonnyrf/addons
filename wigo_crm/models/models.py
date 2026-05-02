@@ -121,10 +121,102 @@ class CrmLead(models.Model):
         compute='_compute_contract_count',
     )
 
+    active_contract_id = fields.Many2one(
+        'customer.contract',
+        string="Contrato activo",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_name = fields.Char(
+        string="Código de contrato activo",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_state = fields.Selection(
+        selection=[
+            ('draft', 'Borrador'),
+            ('pending', 'Pendiente de Contrato'),
+            ('signed', 'Contrato Registrado'),
+            ('active', 'Activo'),
+            ('terminated', 'Finalizado'),
+        ],
+        string="Estado del contrato activo",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_plan_id = fields.Many2one(
+        'internet.plan',
+        string="Plan activo",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_payment_mode = fields.Selection(
+        selection=[
+            ('prepaid', 'Prepago'),
+            ('postpaid', 'Postpago'),
+        ],
+        string="Modalidad de pago activa",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_date = fields.Date(
+        string="Fecha de contrato activa",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+    active_contract_installation_date = fields.Date(
+        string="Fecha de instalación activa",
+        compute='_compute_active_contract_reference',
+        readonly=True,
+    )
+
     @api.depends('contract_id')
     def _compute_contract_count(self):
         for lead in self:
             lead.contract_count = 1 if lead.contract_id else 0
+
+    def _resolve_active_contract(self, contract):
+        seen_ids = set()
+        current = contract
+        while current and current.id not in seen_ids:
+            seen_ids.add(current.id)
+            if current.state == 'terminated' and current.next_contract_id:
+                current = current.next_contract_id
+                continue
+            break
+        return current
+
+    @api.depends(
+        'contract_id',
+        'contract_id.state',
+        'contract_id.next_contract_id',
+        'contract_id.next_contract_id.state',
+        'contract_id.next_contract_id.next_contract_id',
+        'contract_id.next_contract_id.plan_id',
+        'contract_id.next_contract_id.payment_mode',
+        'contract_id.next_contract_id.contract_date',
+        'contract_id.next_contract_id.installation_date',
+    )
+    def _compute_active_contract_reference(self):
+        for lead in self:
+            contract = lead._resolve_active_contract(lead.contract_id)
+            lead.active_contract_id = contract
+            lead.active_contract_name = contract.name if contract else False
+            lead.active_contract_state = contract.state if contract else False
+            lead.active_contract_plan_id = contract.plan_id if contract else False
+            lead.active_contract_payment_mode = contract.payment_mode if contract else False
+            lead.active_contract_date = contract.contract_date if contract else False
+            lead.active_contract_installation_date = contract.installation_date if contract else False
+
+    def sync_contract_reference(self, contract):
+        """Actualiza en el lead la referencia al contrato activo actual."""
+        for lead in self:
+            if not contract:
+                continue
+            lead.with_context(skip_lead_to_partner_sync=True).write({
+                'contract_id': contract.id,
+                'plan_id': contract.plan_id.id if contract.plan_id else False,
+            })
 
     @api.depends('zona')
     def _compute_zona_id(self):
@@ -158,14 +250,14 @@ class CrmLead(models.Model):
             if not partner:
                 continue
 
-            if not lead.zona:
-                lead.zona = partner.zona or False
-            if not lead.direccion:
-                lead.direccion = partner.direccion or False
-            if not lead.ubicacion:
-                lead.ubicacion = partner.ubicacion or False
-            if not lead.coordenadas:
-                lead.coordenadas = partner.coordenadas or False
+            # Al cambiar el cliente seleccionado, siempre rellenar los campos
+            # de instalación con los valores del partner seleccionado. Esto
+            # evita que queden datos del cliente anterior cuando se cambia de
+            # contacto en la vista del lead.
+            lead.zona = partner.zona or False
+            lead.direccion = partner.direccion or False
+            lead.ubicacion = partner.ubicacion or False
+            lead.coordenadas = partner.coordenadas or False
 
     def _inverse_telefono_contacto(self):
         for lead in self:
@@ -197,7 +289,11 @@ class CrmLead(models.Model):
         if self.env.context.get('skip_lead_to_partner_sync'):
             return res
 
-        if any(field in vals for field in self._WIGO_INSTALLATION_FIELDS) or 'partner_id' in vals:
+        # Sólo sincronizar hacia el partner cuando se modificaron explícitamente
+        # los campos de instalación del lead. No sincronizamos automáticamente
+        # al cambiar el `partner_id` porque eso sobrescribe datos del cliente
+        # destino con valores antiguos del lead.
+        if any(field in vals for field in self._WIGO_INSTALLATION_FIELDS):
             self._sync_wigo_installation_to_partner()
         return res
 
@@ -207,10 +303,12 @@ class CrmLead(models.Model):
             if not lead.partner_id:
                 continue
 
+            # Sólo preparar valores que realmente difieran del partner destino
             vals = {}
             for field in self._WIGO_INSTALLATION_FIELDS:
                 value = getattr(lead, field)
-                if value:
+                partner_val = getattr(lead.partner_id, field, False)
+                if value and value != partner_val:
                     vals[field] = value
 
             if not vals:
@@ -341,13 +439,14 @@ class CrmLead(models.Model):
 
     def _action_open_contract(self):
         self.ensure_one()
-        if not self.contract_id:
+        contract = self.active_contract_id or self.contract_id
+        if not contract:
             return False
         return {
             'type':      'ir.actions.act_window',
             'res_model': 'customer.contract',
             'view_mode': 'form',
-            'res_id':    self.contract_id.id,
+            'res_id':    contract.id,
             'target':    'current',
         }
 
