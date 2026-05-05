@@ -45,18 +45,28 @@
                                 </strong>
                                 <span t-attf-class="badge #{record.active_contract_count.value > 0 ? 'text-bg-success' : 'text-bg-secondary'}" style="white-space:nowrap;font-size:11px;">
                                     <i class="fa fa-file-text-o me-1"/>
-                                    <t t-esc="record.active_contract_count.value"/> activo(s)
+                                    <t t-esc="record.active_contract_count.value"/>
+ activo(s)
                                 </span>
                             </div>
                             <div style="font-size:11px;color:#6b7280;margin-top:4px;">
                                 <t t-if="record.cobranza_ci.value">
-                                    <div><i class="fa fa-id-card me-1"/>CI: <field name="cobranza_ci"/></div>
+                                    <div>
+                                        <i class="fa fa-id-card me-1"/>
+CI: <field name="cobranza_ci"/>
+                                    </div>
                                 </t>
                                 <t t-if="record.cobranza_celular.value">
-                                    <div><i class="fa fa-phone me-1"/>Cel: <field name="cobranza_celular"/></div>
+                                    <div>
+                                        <i class="fa fa-phone me-1"/>
+Cel: <field name="cobranza_celular"/>
+                                    </div>
                                 </t>
                                 <t t-if="record.cobranza_zona.value">
-                                    <div><i class="fa fa-map-marker me-1"/>Zona: <field name="cobranza_zona"/></div>
+                                    <div>
+                                        <i class="fa fa-map-marker me-1"/>
+Zona: <field name="cobranza_zona"/>
+                                    </div>
                                 </t>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-2" style="border-top:1px solid #e5e7eb;padding-top:6px;">
@@ -101,21 +111,30 @@
                         </group>
                     </group>
 
-                    <group string="Contratos del cliente">
-                        <field name="active_contract_ids" nolabel="1" readonly="1" context="{'default_partner_id': id, 'search_default_active': 1}">
-                            <list string="Contratos" default_order="contract_date desc" decoration-success="state == 'active'" decoration-warning="state in ['pending','signed']" decoration-muted="state == 'terminated'">
-                                <field name="name" string="Código contrato"/>
-                                <field name="plan_id" string="Plan"/>
-                                <field name="plan_price" string="Tarifa (Bs)" optional="show"/>
-                                <field name="installation_date" string="Inicio cobro"/>
-                                <field name="contract_date" string="Fecha contrato" optional="show"/>
-                                <field name="state" widget="badge"/>
-                                <button name="action_crear_pago_mes_contrato" type="object" string="Registrar pago" class="btn-primary" icon="fa-money"/>
-                                <button name="action_view_cobranza_mensual" type="object" string="Ver meses" class="btn-secondary" icon="fa-calendar"/>
-                                <button name="action_open_contract_full" type="object" string="Mas detalles" class="btn-secondary" icon="fa-external-link"/>
-                            </list>
-                        </field>
-                    </group>
+                    <separator string="Contratos del cliente"/>
+
+
+                    <field name="active_contract_ids" nolabel="1" readonly="1" context="{'default_partner_id': id, 'search_default_active': 1}">
+
+                        <list string="Contratos" default_order="contract_date desc" decoration-success="state == 'active'" decoration-warning="state in ['pending','signed']" decoration-danger="state == 'overdue'" decoration-muted="state == 'terminated'">
+
+                            <field name="name" string="Contrato" class="fw-bold"/>
+
+                            <field name="plan_id" string="Plan"/>
+                            <field name="payment_mode" />
+
+                            <field name="plan_price" string="Tarifa (Bs)" widget="monetary"/>
+
+                            <field name="installation_date" string="Inicio"/>
+                            <field name="contract_date" string="Contrato" optional="hide"/>
+
+                            <field name="state" widget="badge"/>
+
+                            <button name="action_view_cobranza_mensual" type="object" string="Pagos" class="btn-primary" icon="fa-calendar"/>
+
+                            <button name="action_open_contract_full" type="object" string="Mas detalles" icon="fa-external-link" class="btn-secondary"/>
+                        </list>
+                    </field>
                 </sheet>
             </form>
         </field>

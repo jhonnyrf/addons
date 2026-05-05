@@ -178,6 +178,16 @@ class WigoPagoEstado(models.Model):
     ], string='Estado de pago', default='pendiente',
        required=True, tracking=True, index=True,
     )
+    fecha_vencimiento = fields.Date(
+        string='Fecha de vencimiento',
+        compute='_compute_fecha_vencimiento', store=True,
+        help='Último día del mes facturado. Se usa para calcular días de atraso.',
+    )
+    dias_atraso = fields.Integer(
+        string='Días de atraso',
+        compute='_compute_dias_atraso', store=False,
+        help='Días transcurridos desde la fecha de vencimiento.',
+    )
 
     # ── Notas ─────────────────────────────────────────────────────
     notas = fields.Text(string='Notas de cobranza')
@@ -428,6 +438,41 @@ class WigoPagoEstado(models.Model):
             rec.comprobante_adjunto_is_image = is_image
             rec.comprobante_adjunto_is_pdf = is_pdf
 
+    # ── Fecha vencimiento y días de atraso ─────────────────────
+    @api.depends('anio', 'mes')
+    def _compute_fecha_vencimiento(self):
+        """Último día del mes facturado."""
+        from calendar import monthrange
+        for rec in self:
+            if rec.anio and rec.mes:
+                try:
+                    _, last_day = monthrange(int(rec.anio), int(rec.mes))
+                    rec.fecha_vencimiento = date(int(rec.anio), int(rec.mes), last_day)
+                except Exception:
+                    rec.fecha_vencimiento = False
+            else:
+                rec.fecha_vencimiento = False
+
+    def _compute_dias_atraso(self):
+        """Días transcurridos desde la fecha de vencimiento."""
+        hoy = date.today()
+        for rec in self:
+            if rec.fecha_vencimiento and rec.estado_pago not in ('pagado',):
+                delta = (hoy - rec.fecha_vencimiento).days
+                rec.dias_atraso = max(delta, 0)
+            else:
+                rec.dias_atraso = 0
+
+    def _get_regla_for_contract(self, contract):
+        """Devuelve la regla aplicable para un contrato según su modalidad."""
+        Regla = self.env['wigo.cobranza.regla']
+        if not contract:
+            return Regla
+        return Regla.search([
+            ('active', '=', True),
+            ('payment_mode', 'in', [contract.payment_mode, 'all']),
+        ], order='sequence, id', limit=1)
+
     @api.depends('partner_id', 'periodo')
     def _compute_display_name(self):
         for rec in self:
@@ -613,40 +658,16 @@ class WigoPagoEstado(models.Model):
                 contract = Contract.browse(vals.get('contract_id'))
                 vals['payment_mode'] = contract.payment_mode if contract and contract.payment_mode else False
 
-            # Determinar estado inicial según modalidad
+            # Determinar estado inicial según regla configurada
             if not vals.get('estado_pago'):
-                pm = vals.get('payment_mode')
-                mes_actual = vals.get('mes')
-                try:
-                    anio_actual = int(vals.get('anio'))
-                except Exception:
-                    anio_actual = None
-
-                if pm == 'postpaid':
-                    # Postpago: por defecto pendiente, a menos que el mes anterior no esté pagado
-                    prev_mes = None
-                    prev_anio = None
-                    if mes_actual and anio_actual is not None:
-                        if mes_actual == '1':
-                            prev_mes = '12'
-                            prev_anio = anio_actual - 1
-                        else:
-                            prev_mes = str(int(mes_actual) - 1)
-                            prev_anio = anio_actual
-                    prev_rec = False
-                    if vals.get('contract_id') and prev_mes and prev_anio is not None:
-                        prev_rec = self.search([
-                            ('contract_id', '=', vals.get('contract_id')),
-                            ('mes', '=', prev_mes),
-                            ('anio', '=', prev_anio),
-                        ], limit=1)
-                    if prev_rec and prev_rec.estado_pago != 'pagado':
-                        vals['estado_pago'] = 'mora'
+                contract_id = vals.get('contract_id')
+                if contract_id:
+                    contract = Contract.browse(contract_id)
+                    regla = self._get_regla_for_contract(contract)
+                    if regla:
+                        vals['estado_pago'] = regla.estado_inicial
                     else:
-                        vals['estado_pago'] = 'pendiente'
-                elif pm == 'prepaid':
-                    # Prepago: cliente debe pagar antes de consumir
-                    vals['estado_pago'] = 'mora'
+                        vals.setdefault('estado_pago', 'pendiente')
                 else:
                     vals.setdefault('estado_pago', 'pendiente')
 
@@ -829,15 +850,22 @@ class WigoPagoEstado(models.Model):
                         vals['estado_servicio'] = 'suspended'
                     service.write(vals)
 
-                if contract.payment_mode == 'postpaid':
+                # Usar regla para decidir si crear incobrable
+                regla = self._get_regla_for_contract(contract)
+                if regla:
                     self._check_create_incobrable_from_contract(contract)
 
     def _check_create_incobrable_from_contract(self, contract):
         """
-        Verifica si un contrato PostPago tiene 3+ meses consecutivos sin pago
-        y crea automáticamente un registro incobrable si corresponde.
+        Verifica si un contrato tiene N meses consecutivos sin pago
+        según la regla configurada y crea automáticamente un registro
+        incobrable si corresponde.
         """
-        if not contract or contract.payment_mode != 'postpaid':
+        if not contract:
+            return
+
+        regla = self._get_regla_for_contract(contract)
+        if not regla:
             return
 
         # Regla automática: debe ejecutarse aunque el usuario actual
@@ -884,7 +912,7 @@ class WigoPagoEstado(models.Model):
             ultimo_anio = anio_actual
             periodos_adeudados.append(pago.periodo)
 
-        if meses_consecutivos < 3:
+        if meses_consecutivos < regla.meses_incobrable:
             return
 
         monto_total = sum(pagos[:meses_consecutivos].mapped('monto_a_cobrar'))
@@ -899,7 +927,8 @@ class WigoPagoEstado(models.Model):
             'monto_total_adeudado': monto_total,
             'state': 'activo',
             'observaciones': (
-                f'Generado automáticamente: {meses_consecutivos} meses consecutivos sin pago.'
+                f'Generado automáticamente: {meses_consecutivos} meses consecutivos sin pago. '
+                f'Regla: {regla.name}.'
             ),
         })
 
@@ -946,8 +975,11 @@ class WigoPagoEstado(models.Model):
                     subtype_xmlid='mail.mt_comment',
                     partner_ids=self._get_tech_partner_ids(),
                 )
-            if rec.contract_id and rec.contract_id.payment_mode == 'postpaid':
-                self._check_create_incobrable_from_contract(rec.contract_id)
+            # Usar regla para decidir si crear incobrable
+            if rec.contract_id:
+                regla = self._get_regla_for_contract(rec.contract_id)
+                if regla:
+                    self._check_create_incobrable_from_contract(rec.contract_id)
 
     def action_instruir_baja(self):
         """Instruir baja definitiva al área técnica."""
@@ -1189,20 +1221,26 @@ class WigoPagoEstado(models.Model):
     def cron_alertar_mora_dia1(self):
         """
         Corre el día 1 de cada mes.
-        Crea registros pendientes para todos los clientes activos del mes nuevo
+        Crea registros pendientes según reglas configuradas
         y notifica a cobranza.
         """
         hoy = date.today()
         mes_actual = str(hoy.month)
         anio_actual = hoy.year
 
+        # Buscar contratos activos que tengan regla con generación automática activada
         contracts_activos = self.env['customer.contract'].search([
             ('state', '=', 'active'),
-            ('payment_mode', '=', 'postpaid'),
         ])
 
         creados = 0
         for contract in contracts_activos:
+            regla = self._get_regla_for_contract(contract)
+            if not regla or not regla.generacion_automatica:
+                continue
+            if int(regla.dia_generacion) != hoy.day:
+                continue
+
             svc = self._find_client_service_for_contract(contract)
             existente = self.search([
                 ('contract_id', '=', contract.id),
@@ -1215,6 +1253,7 @@ class WigoPagoEstado(models.Model):
                     'contract_id': contract.id,
                     'mes': mes_actual,
                     'anio': anio_actual,
+                    'estado_pago': regla.estado_inicial,
                 }
                 if svc:
                     vals['client_service_id'] = svc.id
@@ -1250,10 +1289,13 @@ class WigoPagoEstado(models.Model):
         anio_actual = hoy.year
         contracts_activos = self.env['customer.contract'].search([
             ('state', '=', 'active'),
-            ('payment_mode', '=', 'postpaid'),
         ])
 
         for contract in contracts_activos:
+            regla = self._get_regla_for_contract(contract)
+            if not regla or not regla.generacion_automatica:
+                continue
+
             existente = self.search([
                 ('contract_id', '=', contract.id),
                 ('mes', '=', mes_actual),
@@ -1268,65 +1310,128 @@ class WigoPagoEstado(models.Model):
                 'contract_id': contract.id,
                 'mes': mes_actual,
                 'anio': anio_actual,
+                'estado_pago': regla.estado_inicial,
             }
             if service:
                 vals['client_service_id'] = service.id
             self.create(vals)
 
     @api.model
-    def cron_detectar_incobrables(self):
+    def cron_evaluar_cobranza(self):
         """
-        Corre el día 1 de cada mes.
-        Revisa todos los contratos PostPago activos y crea incobrables
-        para los que tengan 3+ meses consecutivos sin pago.
-        """
-        contracts_postpago = self.env['customer.contract'].search([
-            ('state', '=', 'active'),
-            ('payment_mode', '=', 'postpaid'),
-        ])
-
-        for contract in contracts_postpago:
-            self._check_create_incobrable_from_contract(contract)
-
-    @api.model
-    def cron_alertar_suspension(self):
-        """
-        Corre el día 1 de cada mes.
-        Identifica clientes que llevan 1 mes sin pagar y notifica a cobranza
-        para que instruyan la suspensión.
+        Cron diario: evalúa estados de cobranza según reglas configuradas.
+        - Actualiza días de atraso
+        - Pasa a mora/incobrable según configuración
         """
         hoy = date.today()
-        # Buscar el mes anterior
-        if hoy.month == 1:
-            mes_mora = '12'
-            anio_mora = hoy.year - 1
-        else:
-            mes_mora = str(hoy.month - 1)
-            anio_mora = hoy.year
-
-        registros_mora = self.search([
-            ('mes', '=', mes_mora),
-            ('anio', '=', anio_mora),
+        pagos_pendientes = self.search([
             ('estado_pago', 'in', ['pendiente', 'mora']),
+            ('contract_id', '!=', False),
         ])
 
-        for rec in registros_mora:
-            if rec.estado_pago != 'mora':
-                rec.estado_pago = 'mora'
-            svc = rec.client_service_id
-            if svc and svc.estado_pago != 'mora':
-                svc.estado_pago = 'mora'
+        for rec in pagos_pendientes:
+            if not rec.fecha_vencimiento:
+                continue
+            contract = rec.contract_id
+            regla = self._get_regla_for_contract(contract)
+            if not regla:
+                continue
 
-        # Notificar a cobranza
+            dias_atraso = (hoy - rec.fecha_vencimiento).days
+            dias_atraso = max(dias_atraso, 0)
+
+            # Evaluar transición de estados
+            if dias_atraso >= regla.dias_incobrable and rec.estado_pago != 'mora':
+                rec.estado_pago = 'mora'
+                # Verificar si debe crear incobrable por meses consecutivos
+                self._check_create_incobrable_from_contract(contract)
+            elif dias_atraso >= regla.dias_mora and rec.estado_pago == 'pendiente':
+                rec.estado_pago = 'mora'
+                # Notificar a cobranza
+                self._notify_mora(rec, regla)
+
+        # Evaluar contratos sin registros generados (día configurado)
+        contracts_activos = self.env['customer.contract'].search([
+            ('state', '=', 'active'),
+        ])
+        for contract in contracts_activos:
+            regla = self._get_regla_for_contract(contract)
+            if not regla or not regla.generacion_automatica:
+                continue
+            if int(regla.dia_generacion) == hoy.day:
+                mes_actual = str(hoy.month)
+                anio_actual = hoy.year
+                existente = self.search([
+                    ('contract_id', '=', contract.id),
+                    ('mes', '=', mes_actual),
+                    ('anio', '=', anio_actual),
+                ], limit=1)
+                if not existente:
+                    svc = self._find_client_service_for_contract(contract)
+                    vals = {
+                        'partner_id': contract.partner_id.id,
+                        'contract_id': contract.id,
+                        'mes': mes_actual,
+                        'anio': anio_actual,
+                        'estado_pago': regla.estado_inicial,
+                    }
+                    if svc:
+                        vals['client_service_id'] = svc.id
+                    self.create(vals)
+
+    def _notify_mora(self, rec, regla):
+        """Notifica a cobranza sobre cliente en mora."""
         cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
-        if cobranza_group and registros_mora:
+        if cobranza_group:
             partners = cobranza_group.user_ids.mapped('partner_id')
             if partners:
                 self.env['mail.message'].create({
                     'message_type': 'notification',
                     'body': (
-                        f"⚠️ <b>{len(registros_mora)} clientes en mora</b> por el período "
-                        f"{dict(self._fields['mes'].selection).get(mes_mora, mes_mora)} {anio_mora}. "
+                        f"⚠️ Cliente <b>{rec.partner_id.name}</b> en mora. "
+                        f"Días de atraso: {rec.dias_atraso}. "
+                        f"Regla: {regla.name}."
+                    ),
+                    'partner_ids': partners.ids,
+                    'model': 'wigo.pago.estado',
+                    'res_id': rec.id,
+                })
+
+    @api.model
+    def cron_detectar_incobrables(self):
+        """
+        Evalúa contratos activos y crea incobrables según reglas configuradas.
+        """
+        contracts_activos = self.env['customer.contract'].search([
+            ('state', '=', 'active'),
+        ])
+
+        for contract in contracts_activos:
+            regla = self._get_regla_for_contract(contract)
+            if not regla:
+                continue
+            self._check_create_incobrable_from_contract(contract)
+
+    @api.model
+    def cron_alertar_suspension(self):
+        """
+        Identifica clientes con pagos en mora según reglas configuradas
+        y notifica a cobranza para instruir la suspensión.
+        """
+        pagos_mora = self.search([
+            ('estado_pago', '=', 'mora'),
+            ('contract_id', '!=', False),
+        ])
+
+        # Notificar a cobranza
+        cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
+        if cobranza_group and pagos_mora:
+            partners = cobranza_group.user_ids.mapped('partner_id')
+            if partners:
+                self.env['mail.message'].create({
+                    'message_type': 'notification',
+                    'body': (
+                        f"⚠️ <b>{len(pagos_mora)} clientes en mora</b>. "
                         f"Revisar el reporte <i>Clientes a Suspender Hoy</i> y proceder."
                     ),
                     'partner_ids': partners.ids,

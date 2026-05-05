@@ -28,6 +28,9 @@ class CustomerContractCobranza(models.Model):
 
     def action_view_cobranza_mensual(self):
         self.ensure_one()
+        # Generar registro del mes actual según reglas configuradas
+        self._ensure_pago_mes_actual()
+
         list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
         form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
         views = []
@@ -52,6 +55,51 @@ class CustomerContractCobranza(models.Model):
                 'show_create': True,
             },
         }
+
+    def _ensure_pago_mes_actual(self):
+        """
+        Asegura que exista el registro del mes actual para este contrato,
+        respetando las reglas configuradas (día de generación, modalidad).
+        """
+        self.ensure_one()
+        if self.state != 'active':
+            return
+
+        PagoEstado = self.env['wigo.pago.estado']
+        hoy = date.today()
+        mes_actual = str(hoy.month)
+        anio_actual = hoy.year
+
+        # Buscar regla aplicable (usar un registro vacío como self)
+        regla = PagoEstado.browse()._get_regla_for_contract(self)
+        if not regla or not regla.generacion_automatica:
+            return
+
+        # Verificar si ya existe registro para este mes
+        existente = PagoEstado.search([
+            ('contract_id', '=', self.id),
+            ('mes', '=', mes_actual),
+            ('anio', '=', anio_actual),
+        ], limit=1)
+        if existente:
+            return
+
+        # Solo generar si hoy es el día configurado
+        if int(regla.dia_generacion) != hoy.day:
+            return
+
+        # Crear registro
+        vals = {
+            'partner_id': self.partner_id.id,
+            'contract_id': self.id,
+            'mes': mes_actual,
+            'anio': anio_actual,
+            'estado_pago': regla.estado_inicial,
+        }
+        service = PagoEstado.browse()._find_client_service_for_contract(self)
+        if service:
+            vals['client_service_id'] = service.id
+        PagoEstado.create(vals)
 
     def action_crear_pago_mes_contrato(self):
         self.ensure_one()

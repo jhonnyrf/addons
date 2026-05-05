@@ -48,9 +48,10 @@
 
      <menuitem id="menu_reporte_altas_bajas" name="Altas / Bajas / Cambios de Plan" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_altas_bajas" sequence="20"/>
 
-     <!-- ─── Configuración ─────────────────────────────────── -->
-     <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="menu_cobranza_root" sequence="90"/>
-     <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_recibo_config" sequence="10"/>
+    <!-- ─── Configuración ─────────────────────────────────── -->
+    <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="menu_cobranza_root" sequence="90"/>
+    <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_recibo_config" sequence="10"/>
+    <menuitem id="menu_cobranza_reglas" name="Reglas de Cobranza" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_regla" sequence="20"/>
 
      <!-- Forzar grupos del menú raíz para limpiar relaciones previas -->
      <record id="menu_cobranza_root" model="ir.ui.menu">

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════
+         LIST VIEW: Reglas de Cobranza
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_cobranza_regla_list" model="ir.ui.view">
+        <field name="name">wigo.cobranza.regla.list</field>
+        <field name="model">wigo.cobranza.regla</field>
+        <field name="arch" type="xml">
+            <list string="Reglas de Cobranza"
+                  default_order="sequence, id">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="payment_mode"/>
+                <field name="dia_generacion"/>
+                <field name="generacion_automatica" widget="boolean_toggle"/>
+                <field name="dias_mora"/>
+                <field name="dias_incobrable"/>
+                <field name="meses_incobrable"/>
+                <field name="estado_inicial"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         FORM VIEW: Regla de Cobranza
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_cobranza_regla_form" model="ir.ui.view">
+        <field name="name">wigo.cobranza.regla.form</field>
+        <field name="model">wigo.cobranza.regla</field>
+        <field name="arch" type="xml">
+            <form string="Regla de Cobranza">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Ej: Regla Postpago Estándar"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="payment_mode"/>
+                        </group>
+                        <group>
+                            <field name="estado_inicial"/>
+                            <field name="generacion_automatica"/>
+                            <field name="dia_generacion" invisible="not generacion_automatica"/>
+                        </group>
+                    </group>
+                    <group string="Tiempos de Morosidad">
+                        <group>
+                            <field name="dias_mora"
+                                   help="Días de atraso desde el vencimiento para marcar Mora."/>
+                        </group>
+                        <group>
+                            <field name="dias_incobrable"
+                                   help="Días de atraso desde el vencimiento para marcar Incobrable."/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="meses_incobrable"
+                               help="Meses consecutivos sin pago para crear registro incobrable."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         ACTION WINDOW
+    ══════════════════════════════════════════════════════════ -->
+    <record id="action_cobranza_regla" model="ir.actions.act_window">
+        <field name="name">Reglas de Cobranza</field>
+        <field name="res_model">wigo.cobranza.regla</field>
+        <field name="view_mode">list,form</field>
+        <field name="help">Configure aquí las reglas para generación de deudas, mora e incobrables.</field>
+    </record>
+
+</odoo>

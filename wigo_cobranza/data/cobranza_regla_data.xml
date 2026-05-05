@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Regla por defecto para todas las modalidades -->
+    <record id="regla_cobranza_todas" model="wigo.cobranza.regla">
+        <field name="name">Regla General (Todas)</field>
+        <field name="active">True</field>
+        <field name="sequence">100</field>
+        <field name="payment_mode">all</field>
+        <field name="dia_generacion">1</field>
+        <field name="generacion_automatica">True</field>
+        <field name="dias_mora">30</field>
+        <field name="dias_incobrable">90</field>
+        <field name="meses_incobrable">3</field>
+        <field name="estado_inicial">pendiente</field>
+    </record>
+
+    <!-- Regla específica para Prepago (opcional, puede desactivarse si se usa la general) -->
+    <record id="regla_cobranza_prepaid" model="wigo.cobranza.regla">
+        <field name="name">Regla Prepago</field>
+        <field name="active">True</field>
+        <field name="sequence">10</field>
+        <field name="payment_mode">prepaid</field>
+        <field name="dia_generacion">1</field>
+        <field name="generacion_automatica">False</field>
+        <field name="dias_mora">15</field>
+        <field name="dias_incobrable">60</field>
+        <field name="meses_incobrable">2</field>
+        <field name="estado_inicial">pendiente</field>
+    </record>
+
+    <!-- Regla específica para Postpago -->
+    <record id="regla_cobranza_postpaid" model="wigo.cobranza.regla">
+        <field name="name">Regla Postpago</field>
+        <field name="active">True</field>
+        <field name="sequence">10</field>
+        <field name="payment_mode">postpaid</field>
+        <field name="dia_generacion">1</field>
+        <field name="generacion_automatica">True</field>
+        <field name="dias_mora">30</field>
+        <field name="dias_incobrable">90</field>
+        <field name="meses_incobrable">3</field>
+        <field name="estado_inicial">pendiente</field>
+    </record>
+
+</odoo>
