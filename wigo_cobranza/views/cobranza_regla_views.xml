@@ -19,6 +19,7 @@
                 <field name="dias_mora"/>
                 <field name="dias_incobrable"/>
                 <field name="meses_incobrable"/>
+                <field name="dias_consecutivos_incobrable"/>
                 <field name="estado_inicial"/>
             </list>
         </field>
@@ -60,9 +61,11 @@
                                    help="Días de atraso desde el vencimiento para marcar Incobrable."/>
                         </group>
                     </group>
-                    <group>
+                    <group string="Criterio de Incobrable">
                         <field name="meses_incobrable"
                                help="Meses consecutivos sin pago para crear registro incobrable."/>
+                        <field name="dias_consecutivos_incobrable"
+                               help="Días consecutivos sin pago para crear registro incobrable."/>
                     </group>
                 </sheet>
             </form>

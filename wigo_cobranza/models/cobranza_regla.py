@@ -65,6 +65,11 @@ class WigoCobranzaRegla(models.Model):
         default=3,
         help='Cantidad de meses consecutivos sin pago para crear registro incobrable.',
     )
+    dias_consecutivos_incobrable = fields.Integer(
+        string='Días consecutivos para Incobrable',
+        default=90,
+        help='Cantidad de días consecutivos sin pago para crear registro incobrable.',
+    )
     estado_inicial = fields.Selection([
         ('pendiente', 'Pendiente'),
         ('pagado', 'Pagado'),
