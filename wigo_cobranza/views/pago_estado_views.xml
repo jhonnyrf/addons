@@ -10,10 +10,12 @@
         <field name="arch" type="xml">
             <list string="Registros de Cobro" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'" default_order="anio desc, mes desc">
                 <field name="codigo_cliente" optional="show"/>
+                <field name="tipo_ajuste_color" column_invisible="1"/>
                 <field name="partner_id"/>
                 <field name="partner_ci" optional="show"/>
                 <field name="partner_celular" optional="show"/>
                 <field name="contract_id" optional="show"/>
+                <field name="tipo_ajuste_id" optional="show" widget="tipo_ajuste_badge"/>
                 <field name="contract_state" optional="show"/>
                 <field name="plan_id" optional="show"/>
                 <field name="payment_mode" string="Modalidad" optional="show"/>
@@ -42,32 +44,16 @@
                     <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['pagado', 'al_dia', 'mora']"/>
 
                     <!-- Orden: Editar valores | Ver Recibo (si existe) | Generar Recibo (si no existe) | Imprimir Recibo | Registrar Factura -->
-                    <button name="action_editar_valores_contables"
-                            string="Editar valores contables"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="estado_pago != 'pagado'"/>
+                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
 
                     <!-- Ver Recibo: solo visible cuando ya se generó el recibo -->
-                    <button name="action_abrir_recibo"
-                            string="Ver Recibo"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="estado_pago != 'pagado' or not recibo_generado"/>
+                    <button name="action_abrir_recibo" string="Ver Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
 
                     <!-- Imprimir Recibo: solo visible cuando ya se generó -->
-                    <button name="action_imprimir_recibo"
-                            string="Imprimir Recibo"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="estado_pago != 'pagado' or not recibo_generado"/>
+                    <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
 
                     <!-- Generar Recibo: solo visible cuando NO existe aún -->
-                    <button name="action_generar_recibo"
-                            string="Generar Recibo"
-                            type="object"
-                            class="btn-secondary"
-                            invisible="estado_pago != 'pagado' or recibo_generado"/>
+                    <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>
 
                     <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
                     <button name="action_open_contract_crm" string="Ir a CRM (Ganado)" type="object" class="btn-secondary" invisible="not contract_id and not partner_id"/>
@@ -102,8 +88,17 @@
                             <field name="contract_state" readonly="1"/>
                             <field name="client_service_id" placeholder="Opcional: se autocompleta si existe servicio FTTH"/>
 
+                            <field name="tipo_ajuste_enable_proration" invisible="1"/>
+                            <field name="tipo_ajuste_requires_reason" invisible="1"/>
+                            <field name="tipo_ajuste_is_default" invisible="1"/>
+                            <field name="tipo_ajuste_color" invisible="1"/>
+                            <field name="es_primer_mes" invisible="1"/>
+
                             <field name="plan_id" readonly="1"/>
                             <field name="payment_mode" readonly="1"/>
+                            <field name="tipo_ajuste_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="motivo" invisible="not tipo_ajuste_requires_reason" required="tipo_ajuste_requires_reason"/>
+                            <field name="monto_prorrateo" invisible="not tipo_ajuste_enable_proration"/>
 
                             <field name="mes"/>
                             <field name="anio"/>
@@ -112,8 +107,6 @@
                         <group>
                             <field name="partner_direccion" readonly="1"/>
                             <field name="monto_plan" readonly="1"/>
-                            <field name="es_primer_mes"/>
-                            <field name="monto_prorrateo" readonly="not es_primer_mes"/>
                             <field name="crm_lead_id" readonly="1" invisible="1"/>
                         </group>
                     </group>
@@ -124,7 +117,7 @@
                                 <group>
                                     <field name="contabilidad_editable" invisible="1"/>
                                     <field name="monto_a_cobrar" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
-                                    <field name="monto_pagado" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                                    <field name="monto_pagado" readonly="tipo_ajuste_is_default or (estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable)"/>
                                     <field name="diferencia" readonly="1"/>
                                 </group>
                                 <group>
@@ -200,11 +193,20 @@
                 <field name="codigo_cliente" string="Código CF"/>
                 <field name="periodo" string="Período"/>
                 <field name="plan_id" string="Plan"/>
+                <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
+                <field name="payment_mode" string="Modalidad de pago"/>
                 <separator/>
                 <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
                 <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
                 <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
                 <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
+                <separator/>
+                <filter name="tipo_ajuste_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
+                <filter name="tipo_ajuste_prorrateo" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
+                <filter name="tipo_ajuste_motivo" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
+                <separator/>
+                <filter name="payment_mode_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
+                <filter name="payment_mode_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
                 <separator/>
                 <filter name="mes_actual" string="Mes actual" domain="[
                             ('mes', '=',
@@ -246,6 +248,13 @@
                 <filter name="group_mes" string="Agrupar por Mes" context="{'group_by':'mes'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by':'plan_id'}"/>
                 <filter name="group_canal" string="Agrupar por Canal de pago" context="{'group_by':'canal_pago'}"/>
+                <filter name="group_tipo_ajuste" string="Agrupar por Tipo de ajuste" context="{'group_by':'tipo_ajuste_id'}"/>
+                <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by':'payment_mode'}"/>
+
+                <searchpanel>
+                    <field name="payment_mode" string="Modalidad de pago"/>
+                    <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
+                </searchpanel>
             </search>
         </field>
     </record>

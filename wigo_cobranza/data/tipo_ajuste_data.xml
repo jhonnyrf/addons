@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="tipo_ajuste_normal" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Normal</field>
+        <field name="active">True</field>
+        <field name="is_default">True</field>
+        <field name="color">2</field>
+        <field name="requires_reason">False</field>
+        <field name="enable_proration">False</field>
+    </record>
+
+    <record id="tipo_ajuste_primer_mes" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Primer mes</field>
+        <field name="active">True</field>
+        <field name="is_default">False</field>
+        <field name="color">3</field>
+        <field name="requires_reason">False</field>
+        <field name="enable_proration">True</field>
+    </record>
+
+    <record id="tipo_ajuste_promocion" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Promoción</field>
+        <field name="active">True</field>
+        <field name="is_default">False</field>
+        <field name="color">4</field>
+        <field name="requires_reason">True</field>
+        <field name="enable_proration">False</field>
+    </record>
+
+    <record id="tipo_ajuste_cambio_plan" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Cambio de plan</field>
+        <field name="active">True</field>
+        <field name="is_default">False</field>
+        <field name="color">6</field>
+        <field name="requires_reason">True</field>
+        <field name="enable_proration">False</field>
+    </record>
+
+    <record id="tipo_ajuste_descuento_manual" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Descuento manual</field>
+        <field name="active">True</field>
+        <field name="is_default">False</field>
+        <field name="color">1</field>
+        <field name="requires_reason">True</field>
+        <field name="enable_proration">False</field>
+    </record>
+
+    <record id="tipo_ajuste_otros" model="wigo.cobranza.tipo_ajuste">
+        <field name="name">Otros</field>
+        <field name="active">True</field>
+        <field name="is_default">False</field>
+        <field name="color">7</field>
+        <field name="requires_reason">False</field>
+        <field name="enable_proration">False</field>
+    </record>
+
+</odoo>

@@ -25,43 +25,25 @@
         <field name="name">wigo.pago.estado.list.planilla</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <list string="Planilla de Cobros"
-                  multi_edit="1"
-                  decoration-success="estado_pago == 'al_dia'"
-                  decoration-warning="estado_pago in ['pendiente','deuda_parcial']"
-                  decoration-danger="estado_pago == 'mora'"
-                  decoration-muted="estado_pago == 'baja_definitiva'"
-                  default_order="anio desc, mes desc, codigo_cliente">
+            <list string="Planilla de Cobros" multi_edit="1" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc, codigo_cliente">
                 <field name="anio" optional="show"/>
                 <field name="mes" optional="show"/>
                 <field name="codigo_cliente"/>
                 <field name="partner_id" string="Cliente"/>
                 <field name="contract_id" optional="show"/>
                 <field name="plan_id"/>
-                <field name="monto_a_cobrar" string="A cobrar (Bs)"
-                       widget="monetary" options="{'currency_field': False}"/>
-                <field name="monto_pagado" string="Pagado (Bs)"
-                       widget="monetary" options="{'currency_field': False}"/>
-                <field name="diferencia" string="Diferencia (Bs)"
-                       widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="diferencia" string="Diferencia (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="fecha_pago"/>
                 <field name="canal_pago" optional="show"/>
                 <field name="comprobante" optional="show" string="Referencia"/>
-                <field name="estado_pago" widget="badge"
-                       decoration-success="estado_pago == 'al_dia'"
-                       decoration-warning="estado_pago in ['pendiente','deuda_parcial']"
-                       decoration-danger="estado_pago == 'mora'"
-                       decoration-muted="estado_pago == 'baja_definitiva'"/>
+                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
                 <field name="registrado_por" optional="hide"/>
                 <!-- Botón para ir al cliente directamente desde la planilla -->
-                <button name="action_open_partner" string="👤" type="object"
-                        title="Ver ficha del cliente"/>
-                <button name="action_registrar_pago" string="✅" type="object"
-                        title="Confirmar pago"
-                        invisible="estado_pago == 'al_dia'"/>
-                <button name="action_generar_recibo" string="🖨️" type="object"
-                        title="Generar recibo de cobro"
-                        invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+                <button name="action_open_partner" string="👤" type="object" title="Ver ficha del cliente"/>
+                <button name="action_registrar_pago" string="✅" type="object" title="Confirmar pago" invisible="estado_pago == 'al_dia'"/>
+                <button name="action_generar_recibo" string="🖨️" type="object" title="Generar recibo de cobro" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
             </list>
         </field>
     </record>
@@ -76,12 +58,21 @@
                 <field name="codigo_cliente" string="Código CF"/>
                 <field name="plan_id" string="Plan"/>
                 <field name="anio" string="Año"/>
+                <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
+                <field name="payment_mode" string="Modalidad de pago"/>
                 <separator/>
                 <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
                 <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
                 <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
                 <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
                 <filter name="baja" string="Bajas" domain="[('estado_pago','=','baja_definitiva')]"/>
+                <separator/>
+                <filter name="tipo_ajuste_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
+                <filter name="tipo_ajuste_prorrateo" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
+                <filter name="tipo_ajuste_motivo" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
+                <separator/>
+                <filter name="payment_mode_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
+                <filter name="payment_mode_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
                 <separator/>
                 <filter name="enero" string="Enero" domain="[('mes','=','1')]"/>
                 <filter name="febrero" string="Febrero" domain="[('mes','=','2')]"/>
@@ -96,17 +87,19 @@
                 <filter name="noviembre" string="Noviembre" domain="[('mes','=','11')]"/>
                 <filter name="diciembre" string="Diciembre" domain="[('mes','=','12')]"/>
                 <separator/>
-                <filter name="anio_actual" string="Año actual"
-                        domain="[('anio','=', context_today().year)]"/>
+                <filter name="anio_actual" string="Año actual" domain="[('anio','=', context_today().year)]"/>
                 <separator/>
-                <filter name="group_partner" string="Agrupar por Cliente"
-                        context="{'group_by': 'partner_id'}"/>
-                <filter name="group_mes" string="Agrupar por Mes"
-                        context="{'group_by': 'mes'}"/>
-                <filter name="group_plan" string="Agrupar por Plan"
-                        context="{'group_by': 'plan_id'}"/>
-                <filter name="group_estado" string="Agrupar por Estado"
-                        context="{'group_by': 'estado_pago'}"/>
+                <filter name="group_partner" string="Agrupar por Cliente" context="{'group_by': 'partner_id'}"/>
+                <filter name="group_mes" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
+                <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
+                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by': 'estado_pago'}"/>
+                <filter name="group_tipo_ajuste" string="Agrupar por Tipo de ajuste" context="{'group_by': 'tipo_ajuste_id'}"/>
+                <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by': 'payment_mode'}"/>
+
+                <searchpanel>
+                    <field name="payment_mode" string="Modalidad de pago"/>
+                    <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
+                </searchpanel>
             </search>
         </field>
     </record>

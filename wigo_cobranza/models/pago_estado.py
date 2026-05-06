@@ -97,12 +97,46 @@ class WigoPagoEstado(models.Model):
     monto_prorrateo = fields.Float(
         string='Monto prorrateo (Bs)',
         default=0.0,
-        help='Monto editable manualmente cuando se marque primer mes.',
+        help='Monto editable manualmente cuando el tipo de ajuste habilita prorrateo.',
+    )
+    tipo_ajuste_id = fields.Many2one(
+        'wigo.cobranza.tipo_ajuste',
+        string='Tipo de ajuste',
+        ondelete='restrict',
+        tracking=True,
+    )
+    tipo_ajuste_is_default = fields.Boolean(
+        related='tipo_ajuste_id.is_default',
+        string='Tipo de ajuste por defecto',
+        readonly=True,
+        store=False,
+    )
+    tipo_ajuste_enable_proration = fields.Boolean(
+        related='tipo_ajuste_id.enable_proration',
+        string='Tipo habilita prorrateo',
+        readonly=True,
+        store=False,
+    )
+    tipo_ajuste_requires_reason = fields.Boolean(
+        related='tipo_ajuste_id.requires_reason',
+        string='Tipo requiere motivo',
+        readonly=True,
+        store=False,
+    )
+    tipo_ajuste_color = fields.Integer(
+        related='tipo_ajuste_id.color',
+        string='Color de tipo de ajuste',
+        readonly=True,
+        store=False,
     )
     es_primer_mes = fields.Boolean(
         string='¿Es primer mes?',
         default=False,
-        help='Activa la edición manual del prorrateo para este registro.',
+        help='Compatibilidad con registros históricos. No usar para nueva lógica.',
+    )
+    motivo = fields.Text(
+        string='Motivo',
+        help='Justificación del ajuste aplicado al cobro.',
     )
     monto_a_cobrar = fields.Float(
         string='Monto a cobrar (Bs)',
@@ -304,6 +338,21 @@ class WigoPagoEstado(models.Model):
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
 
+        tipo_ajuste = self._get_default_tipo_ajuste()
+        if 'tipo_ajuste_id' in fields_list and not res.get('tipo_ajuste_id') and tipo_ajuste:
+            res['tipo_ajuste_id'] = tipo_ajuste.id
+        if 'monto_prorrateo' in fields_list and 'monto_prorrateo' not in res:
+            res['monto_prorrateo'] = 0.0
+        if 'motivo' in fields_list and 'motivo' not in res:
+            res['motivo'] = False
+
+        if tipo_ajuste:
+            res['es_primer_mes'] = bool(tipo_ajuste.enable_proration)
+            if not tipo_ajuste.enable_proration:
+                res['monto_prorrateo'] = 0.0
+            if not tipo_ajuste.requires_reason:
+                res['motivo'] = False
+
         contract_id = res.get('contract_id') or self.env.context.get('default_contract_id')
         service_id = res.get('client_service_id') or self.env.context.get('default_client_service_id')
         partner_id = res.get('partner_id') or self.env.context.get('default_partner_id')
@@ -337,10 +386,65 @@ class WigoPagoEstado(models.Model):
 
         return res
 
+    def _get_default_tipo_ajuste(self):
+        TipoAjuste = self.env['wigo.cobranza.tipo_ajuste']
+        return TipoAjuste.search([
+            ('active', '=', True),
+            ('is_default', '=', True),
+        ], limit=1) or TipoAjuste.search([
+            ('active', '=', True),
+        ], order='id asc', limit=1)
+
+    def _get_legacy_proration_tipo_ajuste(self):
+        return self.env['wigo.cobranza.tipo_ajuste'].search([
+            ('active', '=', True),
+            ('enable_proration', '=', True),
+        ], order='is_default desc, id asc', limit=1)
+
     def _sync_payment_defaults(self):
+        # Avoid recursive ORM writes: update only the necessary columns directly
+        # and invalidate the cache so the record reflects the new values.
+        # Skip for unsaved (NewId) records; onchange only needs field updates.
+        if not self:
+            return
+
+        table = self._table
         for rec in self:
-            if rec.monto_pagado in (False, None):
-                rec.monto_pagado = 0.0
+            # Only update DB for persisted records (id is int, not NewId)
+            if not isinstance(rec.id, int):
+                continue
+
+            updates = []
+            params = []
+
+            if rec.tipo_ajuste_id and rec.tipo_ajuste_id.is_default:
+                if rec.monto_pagado != rec.monto_a_cobrar:
+                    updates.append('monto_pagado = %s')
+                    params.append(rec.monto_a_cobrar or 0.0)
+            elif rec.monto_pagado in (False, None):
+                updates.append('monto_pagado = %s')
+                params.append(0.0)
+
+            if rec.tipo_ajuste_id:
+                expected_primer = bool(rec.tipo_ajuste_id.enable_proration)
+                if rec.es_primer_mes != expected_primer:
+                    updates.append('es_primer_mes = %s')
+                    params.append(expected_primer)
+                if not rec.tipo_ajuste_id.enable_proration and rec.monto_prorrateo not in (False, 0.0):
+                    updates.append('monto_prorrateo = %s')
+                    params.append(0.0)
+                if not rec.tipo_ajuste_id.requires_reason and rec.motivo:
+                    updates.append('motivo = %s')
+                    params.append(False)
+
+            if not updates:
+                continue
+
+            params.append(rec.id)
+            query = 'UPDATE %s SET %s WHERE id = %%s' % (table, ', '.join(updates))
+            self.env.cr.execute(query, params)
+            rec._invalidate_cache(['monto_pagado', 'es_primer_mes', 'monto_prorrateo', 'motivo'])
+            rec.modified(['monto_pagado', 'es_primer_mes', 'monto_prorrateo', 'motivo'])
 
     def _compute_eligible_partner_ids(self):
         Contract = self.env['customer.contract']
@@ -378,11 +482,21 @@ class WigoPagoEstado(models.Model):
                 getattr(partner, 'direccion', False) or partner.street or False
             ) if partner else False
 
-    @api.depends('es_primer_mes', 'monto_prorrateo', 'monto_plan', 'monto_a_cobrar_manual', 'monto_a_cobrar_manual_aplicado')
+    @api.depends(
+        'tipo_ajuste_id',
+        'tipo_ajuste_id.enable_proration',
+        'monto_prorrateo',
+        'monto_plan',
+        'monto_a_cobrar_manual',
+        'monto_a_cobrar_manual_aplicado',
+        'es_primer_mes',
+    )
     def _compute_monto_a_cobrar(self):
         for rec in self:
             if rec.monto_a_cobrar_manual_aplicado:
                 rec.monto_a_cobrar = rec.monto_a_cobrar_manual
+            elif rec.tipo_ajuste_id:
+                rec.monto_a_cobrar = rec.monto_prorrateo if rec.tipo_ajuste_id.enable_proration else rec.monto_plan
             elif rec.es_primer_mes:
                 rec.monto_a_cobrar = rec.monto_prorrateo
             else:                                
@@ -393,17 +507,31 @@ class WigoPagoEstado(models.Model):
             rec.monto_a_cobrar_manual = rec.monto_a_cobrar
             rec.monto_a_cobrar_manual_aplicado = True
 
-    @api.onchange('es_primer_mes', 'monto_prorrateo', 'monto_plan')
+    @api.onchange('tipo_ajuste_id', 'es_primer_mes', 'monto_prorrateo', 'monto_plan')
     def _onchange_prorrateo_manual(self):
-        _logger.info(f"onchange_prorrateo_manual triggered for record {self.id}: es_primer_mes={self.es_primer_mes}, monto_prorrateo={self.monto_prorrateo}, monto_plan={self.monto_plan}")
         for rec in self:
-            # Si se deselecciona primer mes, resetea el prorrateo a 0
-            if not rec.es_primer_mes:
+            if rec.tipo_ajuste_id:
+                rec.es_primer_mes = bool(rec.tipo_ajuste_id.enable_proration)
+                if not rec.tipo_ajuste_id.enable_proration:
+                    rec.monto_prorrateo = 0.0
+                if not rec.tipo_ajuste_id.requires_reason:
+                    rec.motivo = False
+            elif not rec.es_primer_mes:
                 rec.monto_prorrateo = 0.0
-            # Actualiza monto_a_cobrar según el estado del primer mes
-            rec.monto_a_cobrar = rec.monto_prorrateo if rec.es_primer_mes else rec.monto_plan
-            # Sincroniza monto_pagado con el nuevo monto_a_cobrar
-            rec.monto_pagado = rec.monto_a_cobrar or 0.0
+            rec.monto_a_cobrar = rec.monto_prorrateo if (rec.tipo_ajuste_id and rec.tipo_ajuste_id.enable_proration) or rec.es_primer_mes else rec.monto_plan
+            if rec.tipo_ajuste_id and rec.tipo_ajuste_id.is_default:
+                rec.monto_pagado = rec.monto_a_cobrar or 0.0
+
+    @api.constrains('tipo_ajuste_id', 'monto_prorrateo', 'motivo')
+    def _check_tipo_ajuste_rules(self):
+        for rec in self:
+            ajuste = rec.tipo_ajuste_id
+            if not ajuste:
+                continue
+            if ajuste.requires_reason and not (rec.motivo or '').strip():
+                raise ValidationError('El tipo de ajuste seleccionado requiere un motivo.')
+            if not ajuste.enable_proration and rec.monto_prorrateo not in (False, 0.0):
+                raise ValidationError('El tipo de ajuste seleccionado no permite prorrateo.')
 
     @api.depends('monto_a_cobrar', 'monto_pagado','monto_prorrateo')
     def _compute_diferencia(self):
@@ -644,6 +772,29 @@ class WigoPagoEstado(models.Model):
             if not vals.get('fecha_pago'):
                 vals['fecha_pago'] = fields.Date.context_today(self)
 
+            tipo_ajuste_id = vals.get('tipo_ajuste_id')
+            tipo_ajuste = self.env['wigo.cobranza.tipo_ajuste'].browse(tipo_ajuste_id) if tipo_ajuste_id else False
+            if not tipo_ajuste and vals.get('es_primer_mes'):
+                tipo_ajuste = self._get_legacy_proration_tipo_ajuste()
+                if tipo_ajuste:
+                    vals['tipo_ajuste_id'] = tipo_ajuste.id
+            if not tipo_ajuste:
+                tipo_ajuste = self._get_default_tipo_ajuste()
+                if tipo_ajuste and not vals.get('tipo_ajuste_id'):
+                    vals['tipo_ajuste_id'] = tipo_ajuste.id
+
+            if tipo_ajuste:
+                vals['es_primer_mes'] = bool(tipo_ajuste.enable_proration)
+                if not tipo_ajuste.enable_proration:
+                    vals['monto_prorrateo'] = 0.0
+                else:
+                    vals.setdefault('monto_prorrateo', 0.0)
+                if not tipo_ajuste.requires_reason:
+                    vals['motivo'] = False
+            else:
+                vals.setdefault('monto_prorrateo', 0.0)
+                vals.setdefault('motivo', False)
+
             if not vals.get('mes') or not vals.get('anio'):
                 mes_sugerido, anio_sugerido = self._suggest_next_period_values(
                     contract=Contract.browse(contract_id) if contract_id else None,
@@ -672,7 +823,17 @@ class WigoPagoEstado(models.Model):
                     vals.setdefault('estado_pago', 'pendiente')
 
         records = super().create(vals_list)
+        # Sincronizar valores por defecto para registros persistidos
         records._sync_payment_defaults()
+
+        # Si el tipo de ajuste es la opción por defecto, fijar monto_pagado = monto_a_cobrar
+        # y evitar re-trigger de _sync_payment_defaults usando contexto
+        defaults = records.filtered(lambda r: r.tipo_ajuste_id and r.tipo_ajuste_id.is_default)
+        if defaults:
+            for rec in defaults:
+                # escribir con contexto para evitar sincronizar otra vez
+                rec.with_context(skip_sync_payment_defaults=True).write({'monto_pagado': rec.monto_a_cobrar or 0.0})
+
         records._recompute_contract_mora()
         return records
 
@@ -701,6 +862,36 @@ class WigoPagoEstado(models.Model):
                     'fecha': fields.Datetime.now(),
                 })
 
+        if 'tipo_ajuste_id' in vals:
+            tipo_ajuste = self.env['wigo.cobranza.tipo_ajuste'].browse(vals.get('tipo_ajuste_id')) if vals.get('tipo_ajuste_id') else False
+            if tipo_ajuste:
+                vals['es_primer_mes'] = bool(tipo_ajuste.enable_proration)
+                if not tipo_ajuste.enable_proration:
+                    vals['monto_prorrateo'] = 0.0
+                else:
+                    vals.setdefault('monto_prorrateo', 0.0)
+                if not tipo_ajuste.requires_reason:
+                    vals['motivo'] = False
+            else:
+                vals['es_primer_mes'] = False
+                vals['monto_prorrateo'] = 0.0
+                vals['motivo'] = False
+        elif 'es_primer_mes' in vals:
+            if vals.get('es_primer_mes'):
+                tipo_ajuste = self._get_legacy_proration_tipo_ajuste()
+                if tipo_ajuste:
+                    vals['tipo_ajuste_id'] = tipo_ajuste.id
+                    vals['es_primer_mes'] = bool(tipo_ajuste.enable_proration)
+                    if not tipo_ajuste.enable_proration:
+                        vals['monto_prorrateo'] = 0.0
+                    else:
+                        vals.setdefault('monto_prorrateo', 0.0)
+                    if not tipo_ajuste.requires_reason:
+                        vals['motivo'] = False
+            else:
+                vals['monto_prorrateo'] = 0.0
+                vals['motivo'] = False
+
         res = super().write(vals)
 
         if contable_changed:
@@ -725,7 +916,8 @@ class WigoPagoEstado(models.Model):
                         subtype_xmlid='mail.mt_note',
                     )
 
-        if any(k in vals for k in ('es_primer_mes', 'monto_prorrateo', 'monto_plan')):
+        # Only trigger sync when not explicitly skipped via context
+        if not self.env.context.get('skip_sync_payment_defaults') and any(k in vals for k in ('tipo_ajuste_id', 'es_primer_mes', 'monto_prorrateo', 'monto_plan', 'motivo')):
             self._sync_payment_defaults()
         if any(k in vals for k in ('estado_pago', 'monto_pagado', 'contract_id', 'mes', 'anio')):
             self._recompute_contract_mora()

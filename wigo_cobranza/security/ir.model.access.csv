@@ -20,3 +20,7 @@ access_pago_estado_attachment_viewer_wizard_user,wigo.pago.estado.attachment.vie
 access_cobranza_regla_cobranza,wigo.cobranza.regla cobranza,model_wigo_cobranza_regla,wigo_cobranza.group_cobranza,1,1,1,1
 access_cobranza_regla_admin,wigo.cobranza.regla admin,model_wigo_cobranza_regla,base.group_system,1,1,1,1
 access_cobranza_regla_user,wigo.cobranza.regla user,model_wigo_cobranza_regla,base.group_user,1,0,0,0
+access_tipo_ajuste_user,wigo.cobranza.tipo_ajuste user,model_wigo_cobranza_tipo_ajuste,base.group_user,1,0,0,0
+access_tipo_ajuste_cobranza,wigo.cobranza.tipo_ajuste cobranza,model_wigo_cobranza_tipo_ajuste,wigo_cobranza.group_cobranza,1,1,1,1
+access_tipo_ajuste_contabilidad,wigo.cobranza.tipo_ajuste contabilidad,model_wigo_cobranza_tipo_ajuste,wigo_cobranza.group_contabilidad,1,1,1,1
+access_tipo_ajuste_admin,wigo.cobranza.tipo_ajuste admin,model_wigo_cobranza_tipo_ajuste,base.group_system,1,1,1,1

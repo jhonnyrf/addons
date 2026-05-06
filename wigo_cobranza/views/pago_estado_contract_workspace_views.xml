@@ -7,10 +7,11 @@
         <field name="arch" type="xml">
             <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'">
                 <field name="periodo"/>
+                <field name="tipo_ajuste_color" column_invisible="1"/>
                 <field name="payment_mode" string="Modalidad" optional="show"/>
+                <field name="tipo_ajuste_id" optional="show" widget="tipo_ajuste_badge"/>
                 <field name="monto_a_cobrar" />
                 <field name="monto_pagado" />
-                <field name="diferencia" />
                 <field name="fecha_pago"/>
                 <field name="estado_pago" widget="badge"/>
                 <field name="canal_pago" optional="show"/>
@@ -54,15 +55,22 @@
                             <field name="partner_id" readonly="1"/>
                             <field name="contract_id" readonly="1"/>
                             <field name="plan_id" readonly="1"/>
-                            <field name="mes"/>
-                            <field name="anio"/>
+                            <field name="tipo_ajuste_enable_proration" invisible="1"/>
+                            <field name="tipo_ajuste_requires_reason" invisible="1"/>
+                            <field name="tipo_ajuste_is_default" invisible="1"/>
+                            <field name="tipo_ajuste_color" invisible="1"/>
+                            <field name="es_primer_mes" invisible="1"/>
+
+                            <field name="mes" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                            <field name="anio" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                             <field name="periodo" readonly="1"/>
                         </group>
                         <group>
                             <field name="monto_plan" readonly="1"/>
                             <field name="payment_mode" readonly="1"/>
-                            <field name="es_primer_mes"/>
-                            <field name="monto_prorrateo" readonly="not es_primer_mes"/>
+                            <field name="tipo_ajuste_id" options="{'no_create': True, 'no_open': True}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                            <field name="monto_prorrateo" invisible="not tipo_ajuste_enable_proration" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                            <field name="motivo" invisible="not tipo_ajuste_requires_reason" required="tipo_ajuste_requires_reason" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                         </group>
                     </group>
 
@@ -71,13 +79,13 @@
                             <group string="Contabilidad" col="2">
                                 <group>
                                     <field name="contabilidad_editable" invisible="1"/>
-                                    <field name="monto_a_cobrar" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
-                                    <field name="monto_pagado" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
-                                    <field name="diferencia" readonly="1"/>
+                                    <field name="monto_a_cobrar" readonly="tipo_ajuste_is_default or (estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable)"/>
+                                    <field name="monto_pagado" readonly="tipo_ajuste_is_default or (estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable)"/>
+                                    <field name="diferencia" invisible="1"/>
                                 </group>
                                 <group>
-                                    <field name="fecha_pago" widget="date" options="{'numeric': true}"/>
-                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}"/>
+                                    <field name="fecha_pago" widget="date" options="{'numeric': true}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                                    <field name="canal_pago" string="Canal de pago" options="{'no_open': True}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                                     <field name="registrado_por" readonly="1"/>
                                     <field name="justificacion_edicion" placeholder="Justificación obligatoria cuando se editen montos contables fuera de pendiente." invisible="not contabilidad_editable" required="contabilidad_editable"/>
                                 </group>
@@ -93,7 +101,7 @@
                                 <group>
                                     <field name="comprobante_adjunto" invisible="1"/>
                                     <field name="comprobante_adjunto_fname" invisible="1"/>
-                                    <field name="comprobante_attachment_ids" widget="many2many_binary" string="Archivo(s) de comprobante" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
+                                    <field name="comprobante_attachment_ids" widget="many2many_binary" string="Archivo(s) de comprobante" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                                 </group>
                                 <group invisible="not has_comprobante">
                                     <div class="d-flex gap-2 flex-wrap" style="margin-bottom: 12px;">

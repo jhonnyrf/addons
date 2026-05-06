@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="wigo_cobranza.TipoAjusteBadge">
+        <span class="o_field_widget o_tipo_ajuste_badge" t-att-class="className" t-att-style="style">
+            <t t-esc="label"/>
+        </span>
+    </t>
+
+</templates>

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import cobranza_regla
+from . import tipo_ajuste
 from . import pago_estado
 from . import ftth_client_service_ext
 from . import res_partner_ext
