@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import base64
 from datetime import date
+from calendar import monthrange
+from datetime import timedelta
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
 import logging
@@ -596,18 +598,46 @@ class WigoPagoEstado(models.Model):
             rec.comprobante_adjunto_is_pdf = is_pdf
 
     # ── Fecha vencimiento y días de atraso ─────────────────────
-    @api.depends('anio', 'mes')
+    @api.depends('anio', 'mes', 'contract_id')
     def _compute_fecha_vencimiento(self):
-        """Último día del mes facturado."""
-        from calendar import monthrange
+        """
+                Calcula la fecha efectiva en la que el registro entra en mora.
+
+                La regla se aplica desde el primer día del período facturado:
+                - Para meses: 1er día del período + meses_mora
+                    Ej: Abril + 1 mes = 1 de Mayo
+                - Para días: 1er día del período + días_mora
+                    Ej: 1 de Abril + 15 días = 16 de Abril
+        """
         for rec in self:
-            if rec.anio and rec.mes:
-                try:
-                    _, last_day = monthrange(int(rec.anio), int(rec.mes))
-                    rec.fecha_vencimiento = date(int(rec.anio), int(rec.mes), last_day)
-                except Exception:
-                    rec.fecha_vencimiento = False
-            else:
+            if not rec.anio or not rec.mes:
+                rec.fecha_vencimiento = False
+                continue
+
+            try:
+                mes_int = int(rec.mes)
+                anio_int = int(rec.anio)
+                fecha_inicio_periodo = date(anio_int, mes_int, 1)
+
+                # Si no hay contrato, fallback al primer día del período
+                if not rec.contract_id:
+                    rec.fecha_vencimiento = fecha_inicio_periodo
+                    continue
+
+                regla = rec._get_regla_for_contract(rec.contract_id)
+                if not regla:
+                    # Sin regla, usar primer día del período
+                    rec.fecha_vencimiento = fecha_inicio_periodo
+                    continue
+
+                rec.fecha_vencimiento = self._calculate_fecha_vencimiento(
+                    mes_int,
+                    anio_int,
+                    regla,
+                )
+
+            except Exception as e:
+                _logger.warning(f"Error calculando fecha_vencimiento para pago {rec.id}: {e}")
                 rec.fecha_vencimiento = False
 
     def _compute_dias_atraso(self):
@@ -623,12 +653,386 @@ class WigoPagoEstado(models.Model):
     def _get_regla_for_contract(self, contract):
         """Devuelve la regla aplicable para un contrato según su modalidad."""
         Regla = self.env['wigo.cobranza.regla']
+        _logger.info(f"Buscando regla para contrato {contract.id} con modalidad '{contract.payment_mode}'")
         if not contract:
             return Regla
+        _logger.info(f"Reglas disponibles: {Regla.search([], order='sequence, id')}")
         return Regla.search([
             ('active', '=', True),
             ('payment_mode', 'in', [contract.payment_mode, 'all']),
         ], order='sequence, id', limit=1)
+
+    def _get_existing_payment_for_period(self, contract=None, client_service=None, partner=None, mes=None, anio=None):
+        """
+        Busca un cobro ya existente para evitar duplicados por período.
+        
+        IMPORTANTE: Busca por período facturado (mes/anio), no por fecha actual.
+        Esto es correcto porque el período se calcula basado en dia_generacion,
+        no en la fecha del cron.
+        """
+        domain = []
+        if mes is not None:
+            domain.append(('mes', '=', str(mes)))
+        if anio is not None:
+            domain.append(('anio', '=', int(anio)))
+
+        if contract:
+            domain.append(('contract_id', '=', contract.id))
+        elif client_service:
+            domain.append(('client_service_id', '=', client_service.id))
+        elif partner:
+            domain.append(('partner_id', '=', partner.id))
+        else:
+            return self.browse()
+
+        return self.search(domain, limit=1, order='id desc')
+
+    def _months_overdue(self, rec, today=None):
+        today = today or date.today()
+        if not rec or not rec.fecha_vencimiento:
+            return 0
+        due = rec.fecha_vencimiento
+        months = (today.year - due.year) * 12 + (today.month - due.month)
+        if today.day < due.day:
+            months -= 1
+        return max(months, 0)
+
+    def _months_between_dates(self, start_date, end_date=None):
+        """
+        Calcula meses completos transcurridos entre `start_date` y `end_date`.
+        Ej: start=2026-04-30, end=2026-05-30 -> 1
+        start=2026-04-30, end=2026-05-29 -> 0
+        """
+        end_date = end_date or date.today()
+        if not start_date:
+            return 0
+        months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+        if end_date.day < start_date.day:
+            months -= 1
+        return max(months, 0)
+
+    def _get_active_contracts_for_rule(self, rule):
+        """Contratos activos que pueden ser impactados por una regla."""
+        Contract = self.env['customer.contract']
+        domain = [('state', '=', 'active')]
+        if rule.payment_mode and rule.payment_mode != 'all':
+            domain.append(('payment_mode', '=', rule.payment_mode))
+        return Contract.search(domain, order='partner_id, id')
+
+    def _add_months_to_date(self, base_date, months_to_add):
+        """
+        Suma meses a una fecha, manejando correctamente cambios de año y
+        ajustando el día si el mes destino tiene menos días.
+        
+        Ejemplo:
+        - 2026-01-31 + 1 mes = 2026-02-28 (febrero tiene solo 28 días)
+        - 2026-01-31 + 2 meses = 2026-03-31 (marzo tiene 31 días)
+        """
+        from calendar import monthrange
+        
+        month = base_date.month + months_to_add
+        year = base_date.year
+        
+        # Ajustar año si pasamos los 12 meses
+        while month > 12:
+            month -= 12
+            year += 1
+        while month < 1:
+            month += 12
+            year -= 1
+        
+        # Asegurar que el día existe en el mes destino
+        # Si no existe, usar el último día del mes
+        _, max_day = monthrange(year, month)
+        day = min(base_date.day, max_day)
+        
+        return date(year, month, day)
+
+    def _calculate_billed_period_from_trigger_day(self, rule, today=None):
+        """
+        Calcula el período facturado basado en dia_generacion de la regla.
+        
+        Ejemplo:
+        - Hoy es 7 de mayo (today.day=7)
+        - dia_generacion=5
+        - Como 5 <= 7, generamos factura para MAYO (mes actual)
+        
+        Otro ejemplo:
+        - Hoy es 3 de mayo (today.day=3)
+        - dia_generacion=5
+        - Como 5 > 3, generamos factura para ABRIL (mes anterior)
+        
+        Retorna: (mes_int, año_int)
+        """
+        today = today or date.today()
+        trigger_day = int(rule.dia_generacion)
+        current_day = today.day
+        current_month = today.month
+        current_year = today.year
+
+        # Si el día actual es >= al día de generación, generamos para este mes
+        if current_day >= trigger_day:
+            return current_month, current_year
+
+        # Si el día actual es < al día de generación, generamos para el mes anterior
+        if current_month == 1:
+            return 12, current_year - 1
+        return current_month - 1, current_year
+
+    def _calculate_fecha_vencimiento(self, mes_facturado, anio_facturado, rule):
+        """
+        Calcula la fecha efectiva de mora a partir del primer día del período.
+        
+        Ejemplo 1 (mora por días):
+        - Período: Abril 2026 (primer día: 2026-04-01)
+        - dias_mora=15
+        - fecha_vencimiento = 2026-04-16
+        
+        Ejemplo 2 (mora por meses):
+        - Período: Abril 2026 (primer día: 2026-04-01)
+        - meses_mora=1
+        - fecha_vencimiento = 2026-05-01
+        
+        Ejemplo 3 (con cambio de año):
+        - Período: Diciembre 2025
+        - meses_mora=1
+        - fecha_vencimiento = 2026-01-01
+        
+        Retorna: date object o False
+        """
+
+        try:
+            mes_int = int(mes_facturado)
+            anio_int = int(anio_facturado)
+            
+            # Primer día del período facturado
+            fecha_inicio_periodo = date(anio_int, mes_int, 1)
+
+            # Calculamos la FECHA EN LA QUE EL REGISTRO DEBE CONSIDERARSE EN MORA
+            # en base al inicio del período + regla (días o meses).
+            if rule.mora_criterio == 'meses':
+                meses_a_agregar = int(rule.meses_mora or 0)
+                fecha_vencimiento = self._add_months_to_date(fecha_inicio_periodo, meses_a_agregar)
+            else:  # mora_criterio == 'dias'
+                dias_a_agregar = int(rule.dias_mora or 0)
+                fecha_vencimiento = fecha_inicio_periodo + timedelta(days=dias_a_agregar)
+
+            return fecha_vencimiento
+        except Exception as e:
+            _logger.error(f"Error al calcular fecha_vencimiento: {e}")
+            return False
+
+    def _build_generation_vals(self, contract, rule, today):
+        """
+        Valores mínimos para crear un cobro mensual automático.
+        
+        IMPORTANTE: El período facturado se calcula basado en dia_generacion,
+        NO en la fecha actual del cron. Esto asegura que siempre se genere
+        la factura para el período correcto independientemente de cuándo
+        se ejecute el cron.
+        
+        La fecha_vencimiento se calcula automáticamente basada en:
+        - Último día del período facturado
+        - Configuración de mora (dias_mora o meses_mora)
+        """
+        service = self._find_client_service_for_contract(contract)
+        
+        # Calcular período facturado basado en dia_generacion
+        mes_facturado, anio_facturado = self._calculate_billed_period_from_trigger_day(rule, today)
+        
+        # Calcular fecha_vencimiento de forma automática
+        fecha_vencimiento = self._calculate_fecha_vencimiento(
+            mes_facturado, anio_facturado, rule
+        )
+        
+        vals = {
+            'partner_id': contract.partner_id.id,
+            'contract_id': contract.id,
+            'mes': str(mes_facturado),
+            'anio': anio_facturado,
+            'estado_pago': rule.estado_inicial,
+            'fecha_pago': fields.Date.context_today(self),
+        }
+        
+        # Establecer fecha_vencimiento calculada si es válida
+        # (se sobrescribirá automáticamente cuando mes/anio cambien)
+        if fecha_vencimiento:
+            # Nota: No almacenamos esto directamente porque fecha_vencimiento
+            # es un computed field que se recalcula automáticamente.
+            # Sin embargo, podemos dejar un log para debugging.
+            _logger.info(
+                f"Período: {mes_facturado}/{anio_facturado}, "
+                f"fecha_vencimiento calculada: {fecha_vencimiento}"
+            )
+        
+        if service:
+            vals['client_service_id'] = service.id
+        return vals
+
+    def _notify_cobranza_group(self, body, model='wigo.pago.estado', res_id=False):
+        group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
+        if not group:
+            return
+        partners = group.user_ids.mapped('partner_id')
+        if not partners:
+            return
+        self.env['mail.message'].create({
+            'message_type': 'notification',
+            'body': body,
+            'partner_ids': partners.ids,
+            'model': model,
+            'res_id': res_id,
+        })
+
+    def _deactivate_legacy_crons(self):
+        """Desactiva crons antiguos que apuntaban a procesos hardcodeados."""
+        cron_xmlids = [
+            'wigo_cobranza.cron_alertar_mora_dia1',
+            'wigo_cobranza.cron_evaluar_cobranza',
+            'wigo_cobranza.cron_detectar_incobrables',
+            'wigo_cobranza.cron_alertar_suspension',
+        ]
+        crons = self.env['ir.cron'].sudo()
+        for xmlid in cron_xmlids:
+            cron = self.env.ref(xmlid, raise_if_not_found=False)
+            if cron and cron.active:
+                crons.browse(cron.id).write({'active': False})
+
+    def _cron_generar_deudas_diarias(self, today=None):
+        today = today or date.today()
+        rules = self.env['wigo.cobranza.regla']._get_generation_rules_for_day(today.day)
+        if not rules:
+            return 0
+
+        created = 0
+        seen_contracts = set()
+        for rule in rules:
+            contracts = self._get_active_contracts_for_rule(rule)
+            # Calcular el período que esta regla va a facturar
+            mes_facturado, anio_facturado = self._calculate_billed_period_from_trigger_day(rule, today)
+
+            for contract in contracts:
+                if contract.id in seen_contracts:
+                    continue
+                seen_contracts.add(contract.id)
+
+                existing = self._get_existing_payment_for_period(
+                    contract=contract,
+                    mes=str(mes_facturado),
+                    anio=anio_facturado,
+                )
+                if existing:
+                    continue
+
+                vals = self._build_generation_vals(contract, rule, today)
+                self.create(vals)
+                created += 1
+
+        if created:
+            self._notify_cobranza_group(
+                f"📋 Se generaron <b>{created}</b> registros de cobro pendientes "
+                f"para el período {today.strftime('%B %Y')}. Por favor inicie la gestión de cobro."
+            )
+        return created
+
+    def _get_open_payments_for_rules(self, today=None):
+        today = today or date.today()
+        return self.search([
+            ('estado_pago', 'in', ['pendiente', 'mora']),
+            ('contract_id', '!=', False),
+        ], order='fecha_vencimiento asc, id asc')
+
+    def _cron_evaluar_mora_diaria(self, today=None):
+        today = today or date.today()
+        pagos = self._get_open_payments_for_rules(today)
+        _logger.info(f"Evaluando mora para {len(pagos)} pagos abiertos...")
+        mora_count = 0
+        incobrable_contracts = set()
+
+        for rec in pagos:
+            regla = self._get_regla_for_contract(rec.contract_id)
+            _logger.info(f"Evaluando pago {rec.id} del contrato {rec.contract_id.id} con regla {regla if regla else 'N/A'}")
+            if not regla:
+                continue
+
+            # Calcular la fecha en la que este registro entra en mora
+            overdue_date = self._calculate_fecha_vencimiento(rec.mes, rec.anio, regla)
+            if not overdue_date:
+                continue
+
+            dias_atraso = max((today - overdue_date).days, 0)
+            meses_atraso = self._months_between_dates(overdue_date, today)
+
+            # Marcar en mora si hoy es la fecha de vencimiento efectiva o posterior
+            supera_mora = today >= overdue_date
+
+            if not supera_mora:
+                continue
+
+            if rec.estado_pago != 'mora':
+                rec.write({'estado_pago': 'mora'})
+                mora_count += 1
+                self._notify_mora(rec, regla)
+
+            if regla.incobrable_criterio == 'meses':
+                supera_incobrable = meses_atraso >= (regla.meses_incobrable or 0)
+            else:
+                supera_incobrable = dias_atraso >= (regla.dias_incobrable or 0)
+
+            if supera_incobrable:
+                incobrable_contracts.add(rec.contract_id.id)
+
+        for contract_id in incobrable_contracts:
+            contract = self.env['customer.contract'].browse(contract_id)
+            self._check_create_incobrable_from_contract(contract)
+
+        return mora_count
+
+    def _cron_evaluar_incobrables_diario(self, today=None):
+        today = today or date.today()
+        pagos = self._get_open_payments_for_rules(today)
+        contracts_to_check = set()
+
+        for rec in pagos:
+            regla = self._get_regla_for_contract(rec.contract_id)
+            if not regla:
+                continue
+
+            overdue_date = self._calculate_fecha_vencimiento(rec.mes, rec.anio, regla)
+            if not overdue_date:
+                continue
+
+            dias_atraso = max((today - overdue_date).days, 0)
+            meses_atraso = self._months_between_dates(overdue_date, today)
+
+            if regla.incobrable_criterio == 'meses':
+                if meses_atraso >= (regla.meses_incobrable or 0):
+                    contracts_to_check.add(rec.contract_id.id)
+            else:
+                if dias_atraso >= (regla.dias_incobrable or 0):
+                    contracts_to_check.add(rec.contract_id.id)
+
+        for contract_id in contracts_to_check:
+            contract = self.env['customer.contract'].browse(contract_id)
+            self._check_create_incobrable_from_contract(contract)
+
+        return len(contracts_to_check)
+
+    @api.model
+    def cron_procesar_cobranza(self):
+        """Cron maestro diario para cobrar, evaluar mora e incobrables."""
+        _logger.warning("=== CRON COBRANZA EJECUTADO ===")
+        today = date.today()
+        self._deactivate_legacy_crons()
+        generados = self._cron_generar_deudas_diarias(today=today)
+        moras = self._cron_evaluar_mora_diaria(today=today)
+        incobrables = self._cron_evaluar_incobrables_diario(today=today)
+        return {
+            'date': today.isoformat(),
+            'generated': generados,
+            'mora_updated': moras,
+            'incobrables_checked': incobrables,
+        }
 
     @api.depends('partner_id', 'periodo')
     def _compute_display_name(self):
@@ -773,6 +1177,7 @@ class WigoPagoEstado(models.Model):
     def create(self, vals_list):
         Contract = self.env['customer.contract']
         ClientService = self.env['wigo.ftth.client.service']
+        seen_period_keys = set()
         for vals in vals_list:
             partner_id = vals.get('partner_id')
             contract_id = vals.get('contract_id')
@@ -847,23 +1252,39 @@ class WigoPagoEstado(models.Model):
                 vals['mes'] = mes_sugerido
                 vals['anio'] = anio_sugerido
 
+            period_key = (
+                contract_id or service_id or partner_id,
+                str(vals.get('mes')),
+                int(vals.get('anio') or 0),
+            )
+            if period_key in seen_period_keys:
+                raise ValidationError(
+                    'Ya existe un cobro para el mismo período dentro de la misma operación de creación.'
+                )
+            seen_period_keys.add(period_key)
+
+            duplicate = self._get_existing_payment_for_period(
+                contract=Contract.browse(contract_id) if contract_id else None,
+                client_service=ClientService.browse(service_id) if service_id else None,
+                partner=self.env['res.partner'].browse(partner_id) if partner_id else None,
+                mes=vals['mes'],
+                anio=vals['anio'],
+            )
+            if duplicate:
+                raise ValidationError(
+                    f"Ya existe un registro de cobro para el período {vals['mes']}/{vals['anio']} "
+                    f"en el cliente o contrato seleccionado."
+                )
+
             # Poblar modalidad de pago desde el contrato (no editable manualmente)
             if vals.get('contract_id'):
                 contract = Contract.browse(vals.get('contract_id'))
                 vals['payment_mode'] = contract.payment_mode if contract and contract.payment_mode else False
 
-            # Determinar estado inicial según regla configurada
-            if not vals.get('estado_pago'):
-                contract_id = vals.get('contract_id')
-                if contract_id:
-                    contract = Contract.browse(contract_id)
-                    regla = self._get_regla_for_contract(contract)
-                    if regla:
-                        vals['estado_pago'] = regla.estado_inicial
-                    else:
-                        vals.setdefault('estado_pago', 'pendiente')
-                else:
-                    vals.setdefault('estado_pago', 'pendiente')
+            # Establecer estado inicial UNIFORME en 'pendiente'.
+            # Reglas de mora deben evaluarse posteriormente por el cron
+            # o por procesos que centralicen la lógica de mora.
+            vals['estado_pago'] = 'pendiente'
 
         records = super().create(vals_list)
         # Sincronizar valores por defecto para registros persistidos
@@ -877,7 +1298,9 @@ class WigoPagoEstado(models.Model):
                 # escribir con contexto para evitar sincronizar otra vez
                 rec.with_context(skip_sync_payment_defaults=True).write({'monto_pagado': rec.monto_a_cobrar or 0.0})
 
-        records._recompute_contract_mora()
+        # NOTA: No aplicar ninguna evaluación de mora en create().
+        # La evaluación de mora debe ejecutarse exclusivamente desde el cron
+        # (cron_procesar_cobranza / _cron_evaluar_mora_diaria) o funciones explícitas.
         return records
 
     def write(self, vals):
@@ -965,8 +1388,6 @@ class WigoPagoEstado(models.Model):
         # Only trigger sync when not explicitly skipped via context
         if not self.env.context.get('skip_sync_payment_defaults') and any(k in vals for k in ('tipo_ajuste_id', 'es_primer_mes', 'monto_prorrateo', 'monto_plan', 'motivo')):
             self._sync_payment_defaults()
-        if any(k in vals for k in ('estado_pago', 'monto_pagado', 'contract_id', 'mes', 'anio')):
-            self._recompute_contract_mora()
         return res
 
     def action_editar_valores_contables(self):
@@ -1053,29 +1474,56 @@ class WigoPagoEstado(models.Model):
         rec.message_post(
                 body=f"Pago de Bs. {rec.monto_pagado:.2f} registrado vía {dict(rec._fields['canal_pago'].selection).get(rec.canal_pago, '')}."
             )
-        self._recompute_contract_mora()
         return True
 
     def _recompute_contract_mora(self):
         """
-        Regla de negocio: con 3 o más meses sin pago en un contrato,
-        todos los pendientes del contrato pasan a mora.
+        Mantenimiento auxiliar de contrato/servicio.
+
+        Importante: esta rutina NO debe cambiar `estado_pago` a mora.
+        La transición a mora queda exclusivamente a cargo del cron.
         """
         contracts = self.mapped('contract_id').filtered(lambda c: c)
         if not contracts:
             return
+        from datetime import date as _date
 
         for contract in contracts:
-            pagos = self.search([
-                ('contract_id', '=', contract.id),
-            ])
+            pagos = self.search([('contract_id', '=', contract.id)])
+            today = _date.today()
+            # Obtener regla una sola vez por contrato
+            regla_contrato = self._get_regla_for_contract(contract)
+
+            # Evaluar cada pago individualmente: calcular fecha_vencimiento
+            # a partir de mes/anio y la regla (no depender del campo computed)
+            for rec in pagos:
+                try:
+                    if rec.estado_pago == 'pagado':
+                        continue
+
+                    # Calcular fecha de vencimiento aplicada por la regla
+                    fecha_venc = False
+                    if regla_contrato:
+                        fecha_venc = self._calculate_fecha_vencimiento(rec.mes, rec.anio, regla_contrato)
+                    else:
+                        # fallback al campo si no hay regla
+                        fecha_venc = rec.fecha_vencimiento
+
+                    if not fecha_venc:
+                        continue
+
+                    # Marcar en mora si hoy es la fecha de vencimiento o posterior
+                    # No mutar estado_pago aquí. Solo usar la información para
+                    # mantenimiento posterior (servicio, incobrables, etc.).
+                    if today < fecha_venc:
+                        continue
+                except Exception:
+                    continue
+
+            # Mantener la acción de suspensión / creación de incobrables basada
+            # en la cantidad de impagos, pero sin marcar masivamente registros.
             unpaid = pagos.filtered(lambda p: p.estado_pago in ('pendiente', 'mora'))
-
             if len(unpaid) >= 3:
-                for rec in unpaid:
-                    if rec.estado_pago != 'mora':
-                        rec.estado_pago = 'mora'
-
                 latest = unpaid.sorted(
                     key=lambda r: (r.anio or 0, int(r.mes or 0), r.id),
                     reverse=True,
@@ -1083,10 +1531,11 @@ class WigoPagoEstado(models.Model):
                 latest_rec = latest and latest[0] or False
                 service = latest_rec.client_service_id if latest_rec else self._find_client_service_for_contract(contract)
                 if service:
-                    vals = {'estado_pago': 'mora'}
+                    vals = {}
                     if 'estado_servicio' in service._fields and service.estado_servicio != 'baja':
                         vals['estado_servicio'] = 'suspended'
-                    service.write(vals)
+                    if vals:
+                        service.write(vals)
 
                 # Usar regla para decidir si crear incobrable
                 regla = self._get_regla_for_contract(contract)
@@ -1204,27 +1653,21 @@ class WigoPagoEstado(models.Model):
                 })
 
     def action_marcar_mora(self):
-        """Marcar cliente en mora y notificar a técnica para suspensión."""
+        """Acción manual deshabilitada para cambios de estado.
+
+        La transición a `mora` queda exclusivamente en manos del cron.
+        """
         for rec in self:
-            rec.estado_pago = 'mora'
             svc = rec.client_service_id
             if svc:
-                svc.estado_pago = 'mora'
                 svc.message_post(
                     body=(
-                        f"🔴 <b>Cliente en MORA.</b> "
-                        f"Código: <b>{svc.codigo_cliente}</b> — {svc.partner_id.name}. "
-                        f"Período adeudado: {rec.periodo}. "
-                        f"<b>Contabilidad instruye: proceder con la SUSPENSIÓN del servicio en la OLT.</b>"
+                        f"Se solicitó revisión de mora para el período {rec.periodo}. "
+                        f"La actualización de estado se ejecuta únicamente por el cron automático."
                     ),
                     subtype_xmlid='mail.mt_comment',
                     partner_ids=self._get_tech_partner_ids(),
                 )
-            # Usar regla para decidir si crear incobrable
-            if rec.contract_id:
-                regla = self._get_regla_for_contract(rec.contract_id)
-                if regla:
-                    self._check_create_incobrable_from_contract(rec.contract_id)
 
     def action_instruir_baja(self):
         """Instruir baja definitiva al área técnica."""
@@ -1237,8 +1680,8 @@ class WigoPagoEstado(models.Model):
                 svc.fecha_baja = date.today()
                 svc.message_post(
                     body=(
-                        f"⛔ <b>BAJA DEFINITIVA instruida por Contabilidad.</b> "
-                        f"Cliente: <b>{svc.codigo_cliente}</b> — {svc.partner_id.name}. "
+                        f"⛔ BAJA DEFINITIVA instruida por Contabilidad."
+                        f"Cliente: {svc.codigo_cliente} — {svc.partner_id.name}. "
                         f"<b>Área Técnica: retirar equipo ONU y actualizar estado en sistema.</b>"
                     ),
                     subtype_xmlid='mail.mt_comment',
@@ -1464,63 +1907,7 @@ class WigoPagoEstado(models.Model):
     # ─────────────────────────────────────────────────────────────
     @api.model
     def cron_alertar_mora_dia1(self):
-        """
-        Corre el día 1 de cada mes.
-        Crea registros pendientes según reglas configuradas
-        y notifica a cobranza.
-        """
-        hoy = date.today()
-        mes_actual = str(hoy.month)
-        anio_actual = hoy.year
-
-        # Buscar contratos activos que tengan regla con generación automática activada
-        contracts_activos = self.env['customer.contract'].search([
-            ('state', '=', 'active'),
-        ])
-
-        creados = 0
-        for contract in contracts_activos:
-            regla = self._get_regla_for_contract(contract)
-            if not regla or not regla.generacion_automatica:
-                continue
-            if int(regla.dia_generacion) != hoy.day:
-                continue
-
-            svc = self._find_client_service_for_contract(contract)
-            existente = self.search([
-                ('contract_id', '=', contract.id),
-                ('mes', '=', mes_actual),
-                ('anio', '=', anio_actual),
-            ], limit=1)
-            if not existente:
-                vals = {
-                    'partner_id': contract.partner_id.id,
-                    'contract_id': contract.id,
-                    'mes': mes_actual,
-                    'anio': anio_actual,
-                    'estado_pago': regla.estado_inicial,
-                }
-                if svc:
-                    vals['client_service_id'] = svc.id
-                self.create(vals)
-                creados += 1
-
-        # Notificar a grupo cobranza
-        cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
-        if cobranza_group and creados:
-            partners = cobranza_group.user_ids.mapped('partner_id')
-            if partners:
-                self.env['mail.message'].create({
-                    'message_type': 'notification',
-                    'body': (
-                        f"📋 Se generaron <b>{creados}</b> registros de cobro pendientes "
-                        f"para el período {hoy.strftime('%B %Y')}. "
-                        f"Por favor inicie la gestión de cobro."
-                    ),
-                    'partner_ids': partners.ids,
-                    'model': 'wigo.pago.estado',
-                    'res_id': False,
-                })
+        return self.cron_procesar_cobranza()
 
     @api.model
     def action_open_registros_cobro(self):
@@ -1529,112 +1916,11 @@ class WigoPagoEstado(models.Model):
 
     @api.model
     def _ensure_current_month_records(self):
-        hoy = date.today()
-        mes_actual = str(hoy.month)
-        anio_actual = hoy.year
-        contracts_activos = self.env['customer.contract'].search([
-            ('state', '=', 'active'),
-        ])
-
-        for contract in contracts_activos:
-            regla = self._get_regla_for_contract(contract)
-            if not regla or not regla.generacion_automatica:
-                continue
-
-            existente = self.search([
-                ('contract_id', '=', contract.id),
-                ('mes', '=', mes_actual),
-                ('anio', '=', anio_actual),
-            ], limit=1)
-            if existente:
-                continue
-
-            service = self._find_client_service_for_contract(contract)
-            vals = {
-                'partner_id': contract.partner_id.id,
-                'contract_id': contract.id,
-                'mes': mes_actual,
-                'anio': anio_actual,
-                'estado_pago': regla.estado_inicial,
-            }
-            if service:
-                vals['client_service_id'] = service.id
-            self.create(vals)
+        return self._cron_generar_deudas_diarias(today=date.today())
 
     @api.model
     def cron_evaluar_cobranza(self):
-        """
-        Cron diario: evalúa estados de cobranza según reglas configuradas.
-        - Actualiza días de atraso
-        - Pasa a mora/incobrable según configuración
-        """
-        hoy = date.today()
-        pagos_pendientes = self.search([
-            ('estado_pago', 'in', ['pendiente', 'mora']),
-            ('contract_id', '!=', False),
-        ])
-
-        for rec in pagos_pendientes:
-            if not rec.fecha_vencimiento:
-                continue
-            contract = rec.contract_id
-            regla = self._get_regla_for_contract(contract)
-            if not regla:
-                continue
-
-            dias_atraso = (hoy - rec.fecha_vencimiento).days
-            dias_atraso = max(dias_atraso, 0)
-
-            # Determinar umbral de mora según criterio
-            if regla.mora_criterio == 'meses':
-                umbral_mora = regla.meses_mora * 30
-            else:
-                umbral_mora = regla.dias_mora
-
-            # Determinar umbral de incobrable según criterio
-            if regla.incobrable_criterio == 'meses':
-                umbral_incobrable = regla.meses_incobrable * 30
-            else:
-                umbral_incobrable = regla.dias_incobrable
-
-            # Evaluar transición de estados
-            if dias_atraso >= umbral_incobrable and rec.estado_pago != 'mora':
-                rec.estado_pago = 'mora'
-                # Verificar si debe crear incobrable por meses consecutivos
-                self._check_create_incobrable_from_contract(contract)
-            elif dias_atraso >= umbral_mora and rec.estado_pago == 'pendiente':
-                rec.estado_pago = 'mora'
-                # Notificar a cobranza
-                self._notify_mora(rec, regla)
-
-        # Evaluar contratos sin registros generados (día configurado)
-        contracts_activos = self.env['customer.contract'].search([
-            ('state', '=', 'active'),
-        ])
-        for contract in contracts_activos:
-            regla = self._get_regla_for_contract(contract)
-            if not regla or not regla.generacion_automatica:
-                continue
-            if int(regla.dia_generacion) == hoy.day:
-                mes_actual = str(hoy.month)
-                anio_actual = hoy.year
-                existente = self.search([
-                    ('contract_id', '=', contract.id),
-                    ('mes', '=', mes_actual),
-                    ('anio', '=', anio_actual),
-                ], limit=1)
-                if not existente:
-                    svc = self._find_client_service_for_contract(contract)
-                    vals = {
-                        'partner_id': contract.partner_id.id,
-                        'contract_id': contract.id,
-                        'mes': mes_actual,
-                        'anio': anio_actual,
-                        'estado_pago': regla.estado_inicial,
-                    }
-                    if svc:
-                        vals['client_service_id'] = svc.id
-                    self.create(vals)
+        return self.cron_procesar_cobranza()
 
     def _notify_mora(self, rec, regla):
         """Notifica a cobranza sobre cliente en mora."""
@@ -1656,45 +1942,11 @@ class WigoPagoEstado(models.Model):
 
     @api.model
     def cron_detectar_incobrables(self):
-        """
-        Evalúa contratos activos y crea incobrables según reglas configuradas.
-        """
-        contracts_activos = self.env['customer.contract'].search([
-            ('state', '=', 'active'),
-        ])
-
-        for contract in contracts_activos:
-            regla = self._get_regla_for_contract(contract)
-            if not regla:
-                continue
-            self._check_create_incobrable_from_contract(contract)
+        return self.cron_procesar_cobranza()
 
     @api.model
     def cron_alertar_suspension(self):
-        """
-        Identifica clientes con pagos en mora según reglas configuradas
-        y notifica a cobranza para instruir la suspensión.
-        """
-        pagos_mora = self.search([
-            ('estado_pago', '=', 'mora'),
-            ('contract_id', '!=', False),
-        ])
-
-        # Notificar a cobranza
-        cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
-        if cobranza_group and pagos_mora:
-            partners = cobranza_group.user_ids.mapped('partner_id')
-            if partners:
-                self.env['mail.message'].create({
-                    'message_type': 'notification',
-                    'body': (
-                        f"⚠️ <b>{len(pagos_mora)} clientes en mora</b>. "
-                        f"Revisar el reporte <i>Clientes a Suspender Hoy</i> y proceder."
-                    ),
-                    'partner_ids': partners.ids,
-                    'model': 'wigo.pago.estado',
-                    'res_id': False,
-                })
+        return self.cron_procesar_cobranza()
 
 
 class WigoPagoEstadoAttachmentViewerWizard(models.TransientModel):

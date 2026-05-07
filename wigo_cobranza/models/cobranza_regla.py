@@ -55,7 +55,7 @@ class WigoCobranzaRegla(models.Model):
     ],
         string='Criterio de Mora',
         required=True,
-        default='dias',
+        default='meses',
         help='Si se configura por días o por meses.',
     )
     dias_mora = fields.Integer(
@@ -75,7 +75,7 @@ class WigoCobranzaRegla(models.Model):
     ],
         string='Criterio de Incobrable',
         required=True,
-        default='dias',
+        default='meses',
         help='Si se configura por días o por meses.',
     )
     dias_incobrable = fields.Integer(
@@ -135,3 +135,13 @@ class WigoCobranzaRegla(models.Model):
             ('payment_mode', 'in', [contract.payment_mode, 'all']),
         ]
         return self.search(domain, order='sequence, id', limit=1)
+
+    @api.model
+    def _get_generation_rules_for_day(self, day=None):
+        """Reglas activas que deben dispararse en un día específico."""
+        day = day if day is not None else fields.Date.context_today(self).day
+        return self.search([
+            ('active', '=', True),
+            ('generacion_automatica', '=', True),
+            ('dia_generacion', '=', day),
+        ], order='sequence, id')

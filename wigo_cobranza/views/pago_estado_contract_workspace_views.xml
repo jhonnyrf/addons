@@ -15,7 +15,7 @@
                 <field name="monto_a_cobrar" />
                 <field name="monto_pagado" />
                 <field name="fecha_pago"/>
-                <field name="estado_pago" widget="badge"/>
+                <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'"/>
                 <field name="canal_pago" optional="show"/>
                 <field name="registrado_por" optional="show"/>
             </list>
