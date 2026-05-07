@@ -24,26 +24,23 @@
     <record id="view_planilla_general_list" model="ir.ui.view">
         <field name="name">wigo.pago.estado.list.planilla</field>
         <field name="model">wigo.pago.estado</field>
+        <field name="priority" eval="1"/>
         <field name="arch" type="xml">
-            <list string="Planilla de Cobros" multi_edit="1" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc, codigo_cliente">
-                <field name="anio" optional="show"/>
+            <list string="Planilla de Cobros" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc, codigo_cliente">
+                <field name="anio_display" optional="show"/>
                 <field name="mes" optional="show"/>
                 <field name="codigo_cliente"/>
                 <field name="partner_id" string="Cliente"/>
-                <field name="contract_id" optional="show"/>
                 <field name="plan_id"/>
+                <field name="tipo_ajuste_color" column_invisible="1"/>
+                <field name="tipo_ajuste_id" optional="show" widget="tipo_ajuste_badge"/>
+
                 <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
-                <field name="diferencia" string="Diferencia (Bs)" widget="monetary" options="{'currency_field': False}"/>
                 <field name="fecha_pago"/>
-                <field name="canal_pago" optional="show"/>
-                <field name="comprobante" optional="show" string="Referencia"/>
                 <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'al_dia'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
                 <field name="registrado_por" optional="hide"/>
-                <!-- Botón para ir al cliente directamente desde la planilla -->
-                <button name="action_open_partner" string="👤" type="object" title="Ver ficha del cliente"/>
-                <button name="action_registrar_pago" string="✅" type="object" title="Confirmar pago" invisible="estado_pago == 'al_dia'"/>
-                <button name="action_generar_recibo" string="🖨️" type="object" title="Generar recibo de cobro" invisible="estado_pago not in ['al_dia','deuda_parcial']"/>
+
             </list>
         </field>
     </record>
@@ -56,6 +53,7 @@
             <search string="Filtrar planilla">
                 <field name="partner_id" string="Cliente"/>
                 <field name="codigo_cliente" string="Código CF"/>
+                <field name="contract_id" string="Código de contrato"/>
                 <field name="plan_id" string="Plan"/>
                 <field name="anio" string="Año"/>
                 <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
@@ -109,6 +107,7 @@
         <field name="name">Planilla General de Cobros</field>
         <field name="res_model">wigo.pago.estado</field>
         <field name="view_mode">list,pivot,graph</field>
+        <field name="view_id" ref="view_planilla_general_list"/>
         <field name="views" eval="[
             (ref('wigo_cobranza.view_planilla_general_list'), 'list'),
             (ref('wigo_cobranza.view_planilla_general_pivot'), 'pivot'),

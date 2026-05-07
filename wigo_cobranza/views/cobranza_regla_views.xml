@@ -8,7 +8,7 @@
         <field name="name">wigo.cobranza.regla.list</field>
         <field name="model">wigo.cobranza.regla</field>
         <field name="arch" type="xml">
-            <list string="Reglas de Cobranza"
+             <list string="Reglas de Cobranza"
                   default_order="sequence, id">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
@@ -16,10 +16,12 @@
                 <field name="payment_mode"/>
                 <field name="dia_generacion"/>
                 <field name="generacion_automatica" widget="boolean_toggle"/>
-                <field name="dias_mora"/>
-                <field name="dias_incobrable"/>
-                <field name="meses_incobrable"/>
-                <field name="dias_consecutivos_incobrable"/>
+                <field name="mora_criterio"/>
+                <field name="dias_mora" invisible="mora_criterio != 'dias'"/>
+                <field name="meses_mora" invisible="mora_criterio != 'meses'"/>
+                <field name="incobrable_criterio"/>
+                <field name="dias_incobrable" invisible="incobrable_criterio != 'dias'"/>
+                <field name="meses_incobrable" invisible="incobrable_criterio != 'meses'"/>
                 <field name="estado_inicial"/>
             </list>
         </field>
@@ -52,20 +54,22 @@
                         </group>
                     </group>
                     <group string="Tiempos de Morosidad">
-                        <group>
-                            <field name="dias_mora"
-                                   help="Días de atraso desde el vencimiento para marcar Mora."/>
-                        </group>
-                        <group>
-                            <field name="dias_incobrable"
-                                   help="Días de atraso desde el vencimiento para marcar Incobrable."/>
-                        </group>
+                        <field name="mora_criterio" required="1"/>
+                        <field name="dias_mora"
+                               invisible="mora_criterio != 'dias'"
+                               help="Días de atraso desde el vencimiento para marcar Mora."/>
+                        <field name="meses_mora"
+                               invisible="mora_criterio != 'meses'"
+                               help="Meses de atraso desde el vencimiento para marcar Mora."/>
                     </group>
-                    <group string="Criterio de Incobrable">
+                    <group string="Tiempos de Incobrable">
+                        <field name="incobrable_criterio" required="1"/>
+                        <field name="dias_incobrable"
+                               invisible="incobrable_criterio != 'dias'"
+                               help="Días de atraso desde el vencimiento para marcar Incobrable."/>
                         <field name="meses_incobrable"
+                               invisible="incobrable_criterio != 'meses'"
                                help="Meses consecutivos sin pago para crear registro incobrable."/>
-                        <field name="dias_consecutivos_incobrable"
-                               help="Días consecutivos sin pago para crear registro incobrable."/>
                     </group>
                 </sheet>
             </form>

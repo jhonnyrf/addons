@@ -147,6 +147,7 @@ Zona: <field name="cobranza_zona"/>
             <search string="Buscar clientes con contrato">
                 <field name="name" string="Cliente"/>
                 <field name="cobranza_ci" string="CI"/>
+                <field name="vat" string="NIT"/>
                 <field name="cobranza_celular" string="Celular"/>
                 <filter name="has_active_contract" string="Con contrato activo" domain="[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]"/>
                 <filter name="has_payments" string="Con pagos registrados" domain="[('cobranza_pago_ids', '!=', False)]"/>

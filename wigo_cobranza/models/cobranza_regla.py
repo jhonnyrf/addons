@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class WigoCobranzaRegla(models.Model):
@@ -48,11 +49,34 @@ class WigoCobranzaRegla(models.Model):
         string='Generación automática activada',
         default=True,
     )
+    mora_criterio = fields.Selection([
+        ('dias', 'Días'),
+        ('meses', 'Meses'),
+    ],
+        string='Criterio de Mora',
+        required=True,
+        default='dias',
+        help='Si se configura por días o por meses.',
+    )
     dias_mora = fields.Integer(
         string='Días para Mora',
         required=True,
         default=30,
         help='Días de atraso desde la fecha de vencimiento para pasar a estado Mora.',
+    )
+    meses_mora = fields.Integer(
+        string='Meses para Mora',
+        default=1,
+        help='Meses de atraso desde la fecha de vencimiento para pasar a estado Mora.',
+    )
+    incobrable_criterio = fields.Selection([
+        ('dias', 'Días'),
+        ('meses', 'Meses'),
+    ],
+        string='Criterio de Incobrable',
+        required=True,
+        default='dias',
+        help='Si se configura por días o por meses.',
     )
     dias_incobrable = fields.Integer(
         string='Días para Incobrable',
@@ -64,11 +88,6 @@ class WigoCobranzaRegla(models.Model):
         string='Meses consecutivos para Incobrable',
         default=3,
         help='Cantidad de meses consecutivos sin pago para crear registro incobrable.',
-    )
-    dias_consecutivos_incobrable = fields.Integer(
-        string='Días consecutivos para Incobrable',
-        default=90,
-        help='Cantidad de días consecutivos sin pago para crear registro incobrable.',
     )
     estado_inicial = fields.Selection([
         ('pendiente', 'Pendiente'),
@@ -87,14 +106,18 @@ class WigoCobranzaRegla(models.Model):
                     'El día de generación debe estar entre 1 y 28.'
                 )
 
-    @api.constrains('dias_mora', 'dias_incobrable')
+    @api.constrains('dias_mora', 'dias_incobrable', 'meses_mora', 'meses_incobrable')
     def _check_dias(self):
         for rec in self:
-            if rec.dias_mora < 0:
+            if rec.mora_criterio == 'dias' and rec.dias_mora < 0:
                 raise ValidationError('Los días para mora no pueden ser negativos.')
-            if rec.dias_incobrable < 0:
+            if rec.mora_criterio == 'meses' and rec.meses_mora < 0:
+                raise ValidationError('Los meses para mora no pueden ser negativos.')
+            if rec.incobrable_criterio == 'dias' and rec.dias_incobrable < 0:
                 raise ValidationError('Los días para incobrable no pueden ser negativos.')
-            if rec.dias_incobrable <= rec.dias_mora:
+            if rec.incobrable_criterio == 'meses' and rec.meses_incobrable < 0:
+                raise ValidationError('Los meses para incobrable no pueden ser negativos.')
+            if rec.incobrable_criterio == 'dias' and rec.mora_criterio == 'dias' and rec.dias_incobrable <= rec.dias_mora:
                 raise ValidationError(
                     'Los días para incobrable deben ser mayores que los días para mora.'
                 )

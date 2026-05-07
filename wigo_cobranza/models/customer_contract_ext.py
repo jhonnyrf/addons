@@ -31,6 +31,8 @@ class CustomerContractCobranza(models.Model):
         # Generar registro del mes actual según reglas configuradas
         self._ensure_pago_mes_actual()
 
+        related_contracts = self._get_cobranza_version_contracts()
+
         list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
         form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
         views = []
@@ -46,7 +48,7 @@ class CustomerContractCobranza(models.Model):
             'view_mode': 'list,form',
             'views': views or False,
             'target': 'current',
-            'domain': [('contract_id', '=', self.id)],
+            'domain': [('contract_id', 'in', related_contracts.ids or [self.id])],
             'context': {
                 'default_partner_id': self.partner_id.id,
                 'default_contract_id': self.id,
@@ -55,6 +57,22 @@ class CustomerContractCobranza(models.Model):
                 'show_create': True,
             },
         }
+
+    def _get_cobranza_version_contracts(self):
+        """Retorna el contrato actual y toda su cadena de versiones."""
+        self.ensure_one()
+
+        root = self
+        while root.previous_contract_id:
+            root = root.previous_contract_id
+
+        contracts = self.env['customer.contract']
+        current = root
+        while current and current not in contracts:
+            contracts |= current
+            current = current.next_contract_id
+
+        return contracts
 
     def _ensure_pago_mes_actual(self):
         """

@@ -18,9 +18,9 @@
 
      <menuitem id="menu_cobranza_clientes" name="Clientes con Contrato" parent="menu_cobranza_gestion" action="wigo_cobranza.action_cobranza_clientes_contrato" sequence="10"/>
 
-     <menuitem id="menu_cobranza_contratos" name="Contratos Activos" parent="menu_cobranza_gestion" action="customer_contract.action_customer_contract" sequence="20"/>
+     <!-- <menuitem id="menu_cobranza_contratos" name="Contratos Activos" parent="menu_cobranza_gestion" action="customer_contract.action_customer_contract" sequence="20"/> -->
 
-     <menuitem id="menu_cobranza_todos" name="Pagos Mensuales" parent="menu_cobranza_gestion" action="wigo_cobranza.action_open_pago_estado_auto" sequence="30"/>
+     <!-- <menuitem id="menu_cobranza_todos" name="Pagos Mensuales" parent="menu_cobranza_gestion" action="wigo_cobranza.action_open_pago_estado_auto" sequence="30"/> -->
 
      <menuitem id="menu_cobranza_mora" name="Clientes en Mora" parent="menu_cobranza_gestion" action="wigo_cobranza.action_mora" sequence="40"/>
 
@@ -42,11 +42,11 @@
      <menuitem id="menu_baja_incobrable" name="Baja - Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable_baja" sequence="60"/>
 
      <!-- ─── Reportes ─────────────────────────────────────────── -->
-     <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>
+     <!--      <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>
 
      <menuitem id="menu_reporte_mora" name="Reporte de Mora" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_mora" sequence="10"/>
 
-     <menuitem id="menu_reporte_altas_bajas" name="Altas / Bajas / Cambios de Plan" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_altas_bajas" sequence="20"/>
+     <menuitem id="menu_reporte_altas_bajas" name="Altas / Bajas / Cambios de Plan" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_altas_bajas" sequence="20"/> -->
 
      <!-- ─── Configuración ─────────────────────────────────── -->
      <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="menu_cobranza_root" sequence="90"/>

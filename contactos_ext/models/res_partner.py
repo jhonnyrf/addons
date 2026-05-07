@@ -86,6 +86,13 @@ class ResPartner(models.Model):
 
             leads.with_context(skip_lead_to_partner_sync=True).write(vals)
 
+    @api.model
+    def _name_search(self, name='', args=None, operator='ilike', limit=100, order=None):
+        args = list(args or [])
+        if name:
+            args = ['|', '|', ('name', operator, name), ('ci', operator, name), ('vat', operator, name)] + args
+        return self._search(args, limit=limit, order=order)
+
     # ── Planes contratados ────────────────────────────────────────
     partner_plan_ids = fields.One2many(
         'partner.plan', 'partner_id',

@@ -67,6 +67,12 @@ class WigoPagoEstado(models.Model):
     anio = fields.Integer(
         string='Año', required=True,
     )
+    anio_display = fields.Char(
+        string='Año',
+        compute='_compute_anio_display',
+        store=False,
+        readonly=True,
+    )
     mes = fields.Selection(
         [(str(i), name) for i, name in enumerate([
             '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -384,6 +390,12 @@ class WigoPagoEstado(models.Model):
             if 'anio' in fields_list and not res.get('anio'):
                 res['anio'] = anio_sugerido
 
+        if tipo_ajuste and tipo_ajuste.is_default and contract_id:
+            contract = self.env['customer.contract'].browse(contract_id)
+            res['monto_a_cobrar_manual'] = 0.0
+            res['monto_a_cobrar_manual_aplicado'] = False
+            res['monto_pagado'] = contract.plan_id.price if contract.plan_id else 0.0
+
         return res
 
     def _get_default_tipo_ajuste(self):
@@ -445,6 +457,24 @@ class WigoPagoEstado(models.Model):
             self.env.cr.execute(query, params)
             rec._invalidate_cache(['monto_pagado', 'es_primer_mes', 'monto_prorrateo', 'motivo'])
             rec.modified(['monto_pagado', 'es_primer_mes', 'monto_prorrateo', 'motivo'])
+
+    def _apply_default_amounts_onchange(self):
+        """Ajusta los montos en memoria para formularios nuevos o en edición."""
+        for rec in self:
+            if not rec.tipo_ajuste_id:
+                continue
+
+            if rec.tipo_ajuste_id.is_default:
+                rec.monto_a_cobrar_manual = 0.0
+                rec.monto_a_cobrar_manual_aplicado = False
+                rec.es_primer_mes = False
+                rec.monto_prorrateo = 0.0
+                rec.monto_a_cobrar = rec.monto_plan or 0.0
+                rec.monto_pagado = rec.monto_a_cobrar or 0.0
+                continue
+
+            if not rec.monto_pagado:
+                rec.monto_pagado = rec.monto_a_cobrar or rec.monto_plan or 0.0
 
     def _compute_eligible_partner_ids(self):
         Contract = self.env['customer.contract']
@@ -519,8 +549,7 @@ class WigoPagoEstado(models.Model):
             elif not rec.es_primer_mes:
                 rec.monto_prorrateo = 0.0
             rec.monto_a_cobrar = rec.monto_prorrateo if (rec.tipo_ajuste_id and rec.tipo_ajuste_id.enable_proration) or rec.es_primer_mes else rec.monto_plan
-            if rec.tipo_ajuste_id and rec.tipo_ajuste_id.is_default:
-                rec.monto_pagado = rec.monto_a_cobrar or 0.0
+            self._apply_default_amounts_onchange()
 
     @api.constrains('tipo_ajuste_id', 'monto_prorrateo', 'motivo')
     def _check_tipo_ajuste_rules(self):
@@ -607,6 +636,14 @@ class WigoPagoEstado(models.Model):
             nombre = rec.partner_id.name or ''
             rec.display_name = f"{nombre} — {rec.periodo}" if rec.periodo else nombre
 
+    @api.depends('anio')
+    def _compute_anio_display(self):
+        for rec in self:
+            if rec.anio:
+                rec.anio_display = f"{int(rec.anio):,}".replace(',', '.')
+            else:
+                rec.anio_display = False
+
     @api.depends('client_service_id.lead_id', 'contract_id.lead_id')
     def _compute_crm_data(self):
         for rec in self:
@@ -642,6 +679,7 @@ class WigoPagoEstado(models.Model):
         self._apply_next_period_for_new_record()
 
         self._sync_payment_defaults()
+        self._apply_default_amounts_onchange()
 
     @api.onchange('contract_id')
     def _onchange_contract_id(self):
@@ -653,12 +691,13 @@ class WigoPagoEstado(models.Model):
         self._apply_next_period_for_new_record()
 
         self._sync_payment_defaults()
+        self._apply_default_amounts_onchange()
 
     @api.onchange('monto_a_cobrar')
     def _onchange_monto_a_cobrar(self):
-        # No precargar el valor pagado antes de la confirmación.
-        if not self.estado_pago or self.estado_pago == 'pendiente':
-            self.monto_pagado = 0.0
+        # Mantener el monto pagado si el usuario ya lo ha llenado manualmente.
+        # El valor por defecto se ajusta en el tipo de ajuste por defecto.
+        return
 
     @api.onchange('client_service_id')
     def _onchange_client_service_id(self):
@@ -671,6 +710,7 @@ class WigoPagoEstado(models.Model):
         self._apply_next_period_for_new_record()
 
         self._sync_payment_defaults()
+        self._apply_default_amounts_onchange()
 
     def _get_preferred_contract(self, partner):
         Contract = self.env['customer.contract']
@@ -791,6 +831,9 @@ class WigoPagoEstado(models.Model):
                     vals.setdefault('monto_prorrateo', 0.0)
                 if not tipo_ajuste.requires_reason:
                     vals['motivo'] = False
+                if tipo_ajuste.is_default:
+                    vals['monto_a_cobrar_manual'] = 0.0
+                    vals['monto_a_cobrar_manual_aplicado'] = False
             else:
                 vals.setdefault('monto_prorrateo', 0.0)
                 vals.setdefault('motivo', False)
@@ -872,6 +915,9 @@ class WigoPagoEstado(models.Model):
                     vals.setdefault('monto_prorrateo', 0.0)
                 if not tipo_ajuste.requires_reason:
                     vals['motivo'] = False
+                if tipo_ajuste.is_default:
+                    vals['monto_a_cobrar_manual'] = 0.0
+                    vals['monto_a_cobrar_manual_aplicado'] = False
             else:
                 vals['es_primer_mes'] = False
                 vals['monto_prorrateo'] = 0.0
@@ -992,8 +1038,8 @@ class WigoPagoEstado(models.Model):
 
             svc = rec.client_service_id
             if svc:
-                svc.write({'estado_pago': nuevo_estado})
-                if svc.estado_servicio == 'suspended':
+                if nuevo_estado == 'pagado' and svc.estado_servicio == 'suspended':
+                    svc.write({'estado_servicio': 'active'})
                     svc.message_post(
                         body=(
                             f"✅ <b>Pago registrado por cobranza.</b> "
@@ -1104,8 +1150,15 @@ class WigoPagoEstado(models.Model):
             ultimo_anio = anio_actual
             periodos_adeudados.append(pago.periodo)
 
-        if meses_consecutivos < regla.meses_incobrable:
-            return
+        if regla.incobrable_criterio == 'meses':
+            if meses_consecutivos < regla.meses_incobrable:
+                return
+        else:
+            # Si es por días, verificar usando días_incobrable
+            # Calculamos los días aproximados desde el primer pago pendiente
+            dias_consecutivos = meses_consecutivos * 30
+            if dias_consecutivos < regla.dias_incobrable:
+                return
 
         monto_total = sum(pagos[:meses_consecutivos].mapped('monto_a_cobrar'))
         meses_txt = ', '.join(reversed(periodos_adeudados))
@@ -1532,12 +1585,24 @@ class WigoPagoEstado(models.Model):
             dias_atraso = (hoy - rec.fecha_vencimiento).days
             dias_atraso = max(dias_atraso, 0)
 
+            # Determinar umbral de mora según criterio
+            if regla.mora_criterio == 'meses':
+                umbral_mora = regla.meses_mora * 30
+            else:
+                umbral_mora = regla.dias_mora
+
+            # Determinar umbral de incobrable según criterio
+            if regla.incobrable_criterio == 'meses':
+                umbral_incobrable = regla.meses_incobrable * 30
+            else:
+                umbral_incobrable = regla.dias_incobrable
+
             # Evaluar transición de estados
-            if dias_atraso >= regla.dias_incobrable and rec.estado_pago != 'mora':
+            if dias_atraso >= umbral_incobrable and rec.estado_pago != 'mora':
                 rec.estado_pago = 'mora'
                 # Verificar si debe crear incobrable por meses consecutivos
                 self._check_create_incobrable_from_contract(contract)
-            elif dias_atraso >= regla.dias_mora and rec.estado_pago == 'pendiente':
+            elif dias_atraso >= umbral_mora and rec.estado_pago == 'pendiente':
                 rec.estado_pago = 'mora'
                 # Notificar a cobranza
                 self._notify_mora(rec, regla)

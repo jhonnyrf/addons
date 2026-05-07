@@ -9,7 +9,9 @@
         <field name="payment_mode">all</field>
         <field name="dia_generacion">1</field>
         <field name="generacion_automatica">True</field>
+        <field name="mora_criterio">dias</field>
         <field name="dias_mora">30</field>
+        <field name="incobrable_criterio">dias</field>
         <field name="dias_incobrable">90</field>
         <field name="meses_incobrable">3</field>
         <field name="estado_inicial">pendiente</field>
@@ -23,7 +25,9 @@
         <field name="payment_mode">prepaid</field>
         <field name="dia_generacion">1</field>
         <field name="generacion_automatica">False</field>
+        <field name="mora_criterio">dias</field>
         <field name="dias_mora">15</field>
+        <field name="incobrable_criterio">dias</field>
         <field name="dias_incobrable">60</field>
         <field name="meses_incobrable">2</field>
         <field name="estado_inicial">pendiente</field>
@@ -37,7 +41,9 @@
         <field name="payment_mode">postpaid</field>
         <field name="dia_generacion">1</field>
         <field name="generacion_automatica">True</field>
+        <field name="mora_criterio">dias</field>
         <field name="dias_mora">30</field>
+        <field name="incobrable_criterio">dias</field>
         <field name="dias_incobrable">90</field>
         <field name="meses_incobrable">3</field>
         <field name="estado_inicial">pendiente</field>
