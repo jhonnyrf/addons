@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Helpdesk WigoFast',
-    'version': '19.0.5.1.0',
+    'version': '19.0.5.2.0',
     'category': 'Services/Helpdesk',
     'summary': 'Gestión de tickets de soporte para ISP WigoFast',
     'description': """
@@ -57,9 +57,9 @@
         'views/helpdesk_menu.xml',
         'report/helpdesk_ticket_report.xml',
         'report/helpdesk_ticket_report_template.xml',
-        'wizard/assign_ticket_wizard_views.xml',
-        'wizard/close_ticket_wizard_views.xml',
-        'wizard/sla_advanced_wizard_views.xml',
+        'views/helpdesk_assign_wizard_views.xml',
+        'views/helpdesk_close_wizard_views.xml',
+        'views/helpdesk_sla_advanced_wizard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

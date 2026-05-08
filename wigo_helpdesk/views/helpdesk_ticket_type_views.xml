@@ -8,7 +8,6 @@
         <field name="arch" type="xml">
             <list string="Tipos de Tickets" editable="bottom">
                 <field name="sequence" widget="handle"/>
-                <field name="code"/>
                 <field name="name"/>
                 <field name="description"/>
                 <field name="color" widget="color_picker"/>
@@ -33,13 +32,8 @@
                     </div>
                     <group>
                         <group>
-                            <field name="code" placeholder="Ej: incident, request"/>
-                            <field name="sequence"/>
                             <field name="color" widget="color_picker"/>
                             <field name="active"/>
-                        </group>
-                        <group>
-                            <field name="ticket_count" readonly="1"/>
                         </group>
                     </group>
                     <group string="Descripción">

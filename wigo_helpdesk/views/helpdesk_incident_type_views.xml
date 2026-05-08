@@ -1,6 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- SEARCH VIEW con filtros en sidebar -->
+    <record id="view_helpdesk_incident_type_search" model="ir.ui.view">
+        <field name="name">helpdesk.incident.type.search</field>
+        <field name="model">helpdesk.incident.type</field>
+        <field name="arch" type="xml">
+            <search string="Tipos de Incidencia">
+                <searchpanel enable_counters="true">
+                    <field name="area_id" select="groupby" icon="fa-folder-o"/>
+                    <field name="ticket_type_id" select="groupby" icon="fa-tags"/>
+                </searchpanel>
+                <field name="name" string="Nombre"/>
+                <field name="area_id" string="Área"/>
+                <field name="ticket_type_id" string="Tipo de Ticket"/>
+                <field name="priority_suggestion" string="Prioridad"/>
+
+                <separator/>
+
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+
+                <separator/>
+
+                <filter name="filter_priority_baja" string="Prioridad: Baja" domain="[('priority_suggestion', '=', '0')]"/>
+                <filter name="filter_priority_media" string="Prioridad: Media" domain="[('priority_suggestion', '=', '1')]"/>
+                <filter name="filter_priority_alta" string="Prioridad: Alta" domain="[('priority_suggestion', '=', '2')]"/>
+                <filter name="filter_priority_critica" string="Prioridad: Crítica" domain="[('priority_suggestion', '=', '3')]"/>
+
+                <separator/>
+
+                <filter name="filter_by_area" string="Por Área" context="{'group_by': 'area_id'}"/>
+                <filter name="filter_by_priority" string="Por Prioridad" context="{'group_by': 'priority_suggestion'}"/>
+                <filter name="filter_by_type" string="Por Tipo de Ticket" context="{'group_by': 'ticket_type_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- TIPOS DE INCIDENCIAS — lista editable -->
     <record id="view_helpdesk_incident_type_list" model="ir.ui.view">
         <field name="name">helpdesk.incident.type.list</field>
         <field name="model">helpdesk.incident.type</field>
@@ -8,49 +45,58 @@
             <list string="Tipos de Incidencia" editable="bottom">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="code"/>
-                <field name="ticket_type_scope"/>
-                <field name="area"/>
-                <field name="requires_visit"/>
-                <field name="priority_suggestion"/>
-                <field name="color" widget="color_picker"/>
+                <field name="area_id"/>
+                <field name="ticket_type_id"/>
+                <field name="priority_suggestion" decoration-danger="priority_suggestion == '3'" decoration-warning="priority_suggestion == '2'" decoration-info="priority_suggestion == '1'" decoration-success="priority_suggestion == '0'"/>
                 <field name="ticket_count" readonly="1"/>
                 <field name="active"/>
             </list>
         </field>
     </record>
 
+    <!-- TIPOS DE INCIDENCIAS — formulario completo -->
     <record id="view_helpdesk_incident_type_form" model="ir.ui.view">
         <field name="name">helpdesk.incident.type.form</field>
         <field name="model">helpdesk.incident.type</field>
         <field name="arch" type="xml">
             <form string="Tipo de Incidencia">
                 <sheet>
-                    <group>
-                        <group>
+                    <div class="oe_title">
+                        <label for="name" string="Tipo de Incidencia"/>
+                        <h1>
                             <field name="name" placeholder="Ej: Sin señal, Velocidad baja..."/>
-                            <field name="code" placeholder="Ej: no_signal"/>
-                            <field name="ticket_type_scope"/>
-                            <field name="area"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Configuración">
+                            <field name="area_id" required="1" help="Selecciona el área/departamento responsable"/>
+                            <field name="ticket_type_id" required="1" help="Tipo de ticket asociado"/>
+                            <field name="sequence"/>
+                        </group>
+
+                        <group string="Prioridad y Color">
+                            <field name="priority_suggestion" required="1"/>
+                            <field name="color" widget="color_picker" readonly="1" help="Color asignado automáticamente según prioridad"/>
                             <field name="active"/>
                         </group>
-                        <group>
-                            <field name="requires_visit" help="Al usar este tipo, se marcará automáticamente que requiere visita."/>
-                            <field name="priority_suggestion"/>
-                            <field name="color" widget="color_picker"/>
-                            <field name="sequence"/>
-                            <field name="ticket_count" readonly="1"/>
-                        </group>
                     </group>
+
+                    <footer>
+                        <field name="code" readonly="1" invisible="1"/>
+                        <field name="ticket_count" readonly="1"/>
+                    </footer>
                 </sheet>
             </form>
         </field>
     </record>
 
+    <!-- ACCIÓN para abrir tipos de incidencias -->
     <record id="action_helpdesk_incident_type" model="ir.actions.act_window">
         <field name="name">Tipos de Incidencia</field>
         <field name="res_model">helpdesk.incident.type</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_helpdesk_incident_type_search"/>
     </record>
 
 </odoo>

@@ -12,3 +12,6 @@ from . import helpdesk_knowledge
 from . import mail_activity
 from . import helpdesk_ticket
 from . import res_partner
+from . import helpdesk_assign_wizard
+from . import helpdesk_close_wizard
+from . import helpdesk_sla_advanced_wizard

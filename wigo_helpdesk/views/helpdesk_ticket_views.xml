@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- SEARCH VIEW para filtros en sidebar -->
+    <record id="view_helpdesk_ticket_search" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.search</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Tickets">
+                <field name="title" string="Título"/>
+                <field name="customer_name" string="Cliente"/>
+                <field name="incident_type_id" string="Síntoma"/>
+
+                <separator/>
+
+                <!-- Filtros por Estado -->
+                <filter name="filter_my" string="Mis Tickets" domain="['|', ('employee_id.user_id', '=', uid), ('user_id', '=', uid)]"/>
+                <filter name="filter_open" string="Abiertos" domain="[('is_closed', '=', False)]"/>
+                <filter name="filter_closed" string="Cerrados" domain="[('is_closed', '=', True)]"/>
+
+                <separator/>
+
+                <!-- Filtros por Incidencia -->
+                <filter name="filter_by_incident" string="Por Síntoma" context="{'group_by': 'incident_type_id'}"/>
+
+                <!-- Filtros por Área -->
+                <filter name="filter_by_area" string="Por Área" context="{'group_by': 'area_id'}"/>
+
+                <!-- Filtros por Prioridad -->
+                <filter name="filter_by_priority" string="Por Prioridad" context="{'group_by': 'priority'}"/>
+                <filter name="filter_priority_baja" string="Prioridad: Baja" domain="[('priority', '=', '0')]"/>
+                <filter name="filter_priority_media" string="Prioridad: Media" domain="[('priority', '=', '1')]"/>
+                <filter name="filter_priority_alta" string="Prioridad: Alta" domain="[('priority', '=', '2')]"/>
+                <filter name="filter_priority_critica" string="Prioridad: Crítica" domain="[('priority', '=', '3')]"/>
+
+                <separator/>
+
+                <!-- Filtros por SLA -->
+                <filter name="filter_sla_ok" string="SLA en Tiempo" domain="[('sla_status', '=', 'ok')]"/>
+                <filter name="filter_sla_warning" string="SLA Próximo a Vencer" domain="[('sla_status', '=', 'warning')]"/>
+                <filter name="filter_sla_danger" string="SLA Vencido" domain="[('sla_status', '=', 'danger')]"/>
+            </search>
+        </field>
+    </record>
+
     <record id="view_helpdesk_ticket_form" model="ir.ui.view">
         <field name="name">helpdesk.ticket.form</field>
         <field name="model">helpdesk.ticket</field>
@@ -24,11 +66,10 @@
                     <div class="oe_title">
                         <label for="title" string="Ticket"/>
                         <h1>
-                            <field name="title" placeholder="Descripción breve del problema..."/>
+                            <field name="title" placeholder="Descripción breve del Ticket..."/>
                         </h1>
-                        <div class="d-flex gap-3 align-items-center">
-                            <field name="name" readonly="1" class="text-muted"/>
-                            <field name="priority" widget="priority" class="wigo_priority_big"/>
+                        <div class="d-flex justify-content-end">
+                            <field name="priority" widget="priority" class="wigo_priority_big" style="transform: scale(1.5); display: inline-block;"/>
                         </div>
                     </div>
 
@@ -174,10 +215,9 @@
                         <page string="Visita Técnica" name="visit">
                             <group>
                                 <group string="Programación de visita">
-                                    <field name="requires_visit"/>
-                                    <field name="technician_id" invisible="not requires_visit" required="requires_visit" string="Asignar a" help="Asigna un técnico para que reciba la actividad en su bitácora."/>
-                                    <field name="visit_date" invisible="not requires_visit" required="requires_visit" string="Fecha programada"/>
-                                    <field name="visit_result" invisible="not requires_visit" string="Estado de visita"/>
+                                    <field name="technician_id" required="1" string="Asignar a" help="Asigna un técnico para que reciba la actividad en su bitácora."/>
+                                    <field name="visit_date" required="1" string="Fecha programada"/>
+                                    <field name="visit_result" string="Estado de visita"/>
                                 </group>
                             </group>
                         </page>
@@ -492,6 +532,7 @@ h restantes
         <field name="name">Todos los Tickets</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">kanban,list,graph,form</field>
+        <field name="search_view_id" ref="view_helpdesk_ticket_search"/>
         <field name="context">{'search_default_filter_my': 1}</field>
     </record>
 

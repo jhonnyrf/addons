@@ -10,7 +10,6 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
 
     ticket_id = fields.Many2one('helpdesk.ticket', string='Ticket', required=True)
 
-    # Info de solo lectura (actual)
     sla_status = fields.Selection(related='ticket_id.sla_status', string='Estado SLA', readonly=True)
     sla_deadline_current = fields.Datetime(
         string='Límite actual', compute='_compute_current_sla', readonly=True,
@@ -25,7 +24,6 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
         string='Inicio actual', compute='_compute_current_sla', readonly=True,
     )
 
-    # Vista previa según selección del wizard
     sla_deadline_preview = fields.Datetime(
         string='Límite previsto', compute='_compute_sla_preview', readonly=True,
     )
@@ -39,13 +37,11 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
         string='Inicio previsto', compute='_compute_sla_preview', readonly=True,
     )
 
-    # Modo de configuracion
     sla_mode = fields.Selection([
         ('quick', 'Dias'),
         ('advanced', 'Avanzado'),
     ], string='Modo', default='quick', required=True)
 
-    # Modo rapido
     sla_quick_days = fields.Selection([
         ('1', '1 día'),
         ('2', '2 días'),
@@ -56,7 +52,6 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
         ('7', '7 días'),
     ], string='Duración', default='2')
 
-    # Modo avanzado
     sla_start_datetime = fields.Datetime(string='Inicio SLA')
     sla_end_datetime = fields.Datetime(string='Fin SLA')
 

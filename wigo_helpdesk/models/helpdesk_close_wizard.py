@@ -56,7 +56,6 @@ class HelpdeskCloseWizard(models.TransientModel):
         self.ticket_id.write(vals)
         if self.close_ticket:
             self.ticket_id.action_close()
-        # Log en chatter
         body_parts = []
         if self.resolution_notes:
             body_parts.append(f'<b>Resolución:</b> {self.resolution_notes}')

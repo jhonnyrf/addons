@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields
+from odoo import models, fields, api
+import re
 
 
 class HelpdeskTicketType(models.Model):
@@ -15,7 +16,7 @@ class HelpdeskTicketType(models.Model):
     code = fields.Char(
         string='Código',
         required=True,
-        help='Código interno para el tipo de ticket (ej: incident, request)',
+        help='Código interno para el tipo de ticket (se genera automáticamente)',
     )
     sequence = fields.Integer(
         string='Secuencia',
@@ -48,3 +49,12 @@ class HelpdeskTicketType(models.Model):
         mapped = {type_id.id: count for type_id, count in ticket_data}
         for ticket_type in self:
             ticket_type.ticket_count = mapped.get(ticket_type.id, 0)
+
+    @api.onchange('name')
+    def _onchange_name(self):
+        """Generar automáticamente el código a partir del nombre"""
+        if self.name:
+            # Convertir a lowercase, remover espacios y caracteres especiales
+            code = self.name.lower()
+            code = re.sub(r'[^a-z0-9_]', '', code.replace(' ', '_'))
+            self.code = code

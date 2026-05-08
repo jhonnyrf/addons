@@ -8,7 +8,6 @@
             <form string="Configurar SLA">
                 <sheet>
 
-                    <!-- Vista previa del SLA -->
                     <div class="alert alert-secondary wigo_sla_wizard_status mb-3 py-2 px-3" role="status">
                         <div class="wigo_sla_wizard_row">
                             <div class="wigo_sla_wizard_label text-muted">Inicio:</div>
@@ -32,12 +31,10 @@
                         </div>
                     </div>
 
-                    <!-- Selector de modo -->
                     <group>
                         <field name="sla_mode" widget="radio" string="Tipo de configuración"/>
                     </group>
 
-                    <!-- Modo DIAS -->
                     <group string="⏱ Duración en días" invisible="sla_mode != 'quick'">
                         <div class="text-muted small mb-2">
                             El límite SLA se calculará desde la fecha de apertura del ticket (o desde el inicio ya guardado si el SLA fue aplicado antes).
@@ -47,7 +44,6 @@
                         </group>
                     </group>
 
-                    <!-- Modo AVANZADO -->
                     <group string="📅 Fechas personalizadas" invisible="sla_mode != 'advanced'">
                         <div class="text-muted small mb-2">
                             Define exactamente cuándo empieza y termina el período SLA.

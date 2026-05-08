@@ -171,6 +171,7 @@ class HelpdeskTicket(models.Model):
         tracking=True,
         index=True,
         help='Seleccione el tipo de ticket para clasificar correctamente la atencion.',
+        default=lambda self: self.env['helpdesk.ticket.type'].search([], order='sequence', limit=1),
     )
     category_id = fields.Many2one(
         comodel_name='helpdesk.category', string='Categoría', tracking=True, index=True,
@@ -874,13 +875,12 @@ class HelpdeskTicket(models.Model):
 
     @api.onchange('ticket_type_id')
     def _onchange_ticket_type_id(self):
-        if not self.incident_type_id:
+        """Validar que el tipo de incidencia sea compatible con el tipo de ticket"""
+        if not self.incident_type_id or not self.ticket_type_id:
             return
-        # Comparar el código del ticket_type con el ticket_type_scope
-        ticket_type_code = self.ticket_type_id.code if self.ticket_type_id else None
-        if self.incident_type_id.ticket_type_scope in ('both', ticket_type_code):
-            return
-        self.incident_type_id = False
+        # Verificar que el ticket_type_id del incident_type coincida con el seleccionado
+        if self.incident_type_id.ticket_type_id != self.ticket_type_id:
+            self.incident_type_id = False
 
     @api.onchange('area_id')
     def _onchange_area_id(self):
@@ -898,11 +898,6 @@ class HelpdeskTicket(models.Model):
             self.user_id = self.employee_id.user_id
         if self.employee_id and self.employee_id.department_id and not self.area_id:
             self.area_id = self.employee_id.department_id
-
-    @api.onchange('incident_type_id')
-    def _onchange_requires_visit(self):
-        if self.incident_type_id and self.incident_type_id.requires_visit:
-            self.requires_visit = True
 
     @api.onchange('visit_diagnosis_id')
     def _onchange_visit_diagnosis_id(self):

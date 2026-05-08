@@ -33,11 +33,7 @@
                                 <filter name="filter_my" string="Mis Tickets" domain="['|', ('employee_id.user_id', '=', uid), ('user_id', '=', uid)]"/>
                                 <filter name="filter_critical" string="Prioridad Crítica" domain="[('priority', '=', '3')]"/>
                                 <filter name="filter_escalated" string="Escalados" domain="[('is_escalated', '=', True)]"/>
-                                <filter name="filter_visit" string="Visitas Pendientes" domain="[('requires_visit', '=', True), ('visit_result', '=', 'pending')]"/>
                                 <filter name="filter_postventa" string="Sin Postventa" domain="[('postventa_done', '=', False), ('is_closed', '=', True)]"/>
-                                <separator/>
-                                <filter name="filter_technical" string="Área Técnica" domain="[('incident_type_id.area', '=', 'technical')]"/>
-                                <filter name="filter_commercial" string="Área Comercial" domain="[('incident_type_id.area', '=', 'commercial')]"/>
                                 <separator/>
                                 <!-- Filtros por mes -->
                                 <filter name="filter_this_month" string="Este Mes" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
