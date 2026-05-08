@@ -66,7 +66,7 @@ class WigoPagoEstado(models.Model):
     crm_coordenadas = fields.Char(string='Coordenadas CRM', compute='_compute_crm_data', store=False)
 
     # ── Período ───────────────────────────────────────────────────
-    anio = fields.Integer(
+    anio = fields.Char(
         string='Año', required=True,
     )
     anio_display = fields.Char(

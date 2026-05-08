@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'">
                 <field name="plan_id"/>
-
                 <field name="periodo"/>
                 <field name="tipo_ajuste_color" column_invisible="1"/>
                 <field name="payment_mode" string="Modalidad" optional="show"/>
@@ -62,7 +61,6 @@
                             <field name="tipo_ajuste_is_default" invisible="1"/>
                             <field name="tipo_ajuste_color" invisible="1"/>
                             <field name="es_primer_mes" invisible="1"/>
-
                             <field name="mes" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                             <field name="anio" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                             <field name="periodo" readonly="1"/>
