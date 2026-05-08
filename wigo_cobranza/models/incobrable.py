@@ -24,6 +24,19 @@ class WigoIncobrable(models.Model):
         'customer.contract', string='Contrato',
         tracking=True,
     )
+    contract_phone = fields.Char(
+        string='Teléfono del contrato',
+        related='contract_id.phone', store=True, readonly=True,
+    )
+    contract_mobile = fields.Char(
+        string='Móvil del contrato',
+        related='contract_id.mobile', store=True, readonly=True,    
+    )
+    contract_date = fields.Date(
+        string='Fecha del contrato',
+        related='contract_id.contract_date', store=True, readonly=True,
+    )
+    
     client_service_id = fields.Many2one(
         'wigo.ftth.client.service', string='Servicio (CF)',
         ondelete='restrict', tracking=True,
@@ -36,6 +49,14 @@ class WigoIncobrable(models.Model):
         'internet.plan', string='Plan',
         compute='_compute_datos_cliente', store=True,
     )
+    monto_plan = fields.Float(
+        string='Monto del plan (Bs)',
+        related='plan_id.price', store=True, readonly=True,
+    )
+    plan_identifier = fields.Char(
+        string='Identificador del plan',
+        related='plan_id.plan_identifier', store=True, readonly=True,
+    )
 
     # ── Deuda ────────────────────────────────────────────────────
     meses_adeudados = fields.Char(
@@ -46,11 +67,7 @@ class WigoIncobrable(models.Model):
     monto_total_adeudado = fields.Float(
         string='Monto total adeudado (Bs)',
         tracking=True,
-    )
-    monto_condonado = fields.Float(
-        string='Monto condonado (Bs)',
-        tracking=True,
-    )
+    )    
     monto_cobrado = fields.Float(
         string='Monto cobrado efectivamente (Bs)',
         tracking=True,
@@ -69,17 +86,11 @@ class WigoIncobrable(models.Model):
     fecha_baja_servicio = fields.Date(
         string='Fecha baja de servicio', tracking=True,
     )
-    equipo_retirado = fields.Boolean(
-        string='Equipo ONU retirado', tracking=True,
-    )
-    fecha_retiro_equipo = fields.Date(
-        string='Fecha retiro equipo', tracking=True,
-    )
+      
     state = fields.Selection([
-        ('activo', 'En gestión'),       # todavía hay esperanza
+        ('activo', 'En gestión'),   
         ('baja_incobrable', 'Baja - Incobrable'),
-        ('recuperado', 'Recuperado'),    # pagó después
-        ('condonado', 'Condonado'),
+        ('recuperado', 'Recuperado')        
     ], string='Estado', default='activo', required=True, tracking=True, index=True)
 
     # ── Observaciones ────────────────────────────────────────────
@@ -102,12 +113,11 @@ class WigoIncobrable(models.Model):
                 False
             )
 
-    @api.depends('monto_total_adeudado', 'monto_condonado', 'monto_cobrado')
+    @api.depends('monto_total_adeudado', 'monto_cobrado')
     def _compute_diferencia_incobrable(self):
         for rec in self:
             rec.diferencia_incobrable = (
-                rec.monto_total_adeudado -
-                rec.monto_condonado -
+                rec.monto_total_adeudado -                
                 rec.monto_cobrado
             )
 
@@ -133,10 +143,6 @@ class WigoIncobrable(models.Model):
         for rec in self:
             rec.state = 'recuperado'
 
-    def action_marcar_condonado(self):
-        for rec in self:
-            rec.state = 'condonado'
-
     @api.model
     def crear_desde_pago_mora(self, pago_estado):
         """
@@ -146,7 +152,7 @@ class WigoIncobrable(models.Model):
         existing = self.search([
             ('partner_id', '=', pago_estado.partner_id.id),
             ('contract_id', '=', pago_estado.contract_id.id),
-            ('state', 'not in', ['recuperado', 'condonado']),
+            ('state', '!=', 'recuperado'),
         ], limit=1)
         if existing:
             return existing

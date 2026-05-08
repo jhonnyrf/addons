@@ -8,27 +8,15 @@
         <field name="name">wigo.incobrable.list</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
-            <list string="Incobrables"
-                  decoration-danger="state == 'baja_incobrable'"
-                  decoration-success="state == 'recuperado'"
-                  decoration-muted="state == 'condonado'">
+            <list string="Incobrables" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'">
                 <field name="codigo_cliente" optional="show"/>
                 <field name="partner_id"/>
-                <field name="contract_id" optional="show"/>
                 <field name="plan_id" optional="show"/>
                 <field name="meses_adeudados"/>
                 <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
-                <field name="monto_condonado" optional="show" widget="monetary" options="{'currency_field': False}"/>
                 <field name="monto_cobrado" optional="show" widget="monetary" options="{'currency_field': False}"/>
-                <field name="diferencia_incobrable" widget="monetary" options="{'currency_field': False}"
-                       string="Incobrable (Bs)"/>
                 <field name="fecha_declaracion"/>
-                <field name="equipo_retirado" optional="show"/>
-                <field name="state" widget="badge"
-                       decoration-danger="state == 'baja_incobrable'"
-                       decoration-success="state == 'recuperado'"
-                       decoration-warning="state == 'activo'"
-                       decoration-muted="state == 'condonado'"/>
+                <field name="state" widget="badge" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'" decoration-warning="state == 'activo'" decoration-muted="state == 'condonado'"/>
             </list>
         </field>
     </record>
@@ -42,68 +30,51 @@
         <field name="arch" type="xml">
             <form string="Registro Incobrable">
                 <header>
-                    <button name="action_marcar_baja_incobrable" string="⛔ Baja Incobrable"
-                            type="object" class="btn-danger"
-                            invisible="state == 'baja_incobrable'"
-                            confirm="¿Confirma declarar esta deuda como incobrable y dar de baja el servicio?"/>
-                    <button name="action_marcar_recuperado" string="✅ Recuperado"
-                            type="object" class="btn-success"
-                            invisible="state in ['recuperado','condonado']"/>
-                    <button name="action_marcar_condonado" string="📝 Condonar Deuda"
-                            type="object" class="btn-warning"
-                            invisible="state in ['recuperado','condonado']"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="activo,baja_incobrable,recuperado,condonado"/>
+                    <button name="action_marcar_baja_incobrable" string="Baja Incobrable" type="object" class="btn-danger" invisible="state == 'baja_incobrable'" confirm="¿Confirma declarar esta deuda como incobrable y dar de baja el servicio?"/>
+                    <button name="action_marcar_recuperado" string="Recuperado" type="object" class="btn-success" invisible="state in ['recuperado','condonado']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="activo,baja_incobrable,recuperado"/>
                 </header>
                 <sheet>
-                    <widget name="web_ribbon" title="BAJA INCOBRABLE" bg_color="text-bg-danger"
-                            invisible="state != 'baja_incobrable'"/>
-                    <widget name="web_ribbon" title="Recuperado" bg_color="text-bg-success"
-                            invisible="state != 'recuperado'"/>
-                    <widget name="web_ribbon" title="Condonado" bg_color="text-bg-secondary"
-                            invisible="state != 'condonado'"/>
+                    <widget name="web_ribbon" title="BAJA INCOBRABLE" bg_color="text-bg-danger" invisible="state != 'baja_incobrable'"/>
+                    <widget name="web_ribbon" title="Recuperado" bg_color="text-bg-success" invisible="state != 'recuperado'"/>
+                    <widget name="web_ribbon" title="Condonado" bg_color="text-bg-secondary" invisible="state != 'condonado'"/>
 
                     <div class="oe_title">
-                        <label for="partner_id"/>
-                        <h1><field name="partner_id"/></h1>
-                        <h2><field name="codigo_cliente" readonly="1"/></h2>
+                        <label for="codigo_cliente"/>
+                        <!--  <h1><field name="partner_id"/></h1> -->
+                        <h2>
+                            <field name="codigo_cliente" readonly="1"/>
+                        </h2>
                     </div>
 
                     <group col="2">
                         <group string="Datos del cliente">
-                            <field name="contract_id"
-                                   domain="[('partner_id','=',partner_id),('state','=','active')]"/>
-                            <field name="client_service_id"
-                                   domain="[('partner_id','=',partner_id)]"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="contract_phone" readonly="1"/>
+                            <field name="contract_mobile" readonly="1"/>
+                            <field name="contract_date" readonly="1"/>
+
+                            <!-- <field name="client_service_id" domain="[('partner_id','=',partner_id)]"/> -->
                             <field name="plan_id" readonly="1"/>
+                            <field name="plan_identifier" readonly="1"/>
+                            <field name="monto_plan" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                         <group string="Deuda">
                             <field name="meses_adeudados"/>
-                            <field name="monto_total_adeudado"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="monto_condonado"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="monto_cobrado"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="diferencia_incobrable" readonly="1"
-                                   widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_cobrado" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                     </group>
 
-                    <group col="2">
+                    <group col="1">
                         <group string="Fechas">
                             <field name="fecha_declaracion"/>
                             <field name="fecha_baja_servicio"/>
                         </group>
-                        <group string="Equipo">
-                            <field name="equipo_retirado"/>
-                            <field name="fecha_retiro_equipo"
-                                   invisible="not equipo_retirado"/>
-                        </group>
                     </group>
 
-                    <field name="observaciones" string="Observaciones"
-                           placeholder="Detalle de gestiones, condonaciones, acuerdos..."/>
+                    <field name="observaciones" string="Observaciones" placeholder="Detalle de gestiones, condonaciones, acuerdos..."/>
                 </sheet>
                 <chatter/>
             </form>
@@ -123,18 +94,12 @@
                 <field name="meses_adeudados"/>
                 <separator/>
                 <filter name="activos" string="En gestión" domain="[('state','=','activo')]"/>
-                <filter name="baja_incobrable" string="Baja Incobrable"
-                        domain="[('state','=','baja_incobrable')]"/>
+                <filter name="baja_incobrable" string="Baja Incobrable" domain="[('state','=','baja_incobrable')]"/>
                 <filter name="recuperados" string="Recuperados" domain="[('state','=','recuperado')]"/>
                 <filter name="condonados" string="Condonados" domain="[('state','=','condonado')]"/>
                 <separator/>
-                <filter name="equipo_pendiente" string="Equipo no retirado"
-                        domain="[('equipo_retirado','=',False),('state','=','baja_incobrable')]"/>
-                <separator/>
-                <filter name="group_state" string="Agrupar por Estado"
-                        context="{'group_by': 'state'}"/>
-                <filter name="group_plan" string="Agrupar por Plan"
-                        context="{'group_by': 'plan_id'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
             </search>
         </field>
     </record>

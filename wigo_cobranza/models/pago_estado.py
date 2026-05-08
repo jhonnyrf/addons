@@ -652,11 +652,9 @@ class WigoPagoEstado(models.Model):
 
     def _get_regla_for_contract(self, contract):
         """Devuelve la regla aplicable para un contrato según su modalidad."""
-        Regla = self.env['wigo.cobranza.regla']
-        _logger.info(f"Buscando regla para contrato {contract.id} con modalidad '{contract.payment_mode}'")
+        Regla = self.env['wigo.cobranza.regla']                    
         if not contract:
-            return Regla
-        _logger.info(f"Reglas disponibles: {Regla.search([], order='sequence, id')}")
+            return Regla        
         return Regla.search([
             ('active', '=', True),
             ('payment_mode', 'in', [contract.payment_mode, 'all']),
@@ -807,12 +805,14 @@ class WigoPagoEstado(models.Model):
             
             # Primer día del período facturado
             fecha_inicio_periodo = date(anio_int, mes_int, 1)
+            _logger.info(f"fecha inicio periodo {fecha_inicio_periodo} para mes {mes_int} y año {anio_int}")
 
             # Calculamos la FECHA EN LA QUE EL REGISTRO DEBE CONSIDERARSE EN MORA
             # en base al inicio del período + regla (días o meses).
             if rule.mora_criterio == 'meses':
                 meses_a_agregar = int(rule.meses_mora or 0)
                 fecha_vencimiento = self._add_months_to_date(fecha_inicio_periodo, meses_a_agregar)
+                _logger.info(f"fecha de vencimiento{fecha_vencimiento}")
             else:  # mora_criterio == 'dias'
                 dias_a_agregar = int(rule.dias_mora or 0)
                 fecha_vencimiento = fecha_inicio_periodo + timedelta(days=dias_a_agregar)
@@ -930,7 +930,7 @@ class WigoPagoEstado(models.Model):
 
         if created:
             self._notify_cobranza_group(
-                f"📋 Se generaron <b>{created}</b> registros de cobro pendientes "
+                f"Se generaron {created} registros de cobro pendientes "
                 f"para el período {today.strftime('%B %Y')}. Por favor inicie la gestión de cobro."
             )
         return created
@@ -944,14 +944,13 @@ class WigoPagoEstado(models.Model):
 
     def _cron_evaluar_mora_diaria(self, today=None):
         today = today or date.today()
-        pagos = self._get_open_payments_for_rules(today)
-        _logger.info(f"Evaluando mora para {len(pagos)} pagos abiertos...")
+        pagos = self._get_open_payments_for_rules(today)        
         mora_count = 0
         incobrable_contracts = set()
 
         for rec in pagos:
             regla = self._get_regla_for_contract(rec.contract_id)
-            _logger.info(f"Evaluando pago {rec.id} del contrato {rec.contract_id.id} con regla {regla if regla else 'N/A'}")
+            
             if not regla:
                 continue
 
@@ -990,11 +989,14 @@ class WigoPagoEstado(models.Model):
 
     def _cron_evaluar_incobrables_diario(self, today=None):
         today = today or date.today()
-        pagos = self._get_open_payments_for_rules(today)
+        _logger.info(f"Evaluando incobrables para pagos abiertos a fecha {today}")
+        pagos = self._get_open_payments_for_rules(today)    
+        #_logger.info(f"Pagon {pagos.read()}")    
         contracts_to_check = set()
 
         for rec in pagos:
             regla = self._get_regla_for_contract(rec.contract_id)
+            #_logger.info(f"la aplicada para este pago es {regla.read()}")
             if not regla:
                 continue
 
@@ -1003,7 +1005,10 @@ class WigoPagoEstado(models.Model):
                 continue
 
             dias_atraso = max((today - overdue_date).days, 0)
+            _logger.info(f"Pago {rec.id} tiene {dias_atraso} días de atraso")
             meses_atraso = self._months_between_dates(overdue_date, today)
+            _logger.info(f"Pago {rec.id} tiene {meses_atraso} meses de atraso")
+            
 
             if regla.incobrable_criterio == 'meses':
                 if meses_atraso >= (regla.meses_incobrable or 0):
