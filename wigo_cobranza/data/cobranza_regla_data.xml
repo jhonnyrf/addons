@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<odoo noupdate="1">
 
     <!-- Regla por defecto para todas las modalidades -->
     <record id="regla_cobranza_todas" model="wigo.cobranza.regla">

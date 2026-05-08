@@ -30,22 +30,33 @@
         <field name="arch" type="xml">
             <form string="Registro Incobrable">
                 <header>
+                    <button name="action_marcar_en_corte" string="Marcar en corte" type="object" class="btn-warning" invisible="state in ['in_cut','baja_incobrable','recuperado']"/>
                     <button name="action_marcar_baja_incobrable" string="Baja Incobrable" type="object" class="btn-danger" invisible="state == 'baja_incobrable'" confirm="¿Confirma declarar esta deuda como incobrable y dar de baja el servicio?"/>
-                    <button name="action_marcar_recuperado" string="Recuperado" type="object" class="btn-success" invisible="state in ['recuperado','condonado']"/>
-                    <field name="state" widget="statusbar" statusbar_visible="activo,baja_incobrable,recuperado"/>
+                    <button name="action_marcar_recuperado" string="Marcar recuperado" type="object" class="btn-success" invisible="state in ['recuperado','condonado']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="activo,in_cut,baja_incobrable,recuperado"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="BAJA INCOBRABLE" bg_color="text-bg-danger" invisible="state != 'baja_incobrable'"/>
                     <widget name="web_ribbon" title="Recuperado" bg_color="text-bg-success" invisible="state != 'recuperado'"/>
                     <widget name="web_ribbon" title="Condonado" bg_color="text-bg-secondary" invisible="state != 'condonado'"/>
+                    <div class="d-flex justify-content-between align-items-center mb-4" style="gap:1rem;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div>
+                                <h1 class="text-primary mb-0" style="font-size:2rem; line-height:1.1;">
+                                    <field name="codigo_cliente" readonly="1"/>
+                                </h1>
+                            </div>
+                        </div>
+                        <button name="action_open_pagos_contrato" string="Ver pagos contrato" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
 
-                    <div class="oe_title">
+                    </div>
+                    <!-- <div class="oe_title">
                         <label for="codigo_cliente"/>
-                        <!--  <h1><field name="partner_id"/></h1> -->
+                       <h1><field name="partner_id"/></h1> 
                         <h2>
                             <field name="codigo_cliente" readonly="1"/>
                         </h2>
-                    </div>
+                    </div> -->
 
                     <group col="2">
                         <group string="Datos del cliente">
@@ -60,7 +71,7 @@
                             <field name="monto_plan" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                         <group string="Deuda">
-                            <field name="meses_adeudados"/>
+                            <field name="meses_adeudados" readonly="1"/>
                             <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
                             <field name="monto_cobrado" widget="monetary" options="{'currency_field': False}"/>
                             <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
@@ -72,9 +83,13 @@
                             <field name="fecha_declaracion"/>
                             <field name="fecha_baja_servicio"/>
                         </group>
+
+                    </group>
+                    <group>
+                        <field name="observaciones" string="Observaciones" placeholder="Detalle de gestiones, condonaciones, acuerdos..."/>
                     </group>
 
-                    <field name="observaciones" string="Observaciones" placeholder="Detalle de gestiones, condonaciones, acuerdos..."/>
+
                 </sheet>
                 <chatter/>
             </form>

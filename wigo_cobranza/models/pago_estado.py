@@ -776,48 +776,67 @@ class WigoPagoEstado(models.Model):
         if current_month == 1:
             return 12, current_year - 1
         return current_month - 1, current_year
-
-    def _calculate_fecha_vencimiento(self, mes_facturado, anio_facturado, rule):
+    def _get_fecha_inicio_periodo(self, mes_facturado, anio_facturado):
         """
-        Calcula la fecha efectiva de mora a partir del primer día del período.
-        
-        Ejemplo 1 (mora por días):
-        - Período: Abril 2026 (primer día: 2026-04-01)
-        - dias_mora=15
-        - fecha_vencimiento = 2026-04-16
-        
-        Ejemplo 2 (mora por meses):
-        - Período: Abril 2026 (primer día: 2026-04-01)
-        - meses_mora=1
-        - fecha_vencimiento = 2026-05-01
-        
-        Ejemplo 3 (con cambio de año):
-        - Período: Diciembre 2025
-        - meses_mora=1
-        - fecha_vencimiento = 2026-01-01
-        
-        Retorna: date object o False
+        Obtiene el primer día del período facturado.
+
+        Ejemplo:
+        - mes=4, año=2026
+        - retorna: 2026-04-01
         """
 
         try:
             mes_int = int(mes_facturado)
             anio_int = int(anio_facturado)
-            
-            # Primer día del período facturado
-            fecha_inicio_periodo = date(anio_int, mes_int, 1)
-            _logger.info(f"fecha inicio periodo {fecha_inicio_periodo} para mes {mes_int} y año {anio_int}")
 
-            # Calculamos la FECHA EN LA QUE EL REGISTRO DEBE CONSIDERARSE EN MORA
-            # en base al inicio del período + regla (días o meses).
+            fecha_inicio = date(anio_int, mes_int, 1)
+
+            _logger.info(
+                f"Fecha inicio período: {fecha_inicio} "
+                f"para mes {mes_int} y año {anio_int}"
+            )
+
+            return fecha_inicio
+
+        except Exception as e:
+            _logger.error(f"Error al obtener fecha inicio período: {e}")
+            return False
+    def _calculate_fecha_vencimiento(self, mes_facturado, anio_facturado, rule):
+        """
+        Calcula la fecha efectiva de mora a partir del inicio del período.
+        """
+
+        try:
+            fecha_inicio_periodo = self._get_fecha_inicio_periodo(
+                mes_facturado,
+                anio_facturado
+            )
+
+            if not fecha_inicio_periodo:
+                return False
+
+            # Mora por meses
             if rule.mora_criterio == 'meses':
                 meses_a_agregar = int(rule.meses_mora or 0)
-                fecha_vencimiento = self._add_months_to_date(fecha_inicio_periodo, meses_a_agregar)
-                _logger.info(f"fecha de vencimiento{fecha_vencimiento}")
-            else:  # mora_criterio == 'dias'
+
+                fecha_vencimiento = self._add_months_to_date(
+                    fecha_inicio_periodo,
+                    meses_a_agregar
+                )
+
+            # Mora por días
+            else:
                 dias_a_agregar = int(rule.dias_mora or 0)
-                fecha_vencimiento = fecha_inicio_periodo + timedelta(days=dias_a_agregar)
+
+                fecha_vencimiento = (
+                    fecha_inicio_periodo +
+                    timedelta(days=dias_a_agregar)
+                )
+
+            _logger.info(f"Fecha vencimiento: {fecha_vencimiento}")
 
             return fecha_vencimiento
+
         except Exception as e:
             _logger.error(f"Error al calcular fecha_vencimiento: {e}")
             return False
@@ -935,34 +954,33 @@ class WigoPagoEstado(models.Model):
             )
         return created
 
-    def _get_open_payments_for_rules(self, today=None):
+    def _get_open_payments_for_rules_mora(self, today=None):
         today = today or date.today()
         return self.search([
             ('estado_pago', 'in', ['pendiente', 'mora']),
             ('contract_id', '!=', False),
         ], order='fecha_vencimiento asc, id asc')
+    def _get_open_payments_for_rules_incobrables(self, today=None):
+        today = today or date.today()
+        return self.search([
+            ('estado_pago', 'in',  ['mora']),
+            ('contract_id', '!=', False),
+        ], order='fecha_vencimiento asc, id asc')    
 
     def _cron_evaluar_mora_diaria(self, today=None):
         today = today or date.today()
-        pagos = self._get_open_payments_for_rules(today)        
-        mora_count = 0
-        incobrable_contracts = set()
-
+        pagos = self._get_open_payments_for_rules_mora(today)        
+        mora_count = 0        
         for rec in pagos:
             regla = self._get_regla_for_contract(rec.contract_id)
             
             if not regla:
                 continue
-
             # Calcular la fecha en la que este registro entra en mora
             overdue_date = self._calculate_fecha_vencimiento(rec.mes, rec.anio, regla)
+            
             if not overdue_date:
                 continue
-
-            dias_atraso = max((today - overdue_date).days, 0)
-            meses_atraso = self._months_between_dates(overdue_date, today)
-
-            # Marcar en mora si hoy es la fecha de vencimiento efectiva o posterior
             supera_mora = today >= overdue_date
 
             if not supera_mora:
@@ -971,30 +989,130 @@ class WigoPagoEstado(models.Model):
             if rec.estado_pago != 'mora':
                 rec.write({'estado_pago': 'mora'})
                 mora_count += 1
-                self._notify_mora(rec, regla)
-
-            if regla.incobrable_criterio == 'meses':
-                supera_incobrable = meses_atraso >= (regla.meses_incobrable or 0)
-            else:
-                supera_incobrable = dias_atraso >= (regla.dias_incobrable or 0)
-
-            if supera_incobrable:
-                incobrable_contracts.add(rec.contract_id.id)
-
-        for contract_id in incobrable_contracts:
-            contract = self.env['customer.contract'].browse(contract_id)
-            self._check_create_incobrable_from_contract(contract)
+                self._notify_mora(rec, regla)            
 
         return mora_count
 
     def _cron_evaluar_incobrables_diario(self, today=None):
+
         today = today or date.today()
-        _logger.info(f"Evaluando incobrables para pagos abiertos a fecha {today}")
-        pagos = self._get_open_payments_for_rules(today)    
-        #_logger.info(f"Pagon {pagos.read()}")    
+
+        _logger.info(
+            f"Evaluando incobrables para pagos abiertos a fecha {today}"
+        )
+
+        pagos = self._get_open_payments_for_rules_incobrables(today)
+
         contracts_to_check = set()
 
-        for rec in pagos:
+        contracts = pagos.mapped('contract_id')
+
+        for contract in contracts:
+
+            regla = self._get_regla_for_contract(contract)
+
+            if not regla:
+                continue
+
+            # ==================================================
+            # CRITERIO POR "MESES"
+            # ==================================================
+            # En este caso:
+            #
+            # 1 pago en mora = 1 mes adeudado
+            #
+            # Entonces:
+            # Se cuentan pagos en estado mora
+            # ==================================================
+            if regla.incobrable_criterio == 'meses':
+
+                cantidad_mora = self.search_count([
+                    ('contract_id', '=', contract.id),
+                    ('estado_pago', '=', 'mora'),
+                ])
+
+                _logger.info(
+                    "Contrato %s tiene %s pagos en mora",
+                    contract.name,
+                    cantidad_mora
+                )
+
+                supera_incobrable = (
+                    cantidad_mora >= (
+                        regla.meses_incobrable or 0
+                    )
+                )
+                _logger.info(f"supera_incobrable : {supera_incobrable} , de {regla.meses_incobrable}")
+
+            # ==================================================
+            # CRITERIO POR DÍAS
+            # ==================================================
+            else:
+
+                pagos_mora = self.search([
+                    ('contract_id', '=', contract.id),
+                    ('estado_pago', '=', 'mora'),
+                ], order='fecha_vencimiento asc', limit=1)
+
+                if not pagos_mora:
+                    continue
+
+                pago_mas_antiguo = pagos_mora[0]
+
+                overdue_date = self._calculate_fecha_vencimiento(
+                    pago_mas_antiguo.mes,
+                    pago_mas_antiguo.anio,
+                    regla
+                )
+
+                if not overdue_date:
+                    continue
+
+                dias_atraso = max(
+                    (today - overdue_date).days,
+                    0
+                )
+
+                _logger.info(
+                    "Contrato %s tiene %s días de atraso",
+                    contract.name,
+                    dias_atraso
+                )
+
+                supera_incobrable = (
+                    dias_atraso >= (
+                        regla.dias_incobrable or 0
+                    )
+                )
+
+            # ==================================================
+            # MARCAR CONTRATO PARA INCORBRABLE
+            # ==================================================
+            if supera_incobrable:
+
+                contracts_to_check.add(contract.id)
+                #_logger.info(f"contracts incobrables {contracts_to_check}")
+ 
+        # ==================================================
+        # CREAR INCORBRABLES
+        # ==================================================
+        for contract_id in contracts_to_check:
+
+            contract = self.env[
+                'customer.contract'
+            ].browse(contract_id)
+            #_logger.info(f"contracts incobrables {contract}")
+            self._check_create_incobrable_from_contract(
+                contract
+            )
+
+        _logger.info(
+            "Total contratos enviados a incobrables: %s",
+            len(contracts_to_check)
+        )
+
+        return len(contracts_to_check)
+        """ for rec in pagos:
             regla = self._get_regla_for_contract(rec.contract_id)
             #_logger.info(f"la aplicada para este pago es {regla.read()}")
             if not regla:
@@ -1021,7 +1139,7 @@ class WigoPagoEstado(models.Model):
             contract = self.env['customer.contract'].browse(contract_id)
             self._check_create_incobrable_from_contract(contract)
 
-        return len(contracts_to_check)
+        return len(contracts_to_check) """
 
     @api.model
     def cron_procesar_cobranza(self):
@@ -1461,7 +1579,20 @@ class WigoPagoEstado(models.Model):
                 )
             nuevo_estado = 'pagado' if rec.monto_pagado >= rec.monto_a_cobrar else 'pendiente'
             rec.write({'estado_pago': nuevo_estado})
-
+            
+            # Actualizar monto_cobrado en registro incobrable si existe
+            if rec.contract_id:
+                Incobrable = self.env['wigo.incobrable']
+                incobrables = Incobrable.search([
+                    ('contract_id', '=', rec.contract_id.id),
+                    ('state', 'not in', ['recuperado', 'baja_incobrable']),
+                ])
+                if incobrables:
+                    for incobrable in incobrables:
+                        incobrable.write({
+                            'monto_cobrado': incobrable.monto_cobrado + rec.monto_pagado
+                        })
+            
             svc = rec.client_service_id
             if svc:
                 if nuevo_estado == 'pagado' and svc.estado_servicio == 'suspended':
@@ -1549,113 +1680,149 @@ class WigoPagoEstado(models.Model):
 
     def _check_create_incobrable_from_contract(self, contract):
         """
-        Verifica si un contrato tiene N meses consecutivos sin pago
-        según la regla configurada y crea automáticamente un registro
-        incobrable si corresponde.
+        Crea o actualiza automáticamente un registro incobrable
+        para un contrato que tiene pagos en mora.
         """
+
         if not contract:
             return
 
         regla = self._get_regla_for_contract(contract)
+
         if not regla:
             return
 
-        # Regla automática: debe ejecutarse aunque el usuario actual
-        # no tenga permisos de creación sobre wigo.incobrable.
+        # =========================================================
+        # MODELO INCORBRABLE
+        # =========================================================
         Incobrable = self.env['wigo.incobrable'].sudo()
 
+        # =========================================================
+        # OBTENER PAGOS EN MORA
+        # =========================================================
+        pagos_mora = self.search([
+            ('contract_id', '=', contract.id),
+            ('estado_pago', '=', 'mora'),
+        ], order='anio asc, mes asc')
+        
+        if not pagos_mora:
+            return
+
+        # =========================================================
+        # CALCULAR DATOS
+        # =========================================================
+        cantidad_periodos = len(pagos_mora)
+
+        monto_total = sum(
+            pagos_mora.mapped('monto_a_cobrar')
+        )
+
+        periodos = ', '.join(
+            pagos_mora.mapped('periodo')
+        )
+
+        svc = self._find_client_service_for_contract(
+            contract
+        )
+
+        # =========================================================
+        # BUSCAR INCORBRABLE ACTIVO EXISTENTE
+        # =========================================================
         ya_existe = Incobrable.search([
             ('partner_id', '=', contract.partner_id.id),
             ('contract_id', '=', contract.id),
-            ('state', 'not in', ['recuperado', 'condonado']),
+            ('state', 'not in', ['recuperado','in_cut','baja_incobrable']),
         ], limit=1)
+
+        # =========================================================
+        # ACTUALIZAR INCORBRABLE EXISTENTE
+        # =========================================================
         if ya_existe:
-            return
 
-        pagos = self.search([
-            ('contract_id', '=', contract.id),
-            ('estado_pago', 'in', ('pendiente', 'mora')),
-        ], order='anio desc, mes desc')
+            ya_existe.write({
+                'meses_adeudados': periodos,
+                'monto_total_adeudado': monto_total,
+                'observaciones': (
+                    f'Actualizado automáticamente: '
+                    f'{cantidad_periodos} períodos en mora. '
+                    f'Modalidad: {regla.name}.'
+                ),
+            })
 
-        if not pagos:
-            return
+            _logger.info(
+                "Incobrable actualizado para contrato %s",
+                contract.name
+            )
 
-        meses_consecutivos = 0
-        ultimo_mes = None
-        ultimo_anio = None
-        periodos_adeudados = []
+            return ya_existe
 
-        for pago in pagos:
-            mes_actual = int(pago.mes)
-            anio_actual = int(pago.anio)
-
-            if ultimo_mes is not None:
-                mes_esperado = ultimo_mes - 1
-                anio_esperado = ultimo_anio
-                if mes_esperado < 1:
-                    mes_esperado = 12
-                    anio_esperado -= 1
-
-                if mes_actual != mes_esperado or anio_actual != anio_esperado:
-                    break
-
-            meses_consecutivos += 1
-            ultimo_mes = mes_actual
-            ultimo_anio = anio_actual
-            periodos_adeudados.append(pago.periodo)
-
-        if regla.incobrable_criterio == 'meses':
-            if meses_consecutivos < regla.meses_incobrable:
-                return
-        else:
-            # Si es por días, verificar usando días_incobrable
-            # Calculamos los días aproximados desde el primer pago pendiente
-            dias_consecutivos = meses_consecutivos * 30
-            if dias_consecutivos < regla.dias_incobrable:
-                return
-
-        monto_total = sum(pagos[:meses_consecutivos].mapped('monto_a_cobrar'))
-        meses_txt = ', '.join(reversed(periodos_adeudados))
-        svc = self._find_client_service_for_contract(contract)
-
+        # =========================================================
+        # CREAR NUEVO INCORBRABLE
+        # =========================================================
         incobrable = Incobrable.create({
             'partner_id': contract.partner_id.id,
             'contract_id': contract.id,
             'client_service_id': svc.id if svc else False,
-            'meses_adeudados': meses_txt,
+            'meses_adeudados': periodos,
             'monto_total_adeudado': monto_total,
             'state': 'activo',
             'observaciones': (
-                f'Generado automáticamente: {meses_consecutivos} meses consecutivos sin pago. '
-                f'Regla: {regla.name}.'
+                f'Generado automáticamente: '
+                f'{cantidad_periodos} períodos en mora. '
+                f'Modalidad: {regla.name}.'
             ),
         })
 
+        _logger.info(
+            "Incobrable creado para contrato %s",
+            contract.name
+        )
+
+        # =========================================================
+        # MENSAJE EN CHATTER DEL SERVICIO
+        # =========================================================
         if svc:
+
             svc.message_post(
                 body=(
                     f"⚠️ <b>Cliente trasladado a incobrables automáticamente.</b> "
-                    f"Código: <b>{svc.codigo_cliente}</b> — {svc.partner_id.name}. "
-                    f"Períodos: <b>{meses_txt}</b>."
+                    f"Código: <b>{svc.codigo_cliente}</b> — "
+                    f"{svc.partner_id.name}. "
+                    f"Períodos en mora: <b>{periodos}</b>."
                 ),
                 subtype_xmlid='mail.mt_comment',
                 partner_ids=self._get_tech_partner_ids(),
             )
 
-        cobranza_group = self.env.ref('wigo_cobranza.group_cobranza', raise_if_not_found=False)
+        # =========================================================
+        # NOTIFICACIÓN A COBRANZA
+        # =========================================================
+        cobranza_group = self.env.ref(
+            'wigo_cobranza.group_cobranza',
+            raise_if_not_found=False
+        )
+
         if cobranza_group:
-            partners = cobranza_group.user_ids.mapped('partner_id')
+
+            partners = cobranza_group.user_ids.mapped(
+                'partner_id'
+            )
+
             if partners:
+
                 self.env['mail.message'].sudo().create({
                     'message_type': 'notification',
                     'body': (
-                        f"🚨 <b>{contract.partner_id.name}</b> trasladado a incobrables "
-                        f"por {meses_consecutivos} meses consecutivos sin pago (PostPago)."
+                        f"🚨 <b>{contract.partner_id.name}</b> "
+                        f"trasladado a incobrables "
+                        f"por {cantidad_periodos} períodos en mora."
                     ),
                     'partner_ids': partners.ids,
                     'model': 'wigo.incobrable',
                     'res_id': incobrable.id,
                 })
+
+        return incobrable
 
     def action_marcar_mora(self):
         """Acción manual deshabilitada para cambios de estado.

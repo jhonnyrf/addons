@@ -89,6 +89,7 @@ class WigoIncobrable(models.Model):
       
     state = fields.Selection([
         ('activo', 'En gestión'),   
+        ('in_cut', 'En corte'),
         ('baja_incobrable', 'Baja - Incobrable'),
         ('recuperado', 'Recuperado')        
     ], string='Estado', default='activo', required=True, tracking=True, index=True)
@@ -139,9 +140,108 @@ class WigoIncobrable(models.Model):
                     rec.client_service_id.estado_servicio = 'baja'
                     rec.client_service_id.fecha_baja = date.today()
 
+    def _get_periodos_adeudados_list(self):
+        self.ensure_one()
+        if not self.meses_adeudados:
+            return []
+        return [p.strip() for p in self.meses_adeudados.split(',') if p.strip()]
+
+    def action_marcar_en_corte(self):
+        for rec in self:
+            if rec.state in ('recuperado', 'baja_incobrable'):
+                raise ValidationError(
+                    'No se puede cambiar a "En corte" un registro recuperado o con baja incobrable.'
+                )
+            rec.state = 'in_cut'
+
     def action_marcar_recuperado(self):
         for rec in self:
+            """if rec.state == 'baja_incobrable':
+                raise ValidationError(
+                    'No se puede marcar como recuperado un registro con estado "Baja - Incobrable".'
+            ) """
+
+            if not rec.contract_id:
+                raise ValidationError(
+                    'No se puede validar recuperación sin contrato asociado.'
+                )
+
+            periodos_adeudados = rec._get_periodos_adeudados_list()
+            if not periodos_adeudados:
+                raise ValidationError(
+                    'No se pudieron identificar los meses adeudados para validar recuperación.'
+                )
+
+            pago_pagado = self.env['wigo.pago.estado'].sudo().search([
+                ('contract_id', '=', rec.contract_id.id),
+                ('estado_pago', '=', 'pagado'),
+                ('periodo', 'in', periodos_adeudados),
+            ], limit=1)
+
+            if not pago_pagado:
+                raise ValidationError(
+                    'Para marcar como recuperado debe existir al menos 1 mes pagado '
+                    f'de los adeudados: {", ".join(periodos_adeudados)}.'
+                )
+
             rec.state = 'recuperado'
+
+    def action_open_pagos_contrato(self):
+        """Abre la lista de `wigo.pago.estado` filtrada por el contrato asociado.
+
+        Visible en formulario de incobrable cuando existe `contract_id`.
+        """
+        self.ensure_one()
+        if not self.contract_id:
+            raise ValidationError('No hay contrato asociado a este registro incobrable.')
+
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': f'Pagos — {self.contract_id.name or self.partner_id.name}',
+            'res_model': 'wigo.pago.estado',
+            'view_mode': 'list,form',
+            'domain': [('contract_id', '=', self.contract_id.id)],
+            'context': {'default_contract_id': self.contract_id.id},
+            'target': 'current',
+        }
+
+        # Priorizar las vistas específicas del workspace de contrato si existen
+        list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        views = []
+        if list_view:
+            # en algunos módulos se declara como tipo 'list' (workspace), respetarlo
+            views.append((list_view.id, list_view.type or 'list'))
+        if form_view:
+            views.append((form_view.id, form_view.type or 'form'))
+
+        if views:
+            action['views'] = views
+            # forzar view_mode coherente
+            action['view_mode'] = ','.join([t for _, t in views])
+            return action
+
+        # Fallback: buscar vistas tree/form registradas para el modelo
+        View = self.env['ir.ui.view'].sudo()
+        found_views = View.search([
+            ('model', '=', 'wigo.pago.estado'),
+            ('type', 'in', ('tree', 'form')),
+        ])
+        ordered = []
+        tree_views = [v for v in found_views if v.type == 'tree']
+        form_views = [v for v in found_views if v.type == 'form']
+        for v in tree_views + form_views:
+            ordered.append((v.id, v.type))
+        if ordered:
+            # preferir la vista tree (lista)
+            for vid, vtype in ordered:
+                if vtype == 'tree':
+                    action['views'] = [(vid, 'tree')]
+                    action['view_mode'] = 'tree'
+                    return action
+            action['views'] = ordered
+
+        return action
 
     @api.model
     def crear_desde_pago_mora(self, pago_estado):
