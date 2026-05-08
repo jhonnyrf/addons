@@ -43,6 +43,13 @@ class CrmLead(models.Model):
         readonly=False,
     )
 
+    carnet_identidad = fields.Char(
+        string="C.I.",
+        compute='_compute_carnet_identidad',
+        inverse='_inverse_carnet_identidad',
+        readonly=False,
+    )
+
     plan_id = fields.Many2one(
         'internet.plan',
         string="Plan contratado",
@@ -271,6 +278,28 @@ class CrmLead(models.Model):
             else:
                 partner.with_context(skip_partner_to_lead_sync=True).write({
                     'phone': lead.telefono_contacto or False,
+                })
+
+    @api.depends('partner_id')
+    def _compute_carnet_identidad(self):
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                lead.carnet_identidad = False
+                continue
+            if 'ci' in partner._fields:
+                lead.carnet_identidad = partner.ci or False
+            else:
+                lead.carnet_identidad = False
+
+    def _inverse_carnet_identidad(self):
+        for lead in self:
+            partner = lead.partner_id
+            if not partner:
+                continue
+            if 'ci' in partner._fields:
+                partner.with_context(skip_partner_to_lead_sync=True).write({
+                    'ci': lead.carnet_identidad or False,
                 })
 
     def _inverse_zona_id(self):

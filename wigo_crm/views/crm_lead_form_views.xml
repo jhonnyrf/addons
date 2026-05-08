@@ -74,6 +74,7 @@
             <!-- Muestra Teléfono fijo recuperado desde Contactos (campo custom celular). -->
             <xpath expr="//field[@name='phone']/.." position="after">
                 <field name="telefono_contacto" string="Teléfono" placeholder="Teléfono"/>
+                <field name="carnet_identidad" string="C.I." placeholder="Carnet de Identidad"/>
             </xpath>
 
             <!-- Inserta secciones propias de Wigo despues del primer grupo del formulario base. -->

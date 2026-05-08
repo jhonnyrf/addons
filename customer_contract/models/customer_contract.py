@@ -107,7 +107,7 @@ class CustomerContract(models.Model):
 
     contact_name   = fields.Char(string='Nombre / Empresa')
     billing_name   = fields.Char(string='Nombre del facturante')
-    billing_phone  = fields.Char(string='Teléfono del facturante')
+    billing_phone  = fields.Char(string='Celular del facturante')
     billing_ci     = fields.Char(string='CI del facturante')
 
     phone   = fields.Char(string='Teléfono')
@@ -352,8 +352,8 @@ class CustomerContract(models.Model):
     def _onchange_partner(self):
         if self.partner_id:
             self.contact_name = self.partner_id.name  or ''
-            self.phone        = self.partner_id.phone or ''
-            self.mobile       = _get_partner_mobile(self.partner_id)
+            self.mobile       = self.partner_id.phone or ''
+            self.phone        = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
             self.email        = self.partner_id.email  or ''
             self.address      = self.partner_id.direccion or ''
             self.ci           = self.partner_id.ci     or ''
@@ -441,9 +441,10 @@ class CustomerContract(models.Model):
         if billing_sync_needed and not self.env.context.get('skip_billing_sync'):
             for record in self:
                 if record.billing_responsible_type == 'client' and record.partner_id:
+                    billing_phone = record.partner_id.celular if hasattr(record.partner_id, 'celular') and record.partner_id.celular else ''
                     record.with_context(skip_billing_sync=True).write({
                         'billing_name': record.contact_name or record.partner_id.name or '',
-                        'billing_phone': record.mobile or record.phone or _get_partner_mobile(record.partner_id),
+                        'billing_phone': record.mobile or record.phone or billing_phone or (record.partner_id.mobile if record.partner_id else '') or (record.partner_id.phone if record.partner_id else '') or '',
                         'billing_ci': record.ci or record.partner_id.ci or '',
                     })
 
@@ -492,8 +493,8 @@ class CustomerContract(models.Model):
             return
         partner = self.env['res.partner'].browse(partner_id)
         vals.setdefault('contact_name', partner.name   or '')
-        vals.setdefault('phone',        partner.phone  or '')
-        vals.setdefault('mobile',       _get_partner_mobile(partner))
+        vals.setdefault('mobile',       partner.phone  or '')
+        vals.setdefault('phone',     partner.celular if hasattr(partner, 'celular') and partner.celular else (partner.mobile or ''))
         vals.setdefault('email',        partner.email  or '')
         vals.setdefault('address',      partner.direccion or '')
         vals.setdefault('ci',           partner.ci     or '')
@@ -517,22 +518,27 @@ class CustomerContract(models.Model):
             partner_id = vals.get('partner_id')
             if partner_id:
                 partner = self.env['res.partner'].browse(partner_id)
+                partner_phone = partner.celular if hasattr(partner, 'celular') and partner.celular else ''
                 vals.setdefault('billing_name', vals.get('contact_name') or partner.name or '')
-                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or _get_partner_mobile(partner))
+                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or partner_phone or partner.phone or partner.mobile or '')
                 vals.setdefault('billing_ci', vals.get('ci') or partner.ci or '')
             return
 
     def _fill_billing_from_partner(self):
         if self.partner_id:
             self.billing_name = self.partner_id.name or ''
-            self.billing_phone = _get_partner_mobile(self.partner_id)
+            billing_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
+            self.billing_phone = billing_phone or self.partner_id.mobile or self.partner_id.phone or ''
             self.billing_ci = self.partner_id.ci or ''
         else:
             self._clear_billing_fields()
 
     def _fill_billing_from_contract_snapshot(self):
+        partner_phone = ''
+        if self.partner_id:
+            partner_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
         self.billing_name = self.contact_name or (self.partner_id.name if self.partner_id else '') or ''
-        self.billing_phone = self.mobile or self.phone or (_get_partner_mobile(self.partner_id) if self.partner_id else '')
+        self.billing_phone = self.mobile or self.phone or partner_phone or (self.partner_id.phone if self.partner_id else '') or (self.partner_id.mobile if self.partner_id else '') or ''
         self.billing_ci = self.ci or (self.partner_id.ci if self.partner_id else '') or ''
 
     def _clear_billing_fields(self):
@@ -828,7 +834,7 @@ class CustomerContract(models.Model):
         if not self.billing_name:
             missing.append('Nombre del facturante')
         if not self.billing_phone:
-            missing.append('Teléfono del facturante')
+            missing.append('Celular del facturante')
         if not self.billing_ci:
             missing.append('CI del facturante')
         if missing:
