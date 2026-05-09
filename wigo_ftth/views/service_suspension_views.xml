@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_ftth_service_suspension_search" model="ir.ui.view">
+        <field name="name">wigo.ftth.service.suspension.search</field>
+        <field name="model">wigo.ftth.service.suspension</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="contract_id"/>
+                <field name="client_service_id"/>
+                <field name="partner_id"/>
+                <separator/>
+                <filter string="Pendientes" name="filter_pending" domain="[('state','=','pendiente')]"/>
+                <filter string="En corte" name="filter_in_cut" domain="[('state','=','in_cut')]"/>
+                <filter string="Reconexión" name="filter_reconexion" domain="[('state','=','reconexion')]"/>
+                <separator/>
+                <filter string="Agrupar por estado" name="group_state" context="{'group_by':'state'}"/>
+                <filter string="Agrupar por contrato" name="group_contract" context="{'group_by':'contract_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_ftth_service_suspension_list" model="ir.ui.view">
+        <field name="name">wigo.ftth.service.suspension.list</field>
+        <field name="model">wigo.ftth.service.suspension</field>
+        <field name="arch" type="xml">
+            <list string="Suspensiones FTTH" decoration-warning="state == 'pendiente'" decoration-danger="state == 'in_cut'" decoration-success="state == 'reconexion'">
+                <field name="contract_id"/>
+                <field name="client_service_id"/>
+                <field name="fecha_registro"/>
+                <field name="fecha_corte"/>
+                <field name="fecha_reconexion"/>
+                <field name="state" widget="badge" decoration-warning="state == 'pendiente'" decoration-danger="state == 'in_cut'" decoration-success="state == 'reconexion'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_service_suspension_form" model="ir.ui.view">
+        <field name="name">wigo.ftth.service.suspension.form</field>
+        <field name="model">wigo.ftth.service.suspension</field>
+        <field name="arch" type="xml">
+            <form string="Registro de Suspensión">
+                <header>
+                    <button name="action_marcar_en_corte" type="object" string="Marcar en corte" class="btn-danger" invisible="state == 'in_cut' or state == 'reconexion'"/>
+                    <button name="action_marcar_reconexion" type="object" string="Marcar reconexión" class="btn-success" invisible="state == 'reconexion'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pendiente,in_cut,reconexion"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Suspensión"/>
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group col="2">
+                        <group string="Vínculos">
+                            <field name="contract_id" readonly="1"/>
+                            <field name="client_service_id"/>
+                            <field name="partner_id" readonly="1"/>
+                        </group>
+                        <group string="Fechas">
+                            <field name="fecha_registro" readonly="1"/>
+                            <field name="fecha_corte" readonly="state != 'pendiente'"/>
+                            <field name="fecha_reconexion" readonly="state != 'in_cut'"/>
+                        </group>
+                    </group>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_client_service" type="object" class="oe_stat_button" icon="fa-id-card" invisible="not client_service_id">
+                            <span class="o_stat_text">Ver ficha técnica</span>
+                        </button>
+                        <button name="action_view_incobrables" type="object" class="oe_stat_button" icon="fa-exclamation-circle">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="incobrable_count"/>
+                                </span>
+                                <span class="o_stat_text">Incobrables</span>
+                            </div>
+                        </button>
+                    </div>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ftth_service_suspension" model="ir.actions.act_window">
+        <field name="name">Suspensiones FTTH</field>
+        <field name="res_model">wigo.ftth.service.suspension</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ftth_service_suspension_search"/>
+        <field name="context">{'create': True, 'show_create': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No hay registros de suspensión.</p>
+            <p>Los registros pueden crearse manualmente o desde incobrables cuando se marque en corte.</p>
+        </field>
+    </record>
+
+</odoo>

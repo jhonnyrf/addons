@@ -64,6 +64,7 @@
                             <field name="contract_phone" readonly="1"/>
                             <field name="contract_mobile" readonly="1"/>
                             <field name="contract_date" readonly="1"/>
+                            <field name="suspension_id" readonly="1"/>
 
                             <!-- <field name="client_service_id" domain="[('partner_id','=',partner_id)]"/> -->
                             <field name="plan_id" readonly="1"/>
@@ -76,6 +77,7 @@
                             <field name="monto_cobrado" widget="monetary" options="{'currency_field': False}"/>
                             <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                             <button name="action_open_pagos_contrato" string="Ver pagos" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
+                            <button name="action_view_suspension" string="Ver suspensión" type="object" icon="fa-ban" class="btn-secondary" invisible="not suspension_id"/>
 
                         </group>
                     </group>

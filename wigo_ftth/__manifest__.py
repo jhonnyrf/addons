@@ -42,6 +42,7 @@
         'views/work_order_print_config_views.xml',
         'views/work_order_accessory_views.xml',
         'views/client_service_views.xml',
+        'views/service_suspension_views.xml',
         'views/capacity_views.xml',
         'views/dashboard_views.xml',
         'views/menu.xml',

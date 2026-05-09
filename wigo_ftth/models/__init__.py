@@ -10,6 +10,7 @@ from . import ftth_additional_equipment
 from . import ftth_work_order
 from . import ftth_work_order_accessory
 from . import ftth_client_service
+from . import ftth_service_suspension
 from . import ftth_accesorio
 from . import ftth_work_order_print_config
 

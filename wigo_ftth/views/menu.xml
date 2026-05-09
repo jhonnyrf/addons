@@ -11,6 +11,8 @@
     <menuitem id="menu_ftth_client_service_root" name="Clientes" parent="menu_wigo_ftth_root" sequence="25"/>
 
     <menuitem id="menu_ftth_client_service" name="Fichas Técnicas" parent="menu_ftth_client_service_root" action="action_ftth_client_service" sequence="10"/>
+    <menuitem id="menu_ftth_suspension_root" name="Suspensiones" parent="menu_wigo_ftth_root" sequence="27"/>
+    <menuitem id="menu_ftth_service_suspension" name="Registros de suspensión" parent="menu_ftth_suspension_root" action="action_ftth_service_suspension" sequence="10"/>
     <!-- 3. INVENTARIO ONUs y ACCESORIOS -->
     <menuitem id="menu_ftth_onu_root" name="Inventario ONUs y Accesorios" parent="menu_wigo_ftth_root" sequence="30" groups="base.group_user,base.group_system"/>
 

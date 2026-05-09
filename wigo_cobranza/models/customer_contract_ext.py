@@ -12,6 +12,12 @@ class CustomerContractCobranza(models.Model):
         'contract_id',
         string='Cobros mensuales',
     )
+    incobrable_ids = fields.One2many(
+        'wigo.incobrable',
+        'contract_id',
+        string='Incobrables',
+        readonly=True,
+    )
     unpaid_month_count = fields.Integer(
         string='Meses sin pagar',
         compute='_compute_unpaid_month_count',

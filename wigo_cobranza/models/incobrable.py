@@ -41,6 +41,12 @@ class WigoIncobrable(models.Model):
         'wigo.ftth.client.service', string='Servicio (CF)',
         ondelete='restrict', tracking=True,
     )
+    suspension_id = fields.Many2one(
+        'wigo.ftth.service.suspension',
+        string='Suspensión FTTH',
+        ondelete='set null',
+        tracking=True,
+    )
     codigo_cliente = fields.Char(
         string='Código CF',
         compute='_compute_datos_cliente', store=True,
@@ -153,6 +159,49 @@ class WigoIncobrable(models.Model):
                     'No se puede cambiar a "En corte" un registro recuperado o con baja incobrable.'
                 )
             rec.state = 'in_cut'
+            suspension = rec._get_or_create_suspension_record()
+            if suspension:
+                rec.suspension_id = suspension.id
+
+    def _get_or_create_suspension_record(self):
+        self.ensure_one()
+        Suspension = self.env['wigo.ftth.service.suspension'].sudo()
+        domain = [('contract_id', '=', self.contract_id.id)]
+        if self.client_service_id:
+            domain.append(('client_service_id', '=', self.client_service_id.id))
+
+        suspension = Suspension.search(
+            domain + [('state', 'in', ('pendiente', 'in_cut'))],
+            order='fecha_registro desc, id desc',
+            limit=1,
+        )
+        if suspension:
+            if suspension.state == 'pendiente':
+                suspension.action_marcar_en_corte()
+            elif suspension.state == 'in_cut' and not suspension.fecha_corte:
+                suspension._ensure_cut_date()
+            return suspension
+
+        vals = {
+            'contract_id': self.contract_id.id,
+            'client_service_id': self.client_service_id.id if self.client_service_id else False,
+            'state': 'pendiente',
+            'fecha_corte': date.today(),
+        }
+        return Suspension.create(vals)
+
+    def action_view_suspension(self):
+        self.ensure_one()
+        if not self.suspension_id:
+            raise ValidationError('Este registro incobrable todavía no tiene una suspensión asociada.')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Suspensión FTTH',
+            'res_model': 'wigo.ftth.service.suspension',
+            'view_mode': 'form',
+            'res_id': self.suspension_id.id,
+            'target': 'current',
+        }
 
     def action_marcar_recuperado(self):
         for rec in self:

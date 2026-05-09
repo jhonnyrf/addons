@@ -167,6 +167,19 @@ class FtthClientService(models.Model):
         readonly=True,
     )
 
+    # ── Suspensiones ─────────────────────────────────────────────
+    suspension_ids = fields.One2many(
+        'wigo.ftth.service.suspension',
+        'client_service_id',
+        string='Suspensiones',
+        readonly=True,
+    )
+    suspension_count = fields.Integer(
+        string='Suspensiones',
+        compute='_compute_suspension_data',
+        store=False,
+    )
+
     # ── Incidencias (integrado desde wigo_helpdesk) ─────────────
     incident_count = fields.Integer(
         string='Incidencias',
@@ -269,6 +282,11 @@ class FtthClientService(models.Model):
         for record in self:
             record.work_order_accessory_ids = record.work_order_id.work_order_accessories if record.work_order_id else False
 
+    @api.depends('suspension_ids')
+    def _compute_suspension_data(self):
+        for record in self:
+            record.suspension_count = len(record.suspension_ids)
+
     def action_view_work_order(self):
         self.ensure_one()
         return {
@@ -314,6 +332,20 @@ class FtthClientService(models.Model):
             'view_mode': 'list,form,kanban',
             'domain': [('ftth_service_id', '=', self.id)],
             'context': {'default_ftth_service_id': self.id, 'default_partner_id': self.partner_id.id if self.partner_id else False},
+        }
+
+    def action_view_suspensions(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Suspensiones relacionadas',
+            'res_model': 'wigo.ftth.service.suspension',
+            'view_mode': 'list,form',
+            'domain': [('client_service_id', '=', self.id)],
+            'context': {
+                'default_client_service_id': self.id,
+                'default_contract_id': self.work_order_id.contract_id.id if self.work_order_id and self.work_order_id.contract_id else False,
+            },
         }
 
     def action_create_deactivation_work_order(self):

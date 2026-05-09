@@ -22,6 +22,7 @@ access_ftth_work_order_user,wigo.ftth.work.order user,model_wigo_ftth_work_order
 access_ftth_work_order_accessory_user,ftth.work.order.accessory user,model_ftth_work_order_accessory,base.group_user,1,1,1,1
 access_ftth_client_service_user,wigo.ftth.client.service user,model_wigo_ftth_client_service,base.group_user,1,1,1,1
 access_ftth_work_order_print_config_manager,wigo.ftth.work.order.print.config manager,model_wigo_ftth_work_order_print_config,base.group_system,1,1,1,0
+access_ftth_service_suspension_user,wigo.ftth.service.suspension user,model_wigo_ftth_service_suspension,base.group_user,1,1,1,1
 access_generate_ports_wizard,access_generate_ports_wizard,model_wigo_ftth_generate_ports_wizard,base.group_user,1,1,1,1
 access_generate_boxes_wizard,access_generate_boxes_wizard,model_generate_boxes_wizard,base.group_user,1,1,1,1
 access_generate_subinterfaces_wizard,access_generate_subinterfaces_wizard,model_wigo_ftth_generate_subinterfaces_wizard,base.group_user,1,1,1,1

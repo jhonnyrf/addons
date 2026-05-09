@@ -62,6 +62,15 @@
                                 <span class="o_stat_text">Incidencias</span>
                             </div>
                         </button>
+
+                        <button name="action_view_suspensions" type="object" class="oe_stat_button" icon="fa-ban">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="suspension_count"/>
+                                </span>
+                                <span class="o_stat_text">Suspensiones</span>
+                            </div>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -160,6 +169,18 @@
 
                         <page string="Incidencias" name="incidencias">
                             <field name="incident_summary_html" nolabel="1" readonly="1" widget="html"/>
+                        </page>
+
+                        <page string="Suspensiones" name="suspensiones">
+                            <field name="suspension_ids" nolabel="1" readonly="1">
+                                <list>
+                                    <field name="contract_id"/>
+                                    <field name="fecha_registro"/>
+                                    <field name="fecha_corte"/>
+                                    <field name="fecha_reconexion"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
                         </page>
 
                         <page string="Configuración" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">

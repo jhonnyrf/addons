@@ -38,6 +38,17 @@
                     </field>
 
                 </page>
+                <!--    <page string="Incobrables" name="incobrables" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,base.group_erp_manager">
+                    <field name="incobrable_ids" nolabel="1" readonly="1">
+                        <tree string="Incobrables" default_order="fecha_declaracion desc">
+                            <field name="fecha_declaracion"/>
+                            <field name="state"/>
+                            <field name="meses_adeudados"/>
+                            <field name="monto_total_adeudado"/>
+                            <field name="suspension_id"/>
+                        </tree>
+                    </field>
+                </page> -->
             </xpath>
 
         </field>
