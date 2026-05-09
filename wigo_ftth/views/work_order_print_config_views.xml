@@ -5,76 +5,191 @@
         <field name="name">wigo.ftth.work.order.print.config.form</field>
         <field name="model">wigo.ftth.work.order.print.config</field>
         <field name="arch" type="xml">
-            <form string="Configuración Planilla OT FTTH" create="false" delete="false">
+            <form string="Configuración Planilla OT FTTH" create="false" delete="false" class="wigo-ftth-print-config-form">
                 <header>
-                    <button name="action_reset_defaults" string="↺ Restaurar diseño por defecto" type="object" class="btn-secondary" confirm="¿Restaurar los valores de diseño de la planilla OT?"/>
+                    <button name="action_reset_defaults" icon="fa-refresh" string="Restaurar diseño por defecto" type="object" class="btn-secondary" confirm="¿Restaurar los valores de diseño de la planilla OT?"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
-                        <h1>⚙️ Configuración de Planilla PDF OT FTTH</h1>
+                        <h1>
+                            <i class="fa fa-print me-2 text-primary"/>
+Configuración de Planilla PDF OT FTTH</h1>
+                        <p class="text-muted mb-0">
+                            Personaliza el encabezado, el contenido técnico y la vista previa del documento.
+                        </p>
                     </div>
 
-                    <group col="2" string="Encabezado">
-                        <group>
-                            <field name="titulo_documento"/>
-                            <field name="subtitulo_documento"/>
-                        </group>
-                        <group>
-                            <field name="usar_logo_imagen"/>
-                            <field name="logo" widget="image" options="{'size': [350, 140]}"/>
-                            <field name="logo_ancho"/>
-                        </group>
-                    </group>
+                    <div class="row g-0">
+                        <div class="col-xl-6 pe-xl-3">
 
-                    <group col="2" string="Empresa">
-                        <group>
-                            <field name="empresa_nombre"/>
-                            <field name="empresa_direccion"/>
-                            <field name="empresa_ciudad"/>
-                        </group>
-                        <group>
-                            <field name="empresa_telefono"/>
-                            <field name="empresa_email"/>
-                        </group>
-                    </group>
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-heading me-2 text-primary"/>
+Encabezado</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="titulo_documento"/>
+                                            <field name="subtitulo_documento"/>
+                                            <field name="mostrar_numero_grande"/>
+                                            <field name="border_radius"/>
+                                        </group>
+                                        <group>
+                                            <field name="layout_logo"/>
+                                            <field name="usar_logo_imagen"/>
+                                            <field name="logo" widget="image" options="{'size': [320, 140]}"/>
+                                            <field name="logo_fname" invisible="1"/>
+                                            <field name="logo_ancho"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
 
-                    <group col="2" string="Firma">
-                        <group>
-                            <field name="firma_nombre"/>
-                        </group>
-                        <group>
-                            <field name="firma_cargo"/>
-                        </group>
-                    </group>
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-building me-2 text-success"/>
+Empresa / Contacto</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="empresa_nombre"/>
+                                            <field name="empresa_slogan"/>
+                                            <field name="empresa_direccion"/>
+                                            <field name="empresa_ciudad"/>
+                                        </group>
+                                        <group>
+                                            <field name="empresa_telefono"/>
+                                            <field name="empresa_email"/>
+                                            <field name="empresa_nit"/>
+                                            <field name="firma_nombre"/>
+                                            <field name="firma_cargo"/>
+                                            <field name="firma_celular"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
 
-                    <group col="2" string="Códigos QR">
-                        <group>
-                            <field name="qr_cobranzas" widget="image" options="{'size': [120, 120]}"/>
-                            <field name="qr_cobranzas_fname" invisible="1"/>
-                        </group>
-                        <group>
-                            <field name="qr_soporte" widget="image" options="{'size': [120, 120]}"/>
-                            <field name="qr_soporte_fname" invisible="1"/>
-                        </group>
-                    </group>
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-qrcode me-2 text-dark"/>
+Códigos QR</div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <field name="qr_cobranzas" widget="image" options="{'size': [180, 180]}"/>
+                                            <field name="qr_cobranzas_fname" invisible="1"/>
+                                            <div class="text-center text-muted mt-2">Número de Cobranzas</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <field name="qr_soporte" widget="image" options="{'size': [180, 180]}"/>
+                                            <field name="qr_soporte_fname" invisible="1"/>
+                                            <div class="text-center text-muted mt-2">Número Atención/Soporte</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <group col="2" string="Diseño">
-                        <group>
-                            <field name="color_primario" widget="color"/>
-                            <field name="color_secundario" widget="color"/>
-                            <field name="color_texto_header" widget="color"/>
-                            <field name="color_borde" widget="color"/>
-                            <field name="color_fondo" widget="color"/>
-                            <field name="color_texto" widget="color"/>
-                        </group>
-                        <group>
-                            <field name="fuente_familia"/>
-                            <field name="tamano_fuente_base"/>
-                            <field name="tamano_titulo"/>
-                            <field name="mostrar_accesorios"/>
-                            <field name="mostrar_observaciones"/>
-                        </group>
-                    </group>
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-palette me-2 text-danger"/>
+Colores</div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <group string="Encabezado">
+                                                <field name="color_primario" widget="color"/>
+                                                <field name="color_secundario" widget="color"/>
+                                                <field name="color_texto_header" widget="color"/>
+                                            </group>
+                                        </div>
+                                        <div class="col-6">
+                                            <group string="Cuerpo">
+                                                <field name="color_fondo" widget="color"/>
+                                                <field name="color_borde" widget="color"/>
+                                                <field name="color_texto" widget="color"/>
+                                                <field name="color_fondo_monto" widget="color"/>
+                                            </group>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-font me-2 text-warning"/>
+Tipografía</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="fuente_familia"/>
+                                            <field name="fuente_titulo_negrita"/>
+                                        </group>
+                                        <group>
+                                            <field name="tamano_fuente_base"/>
+                                            <field name="tamano_titulo"/>
+                                            <field name="tamano_empresa"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-layer-group me-2 text-secondary"/>
+Layout y secciones</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="mostrar_banda_decorativa"/>
+                                            <field name="ancho_banda" invisible="not mostrar_banda_decorativa"/>
+                                            <field name="mostrar_equipos_instalados"/>
+                                            <field name="mostrar_materiales"/>
+                                        </group>
+                                        <group>
+                                            <field name="mostrar_observaciones"/>
+                                            <field name="mostrar_conformidad"/>
+                                            <field name="mostrar_pie"/>
+                                            <field name="texto_pie" invisible="not mostrar_pie"/>
+                                            <field name="mostrar_columna_codigo"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-table me-2 text-info"/>
+Tabla y textos</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <field name="tabla_header_texto"/>
+                                        <field name="tabla_monto_texto"/>
+                                    </group>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="col-xl-6 ps-xl-3">
+                            <div class="wigo-ftth-preview-sticky">
+                                <div class="card shadow-sm">
+                                    <div class="card-header fw-bold d-flex justify-content-between align-items-center text-white" style="background: linear-gradient(135deg, #7a3f98, #b564d6);">
+                                        <span>
+                                            <i class="fa fa-eye me-2"/>
+Vista previa en tiempo real</span>
+                                        <small style="opacity:0.85;">Planilla OT FTTH</small>
+                                    </div>
+                                    <div class="card-body p-2 wigo-ftth-preview-area">
+                                        <widget name="ftth_work_order_print_config_preview"/>
+                                    </div>
+                                </div>
+                                <div class="text-muted mt-2 small text-center">
+                                    <i class="fa fa-sync-alt me-1"/>
+La vista previa se actualiza al cambiar cualquier configuración.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </sheet>
             </form>
         </field>

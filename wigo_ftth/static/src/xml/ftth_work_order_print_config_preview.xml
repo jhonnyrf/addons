@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="wigo_ftth.FtthWorkOrderPrintConfigPreview">
+        <div class="wigo-ftth-preview-shell">
+            <t t-if="state.loading">
+                <div class="wigo-ftth-preview-loading">
+                    <i class="fa fa-spinner fa-spin me-2"/>
+                    Generando vista previa...
+                </div>
+            </t>
+            <t t-else="">
+                <div t-ref="configHtmlContainer"/>
+            </t>
+        </div>
+    </t>
+
+</templates>

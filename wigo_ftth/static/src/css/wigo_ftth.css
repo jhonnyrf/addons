@@ -34,3 +34,63 @@
 .wigo_ftth_work_order_form.o_form_readonly .o_field_widget a {
     text-decoration: none;
 }
+
+/* Configuración de impresión OT FTTH */
+.wigo-ftth-print-config-form .card {
+    border: 1px solid rgba(122, 63, 152, 0.12);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.wigo-ftth-print-config-form .card-header {
+    background: linear-gradient(180deg, rgba(122, 63, 152, 0.06), rgba(122, 63, 152, 0.02));
+    border-bottom: 1px solid rgba(122, 63, 152, 0.10);
+}
+
+.wigo-ftth-preview-sticky {
+    position: sticky;
+    top: 72px;
+}
+
+.wigo-ftth-preview-area {
+    background: #f5f7fb;
+    min-height: 72vh;
+    max-height: 82vh;
+    overflow: auto;
+}
+
+.wigo-ftth-preview-shell {
+    min-height: 200px;
+}
+
+.wigo-ftth-preview-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    color: #6b7280;
+}
+
+.wigo-ftth-ot-preview {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.wigo-ftth-ot-paper {
+    width: 100%;
+    max-width: 980px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.wigo-ftth-ot-paper table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wigo-ftth-ot-paper th,
+.wigo-ftth-ot-paper td {
+    word-break: break-word;
+}

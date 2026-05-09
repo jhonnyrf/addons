@@ -49,6 +49,8 @@
     'assets': {
         'web.assets_backend': [
             'wigo_ftth/static/src/css/wigo_ftth.css',
+            'wigo_ftth/static/src/js/ftth_work_order_print_config_preview.js',
+            'wigo_ftth/static/src/xml/ftth_work_order_print_config_preview.xml',
         ],
     }    
 }
