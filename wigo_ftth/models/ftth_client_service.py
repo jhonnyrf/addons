@@ -167,6 +167,55 @@ class FtthClientService(models.Model):
         readonly=True,
     )
 
+    # ── Incidencias ─────────────────────────────────────────────
+    incident_count = fields.Integer(
+        string='Incidencias',
+        compute='_compute_incident_data',
+        store=False,
+    )
+    incident_summary_html = fields.Html(
+        string='Incidencias relacionadas',
+        compute='_compute_incident_data',
+        store=False,
+    )
+
+    def _get_helpdesk_ticket_model(self):
+        return self.env.registry.get('helpdesk.ticket') and self.env['helpdesk.ticket'] or False
+
+    def _compute_incident_data(self):
+        Ticket = self._get_helpdesk_ticket_model()
+        if not Ticket:
+            for record in self:
+                record.incident_count = 0
+                record.incident_summary_html = '<p class="text-muted mb-0">El módulo de incidencias no está disponible en esta base de datos.</p>'
+            return
+
+        grouped = {}
+        if self.ids:
+            for row in Ticket.search_read(
+                [('ftth_service_id', 'in', self.ids)],
+                ['ftth_service_id', 'name', 'title', 'stage_id', 'create_date'],
+                order='create_date desc, id desc',
+            ):
+                service_id = row['ftth_service_id'] and row['ftth_service_id'][0]
+                grouped.setdefault(service_id, []).append(row)
+
+        for record in self:
+            tickets = grouped.get(record.id, [])
+            record.incident_count = len(tickets)
+            if not tickets:
+                record.incident_summary_html = '<p class="text-muted mb-0">No hay incidencias registradas para esta ficha técnica.</p>'
+                continue
+
+            items = []
+            for ticket in tickets:
+                number = ticket.get('name') or '/'
+                title = ticket.get('title') or ''
+                stage = ticket.get('stage_id') and ticket['stage_id'][1] or ''
+                created = ticket.get('create_date') or ''
+                items.append(f'<li><strong>{number}</strong> — {title} <span class="text-muted">({stage})</span> <span class="text-muted">{created}</span></li>')
+            record.incident_summary_html = '<ul class="mb-0">' + ''.join(items) + '</ul>'
+
     def _compute_ruta(self):
         for r in self:
             partes = []
@@ -228,6 +277,43 @@ class FtthClientService(models.Model):
             'res_model': 'wigo.ftth.work.order',
             'view_mode': 'form',
             'res_id': self.work_order_id.id,
+        }
+
+    def action_register_incident(self):
+        """Open a new Helpdesk ticket form prefilled with this ficha técnica data."""
+        self.ensure_one()
+        Ticket = self._get_helpdesk_ticket_model()
+        if not Ticket:
+            raise ValidationError('No se puede registrar una incidencia porque el módulo de Helpdesk no está instalado.')
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': 'Registrar Incidencia',
+            'res_model': 'helpdesk.ticket',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_ftth_service_id': self.id,
+                'default_partner_id': self.partner_id.id if self.partner_id else False,
+                'default_customer_code': self.codigo_cliente or False,
+                'default_customer_name': self.partner_id.name if self.partner_id else False,
+                'default_customer_phone': self.partner_id.mobile if self.partner_id else False,
+                'default_customer_address': self.link_ubicacion or False,
+            },
+        }
+        return action
+
+    def action_view_incidents(self):
+        self.ensure_one()
+        Ticket = self._get_helpdesk_ticket_model()
+        if not Ticket:
+            raise ValidationError('No se pueden visualizar incidencias porque el módulo de Helpdesk no está instalado.')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Incidencias relacionadas',
+            'res_model': 'helpdesk.ticket',
+            'view_mode': 'list,form,kanban',
+            'domain': [('ftth_service_id', '=', self.id)],
+            'context': {'default_ftth_service_id': self.id, 'default_partner_id': self.partner_id.id if self.partner_id else False},
         }
 
     def action_create_deactivation_work_order(self):

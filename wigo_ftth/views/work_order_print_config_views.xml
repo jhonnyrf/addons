@@ -170,6 +170,71 @@ Tabla y textos</div>
                                 </div>
                             </div>
 
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-file-alt me-2 text-secondary"/>
+Textos y etiquetas</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="titulo_datos_tecnicos"/>
+                                            <field name="titulo_equipos"/>
+                                            <field name="titulo_materiales"/>
+                                            <field name="titulo_observaciones"/>
+                                            <field name="titulo_conformidad"/>
+                                            <field name="texto_observaciones"/>
+                                            <field name="texto_conformidad"/>
+                                        </group>
+                                        <group>
+                                            <field name="titulo_cobranzas"/>
+                                            <field name="texto_para_pago"/>
+                                            <field name="titulo_soporte"/>
+                                            <field name="texto_para_soporte"/>
+                                            <field name="instrucciones_texto"/>
+                                            <field name="texto_legal"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-sliders-h me-2 text-muted"/>
+Secciones y etiquetas técnicas</div>
+                                <div class="card-body">
+                                    <group col="2">
+                                        <group>
+                                            <field name="label_servicio"/>
+                                            <field name="label_razon_social"/>
+                                            <field name="label_nombre"/>
+                                            <field name="label_email"/>
+                                            <field name="label_celular"/>
+                                        </group>
+                                        <group>
+                                            <field name="label_telefono"/>
+                                            <field name="label_direccion"/>
+                                            <field name="label_coordenadas"/>
+                                            <field name="col_equipo"/>
+                                            <field name="col_marca"/>
+                                            <field name="col_modelo"/>
+                                        </group>
+                                    </group>
+                                    <group col="2" style="margin-top:8px;">
+                                        <group>
+                                            <field name="col_nro_serie"/>
+                                            <field name="col_nro_serie_pon"/>
+                                        </group>
+                                        <group>
+                                            <field name="mostrar_qr_cobranzas"/>
+                                            <field name="mostrar_qr_soporte"/>
+                                            <field name="mostrar_firma"/>
+                                            <field name="mostrar_datos_tecnicos"/>
+                                            <field name="mostrar_bloque_soporte"/>
+                                        </group>
+                                    </group>
+                                </div>
+                            </div>
+
                         </div>
 
                         <div class="col-xl-6 ps-xl-3">

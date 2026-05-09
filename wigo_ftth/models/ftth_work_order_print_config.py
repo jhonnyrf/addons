@@ -89,6 +89,48 @@ class FtthWorkOrderPrintConfig(models.Model):
     tabla_header_texto = fields.Char(string='Encabezado descripción', default='DESCRIPCIÓN')
     tabla_monto_texto = fields.Char(string='Encabezado monto', default='MONTO (Bs.)')
 
+    # Text blocks and labels (configurable)
+    titulo_datos_tecnicos = fields.Char(string='Título Datos Técnicos', default='DATOS TÉCNICOS DEL SERVICIO')
+    titulo_equipos = fields.Char(string='Título Equipos', default='EQUIPOS INSTALADOS')
+    titulo_materiales = fields.Char(string='Título Materiales', default='MATERIALES')
+    titulo_observaciones = fields.Char(string='Título Observaciones', default='OBSERVACIONES')
+    titulo_conformidad = fields.Char(string='Título Conformidad', default='CONFORMIDAD')
+
+    texto_observaciones = fields.Text(string='Texto Observaciones', default='')
+    texto_conformidad = fields.Text(string='Texto Conformidad', default='Declaro haber recibido el servicio y/o material descrito. Conforme.')
+
+    titulo_cobranzas = fields.Char(string='Título Cobranzas', default='Para Pago de Facturas')
+    texto_para_pago = fields.Char(string='Texto para pago', default='Para Pago de Facturas')
+    titulo_soporte = fields.Char(string='Título Soporte', default='Para Soporte Técnico')
+    texto_para_soporte = fields.Char(string='Texto para soporte', default='Para Soporte Técnico')
+
+    # Labels y columnas
+    label_servicio = fields.Char(string='Label Servicio', default='SERVICIO')
+    label_razon_social = fields.Char(string='Label Razón Social', default='Razón Social')
+    label_nombre = fields.Char(string='Label Nombre', default='Nombre')
+    label_email = fields.Char(string='Label Email', default='email')
+    label_celular = fields.Char(string='Label Celular', default='Celular')
+    label_telefono = fields.Char(string='Label Teléfono', default='Teléfono')
+    label_direccion = fields.Char(string='Label Dirección', default='Dirección')
+    label_coordenadas = fields.Char(string='Label Coordenadas', default='Coordenadas')
+
+    col_equipo = fields.Char(string='Columna Equipo', default='EQUIPO')
+    col_marca = fields.Char(string='Columna Marca', default='MARCA')
+    col_modelo = fields.Char(string='Columna Modelo', default='MODELO')
+    col_nro_serie = fields.Char(string='Columna Nro Serie', default='NRO DE SERIE')
+    col_nro_serie_pon = fields.Char(string='Columna Nro Serie PON', default='NRO DE SERIE (PON S/N)')
+
+    # Additional blocks
+    instrucciones_texto = fields.Text(string='Bloque Instrucciones', default='')
+    texto_legal = fields.Text(string='Texto Legal', default='')
+
+    # Toggles for optional sections
+    mostrar_qr_cobranzas = fields.Boolean(string='Mostrar QR Cobranzas', default=True)
+    mostrar_qr_soporte = fields.Boolean(string='Mostrar QR Soporte', default=True)
+    mostrar_firma = fields.Boolean(string='Mostrar firma', default=True)
+    mostrar_datos_tecnicos = fields.Boolean(string='Mostrar datos técnicos', default=True)
+    mostrar_bloque_soporte = fields.Boolean(string='Mostrar bloque soporte', default=True)
+
     @api.model
     def get_config(self):
         cfg = self.search([], limit=1)
@@ -119,8 +161,39 @@ class FtthWorkOrderPrintConfig(models.Model):
             'mostrar_pie': True,
             'texto_pie': 'La información de esta OT es parte del control técnico.',
             'color_primario': '#7a3f98',
-                        'numero_cobranzas': '73802898',
-                        'numero_soporte': '63888133',
+            'numero_cobranzas': '73802898',
+            'numero_soporte': '63888133',
+            'titulo_datos_tecnicos': 'DATOS TÉCNICOS DEL SERVICIO',
+            'titulo_equipos': 'EQUIPOS INSTALADOS',
+            'titulo_materiales': 'MATERIALES',
+            'titulo_observaciones': 'OBSERVACIONES',
+            'titulo_conformidad': 'CONFORMIDAD',
+            'texto_observaciones': False,
+            'texto_conformidad': 'Declaro haber recibido el servicio y/o material descrito. Conforme.',
+            'titulo_cobranzas': 'Para Pago de Facturas',
+            'texto_para_pago': 'Para Pago de Facturas',
+            'titulo_soporte': 'Para Soporte Técnico',
+            'texto_para_soporte': 'Para Soporte Técnico',
+            'label_servicio': 'SERVICIO',
+            'label_razon_social': 'Razón Social',
+            'label_nombre': 'Nombre',
+            'label_email': 'email',
+            'label_celular': 'Celular',
+            'label_telefono': 'Teléfono',
+            'label_direccion': 'Dirección',
+            'label_coordenadas': 'Coordenadas',
+            'col_equipo': 'EQUIPO',
+            'col_marca': 'MARCA',
+            'col_modelo': 'MODELO',
+            'col_nro_serie': 'NRO DE SERIE',
+            'col_nro_serie_pon': 'NRO DE SERIE (PON S/N)',
+            'instrucciones_texto': False,
+            'texto_legal': False,
+            'mostrar_qr_cobranzas': True,
+            'mostrar_qr_soporte': True,
+            'mostrar_firma': True,
+            'mostrar_datos_tecnicos': True,
+            'mostrar_bloque_soporte': True,
             'color_secundario': '#b564d6',
             'color_texto_header': '#ffffff',
             'color_borde': '#cfcfd6',
@@ -209,4 +282,40 @@ class FtthWorkOrderPrintConfig(models.Model):
             'mostrar_conformidad': cfg.mostrar_conformidad,
             'tabla_header_texto': cfg.tabla_header_texto,
             'tabla_monto_texto': cfg.tabla_monto_texto,
+            # Text blocks and labels
+            'titulo_datos_tecnicos': cfg.titulo_datos_tecnicos or 'DATOS TÉCNICOS DEL SERVICIO',
+            'titulo_equipos': cfg.titulo_equipos or 'EQUIPOS INSTALADOS',
+            'titulo_materiales': cfg.titulo_materiales or 'MATERIALES',
+            'titulo_observaciones': cfg.titulo_observaciones or 'OBSERVACIONES',
+            'titulo_conformidad': cfg.titulo_conformidad or 'CONFORMIDAD',
+            'texto_observaciones': cfg.texto_observaciones or '',
+            'texto_conformidad': cfg.texto_conformidad or 'Declaro haber recibido el servicio y/o material descrito. Conforme.',
+            'titulo_cobranzas': cfg.titulo_cobranzas or 'Para Pago de Facturas',
+            'texto_para_pago': cfg.texto_para_pago or 'Para Pago de Facturas',
+            'titulo_soporte': cfg.titulo_soporte or 'Para Soporte Técnico',
+            'texto_para_soporte': cfg.texto_para_soporte or 'Para Soporte Técnico',
+            # Labels
+            'label_servicio': cfg.label_servicio or 'SERVICIO',
+            'label_razon_social': cfg.label_razon_social or 'Razón Social',
+            'label_nombre': cfg.label_nombre or 'Nombre',
+            'label_email': cfg.label_email or 'email',
+            'label_celular': cfg.label_celular or 'Celular',
+            'label_telefono': cfg.label_telefono or 'Teléfono',
+            'label_direccion': cfg.label_direccion or 'Dirección',
+            'label_coordenadas': cfg.label_coordenadas or 'Coordenadas',
+            # Columns
+            'col_equipo': cfg.col_equipo or 'EQUIPO',
+            'col_marca': cfg.col_marca or 'MARCA',
+            'col_modelo': cfg.col_modelo or 'MODELO',
+            'col_nro_serie': cfg.col_nro_serie or 'NRO DE SERIE',
+            'col_nro_serie_pon': cfg.col_nro_serie_pon or 'NRO DE SERIE (PON S/N)',
+            # Additional blocks
+            'instrucciones_texto': cfg.instrucciones_texto or '',
+            'texto_legal': cfg.texto_legal or '',
+            # Toggles
+            'mostrar_qr_cobranzas': cfg.mostrar_qr_cobranzas,
+            'mostrar_qr_soporte': cfg.mostrar_qr_soporte,
+            'mostrar_firma': cfg.mostrar_firma,
+            'mostrar_datos_tecnicos': cfg.mostrar_datos_tecnicos,
+            'mostrar_bloque_soporte': cfg.mostrar_bloque_soporte,
         }

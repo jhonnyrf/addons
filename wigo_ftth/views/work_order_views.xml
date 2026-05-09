@@ -140,7 +140,7 @@
 
                     <button name="action_activate" type="object" string="✓ Activar cliente" class="btn-success" invisible="work_type == 'deactivation' or state != 'installed'" confirm="¿Confirmar activación? Se creará la ficha técnica del cliente."/>
 
-                    <button name="action_incident" type="object" string="Registrar incidencia" class="btn-warning" invisible="work_type == 'deactivation' or state in ['pending','active','deactivation_executed','incident','cancelled']"/>
+                    <!-- 'Registrar incidencia' moved to Ficha Técnica (wigo.ftth.client.service) -->
 
                     <button name="action_execute_deactivation" type="object" string="Ejecutar baja" class="btn-danger" invisible="work_type != 'deactivation' or state != 'in_field'" confirm="¿Confirmar baja? Se liberará la subinterfaz, el puerto y la ONU."/>
 

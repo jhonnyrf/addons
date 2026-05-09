@@ -199,7 +199,9 @@
                                     </tr>
                                 </table>
 
-                                <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:2px;">DATOS TÉCNICOS DEL SERVICIO</div>
+                                <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:2px;">
+                                    <t t-out="cfg.titulo_datos_tecnicos or 'DATOS TÉCNICOS DEL SERVICIO'"/>
+                                </div>
                                 <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:#{fb - 1}px;">
                                     <tr>
                                         <th class="ot-th" style="width:60%;text-align:left;" colspan="3">Instalación</th>
@@ -229,13 +231,17 @@
                     <!-- ============================================ -->
                     <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:#{fb - 1}px;">
                         <tr>
-                            <th class="ot-th" style="width:12%;">SERVICIO</th>
+                            <th class="ot-th" style="width:12%;">
+                                <t t-out="cfg.label_servicio or 'SERVICIO'"/>
+                            </th>
                             <td class="tc" colspan="7" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="service_name"/>
                             </td>
                         </tr>
                         <tr>
-                            <th class="ot-th">Razón Social</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_razon_social or 'Razón Social'"/>
+                            </th>
                             <td class="tc" colspan="3" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="razon_social"/>
                             </td>
@@ -245,31 +251,43 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="ot-th">Nombre</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_nombre or 'Nombre'"/>
+                            </th>
                             <td class="tc" colspan="3" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="contact_name"/>
                             </td>
-                            <th class="ot-th">email</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_email or 'email'"/>
+                            </th>
                             <td class="tc" colspan="3" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="email"/>
                             </td>
                         </tr>
                         <tr>
-                            <th class="ot-th">Celular</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_celular or 'Celular'"/>
+                            </th>
                             <td class="tc" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="mobile"/>
                             </td>
-                            <th class="ot-th">Teléfono</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_telefono or 'Teléfono'"/>
+                            </th>
                             <td class="tc" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="phone"/>
                             </td>
-                            <th class="ot-th">Dirección</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_direccion or 'Dirección'"/>
+                            </th>
                             <td class="tc" colspan="3" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="address"/>
                             </td>
                         </tr>
                         <tr>
-                            <th class="ot-th">Coordenadas</th>
+                            <th class="ot-th">
+                                <t t-out="cfg.label_coordenadas or 'Coordenadas'"/>
+                            </th>
                             <td class="tc" colspan="3" t-attf-style="border:1px solid #{cb};padding:2px 4px;">
                                 <t t-out="coordinates"/>
                             </td>
@@ -283,7 +301,9 @@
                     <!-- ============================================ -->
                     <!-- DATOS TÉCNICOS DEL SERVICIO                  -->
                     <!-- ============================================ -->
-                    <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">DATOS TÉCNICOS DEL SERVICIO</div>
+                    <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">
+                        <t t-out="cfg.titulo_datos_tecnicos or 'DATOS TÉCNICOS DEL SERVICIO'"/>
+                    </div>
                     <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:#{fb - 1}px;">
                         <tr>
                             <th class="ot-th" style="width:14%;">PLAN</th>
@@ -330,15 +350,27 @@
                     <!-- EQUIPOS INSTALADOS                           -->
                     <!-- ============================================ -->
                     <t t-if="cfg.mostrar_equipos_instalados">
-                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">EQUIPOS INSTALADOS</div>
+                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">
+                            <t t-out="cfg.titulo_equipos or 'EQUIPOS INSTALADOS'"/>
+                        </div>
                         <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:#{fb - 1}px;">
                             <thead>
                                 <tr>
-                                    <th class="ot-th" style="width:14%;">EQUIPO</th>
-                                    <th class="ot-th" style="width:14%;">MARCA</th>
-                                    <th class="ot-th" style="width:20%;">MODELO</th>
-                                    <th class="ot-th" style="width:26%;">NRO DE SERIE</th>
-                                    <th class="ot-th">NRO DE SERIE (PON S/N)</th>
+                                    <th class="ot-th" style="width:14%">
+                                        <t t-out="cfg.col_equipo or 'EQUIPO'"/>
+                                    </th>
+                                    <th class="ot-th" style="width:14%">
+                                        <t t-out="cfg.col_marca or 'MARCA'"/>
+                                    </th>
+                                    <th class="ot-th" style="width:20%">
+                                        <t t-out="cfg.col_modelo or 'MODELO'"/>
+                                    </th>
+                                    <th class="ot-th" style="width:26%">
+                                        <t t-out="cfg.col_nro_serie or 'NRO DE SERIE'"/>
+                                    </th>
+                                    <th class="ot-th">
+                                        <t t-out="cfg.col_nro_serie_pon or 'NRO DE SERIE (PON S/N)'"/>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -372,7 +404,9 @@
                     <!-- MATERIAL                                     -->
                     <!-- ============================================ -->
                     <t t-if="cfg.mostrar_materiales">
-                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">MATERIAL</div>
+                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">
+                            <t t-out="cfg.titulo_materiales or 'MATERIAL'"/>
+                        </div>
                         <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:#{fb - 1}px;">
                             <thead>
                                 <tr>
@@ -384,16 +418,10 @@
                                     <th class="ot-th" style="width:10%;">Unidad</th>
                                     <th class="ot-th" style="width:8%;">CANT.</th>
                                     <th class="ot-th" style="width:16%;" rowspan="2">
-                                        <div style="font-size:8px;font-weight:700;line-height:1;">Número de</div>
-                                        <div style="font-size:8px;font-weight:700;line-height:1;">Cobranzas</div>
+                                        <div style="font-size:8px;font-weight:700;line-height:1;">
+                                            <t t-out="cfg.titulo_cobranzas or 'Número de Cobranzas'"/>
+                                        </div>
                                     </th>
-                                </tr>
-                                <tr>
-                                    <th class="ot-th">DESCRIPCION</th>
-                                    <th class="ot-th">CANT.</th>
-                                    <th class="ot-th">DESCRIPCION</th>
-                                    <th class="ot-th">Unidad</th>
-                                    <th class="ot-th">CANT.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -415,12 +443,14 @@
                                     <td class="tc" t-attf-style="border:1px solid #{cb};padding:2px 4px;">(metros)</td>
                                     <td class="tc" t-attf-style="border:1px solid #{cb};padding:2px 4px;">&#160;</td>
                                     <td class="tc" rowspan="6" t-attf-style="border:1px solid #{cb};padding:2px 4px;vertical-align:middle;">
-                                        <div style="font-size:8px;font-weight:700;">Para Pago de Facturas</div>
+                                        <div style="font-size:8px;font-weight:700;">
+                                            <t t-out="cfg.texto_para_pago or 'Para Pago de Facturas'"/>
+                                        </div>
                                         <div style="font-size:8px;margin-top:1px;">Comuniquese al:</div>
                                         <div style="font-weight:700;margin:2px 0;">
                                             <t t-out="num_cob"/>
                                         </div>
-                                        <t t-if="cfg.qr_cobranzas">
+                                        <t t-if="cfg.mostrar_qr_cobranzas and cfg.qr_cobranzas">
                                             <img t-att-src="image_data_uri(cfg.qr_cobranzas)" style="max-height:72px;max-width:72px;margin-top:4px;display:block;margin-left:auto;margin-right:auto;"/>
                                         </t>
                                     </td>
@@ -518,9 +548,14 @@
                     <!-- OBSERVACIONES                                 -->
                     <!-- ============================================ -->
                     <t t-if="cfg.mostrar_observaciones">
-                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">OBSERVACIONES</div>
+                        <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:4px;">
+                            <t t-out="cfg.titulo_observaciones or 'OBSERVACIONES'"/>
+                        </div>
                         <div t-attf-style="border:1px solid #{cb};border-top:none;min-height:58px;padding:4px 6px;font-size:#{fb - 1}px;line-height:1.45;margin-bottom:4px;">
-                            <t t-if="o.notes">
+                            <t t-if="cfg.texto_observaciones">
+                                <t t-out="cfg.texto_observaciones"/>
+                            </t>
+                            <t t-elif="o.notes">
                                 <t t-out="o.notes"/>
                             </t>
                             <t t-else="">&#160;</t>
@@ -533,24 +568,36 @@
                     <t t-if="cfg.mostrar_conformidad">
                         <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4px;font-size:#{fb - 1}px;">
                             <tr>
-                                <th class="ot-th" style="width:72%;">CONFORMIDAD DEL CLIENTE</th>
-                                <th class="ot-th">Número de Atención/Soporte</th>
+                                <th class="ot-th" style="width:72%">
+                                    <t t-out="cfg.titulo_conformidad or 'CONFORMIDAD DEL CLIENTE'"/>
+                                </th>
+                                <th class="ot-th">
+                                    <t t-out="cfg.titulo_soporte or 'Número de Atención/Soporte'"/>
+                                </th>
                             </tr>
                             <tr>
                                 <td t-attf-style="border:1px solid #{cb};padding:5px 6px;text-align:justify;vertical-align:top;line-height:1.45;">
-                                    El cliente/responsable de recepción del servicio, previa verificación, declara haber recibido el servicio de
-                                    internet WiGo-Fast de ASISCORP S.R.L. con las características descritas arriba, además del equipo instalado
-                                    en sus ambientes, de la misma manera se compromete al cuidado y buen uso de los equipos entregados en calidad
-                                    de comodato. En conformidad firma al pie.
+                                    <t t-if="cfg.texto_conformidad">
+                                        <t t-out="cfg.texto_conformidad"/>
+                                    </t>
+                                    <t t-else="">
+                                        El cliente/responsable de recepción del servicio, previa verificación, declara haber recibido el servicio de
+                                        internet con las características descritas arriba, además del equipo instalado en sus ambientes, de la misma
+                                        manera se compromete al cuidado y buen uso de los equipos entregados en calidad de comodato. En conformidad firma al pie.
+                                    </t>
                                 </td>
                                 <td t-attf-style="border:1px solid #{cb};padding:5px 6px;text-align:center;vertical-align:middle;">
-                                    <div style="font-size:8px;">Para</div>
-                                    <div class="fw7" style="font-size:9px;">Soporte Técnico</div>
+                                    <div style="font-size:8px;">
+                                        <t t-out="cfg.titulo_soporte or 'Para'"/>
+                                    </div>
+                                    <div class="fw7" style="font-size:9px;">
+                                        <t t-out="cfg.texto_para_soporte or 'Soporte Técnico'"/>
+                                    </div>
                                     <div style="font-size:8px;">comuníquese al:</div>
                                     <div class="fw7" style="font-size:11px;margin:2px 0;">
                                         <t t-out="num_sop"/>
                                     </div>
-                                    <t t-if="cfg.qr_soporte">
+                                    <t t-if="cfg.mostrar_qr_soporte and cfg.qr_soporte">
                                         <img t-att-src="image_data_uri(cfg.qr_soporte)" style="max-height:72px;max-width:72px;margin-top:4px;display:block;margin-left:auto;margin-right:auto;"/>
                                     </t>
                                 </td>
@@ -571,8 +618,12 @@
                             </td>
                             <td class="no-border" t-attf-style="width:50%;padding-top:16px;text-align:center;vertical-align:bottom;">
                                 <div class="ot-sign-line"></div>
-                                <div class="fw7">Firma Responsable ASISCORP S.R.L.</div>
-                                <div style="margin-top:2px;text-align:left;" class="fw7">Nombre y Apellido:</div>
+                                <div class="fw7">
+                                    <t t-out="cfg.firma_nombre or 'Firma Responsable'"/>
+                                </div>
+                                <div style="margin-top:2px;text-align:left;" class="fw7">
+                                    <t t-out="cfg.firma_cargo or 'Nombre y Apellido:'"/>
+                                </div>
                             </td>
                         </tr>
                     </table>

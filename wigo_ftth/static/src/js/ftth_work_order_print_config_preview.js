@@ -20,31 +20,39 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         this.state = useState({ loading: true });
 
         useEffect(
-            () => {
-                this._render();
-            },
-            () => {
-                const d = this.props.record.data;
-                return [
-                    d.titulo_documento, d.subtitulo_documento, d.mostrar_numero_grande,
-                    d.border_radius, d.empresa_nombre, d.empresa_slogan,
-                    d.empresa_direccion, d.empresa_ciudad, d.empresa_telefono,
-                    d.empresa_email, d.empresa_nit, d.usar_logo_imagen,
-                    d.layout_logo, d.logo, d.logo_ancho,
-                    d.qr_cobranzas, d.qr_soporte,
-                    d.firma_nombre, d.firma_cargo, d.firma_celular,
-                    d.mostrar_pie, d.texto_pie,
-                    +                    d.numero_cobranzas, d.numero_soporte,
-                    d.color_primario, d.color_secundario, d.color_texto_header,
-                    d.color_borde, d.color_fondo, d.color_texto, d.color_fondo_monto,
-                    d.fuente_familia, d.tamano_fuente_base, d.tamano_titulo,
-                    d.tamano_empresa, d.fuente_titulo_negrita,
-                    d.mostrar_banda_decorativa, d.ancho_banda,
-                    d.mostrar_columna_codigo, d.mostrar_equipos_instalados,
-                    d.mostrar_materiales, d.mostrar_observaciones, d.mostrar_conformidad,
-                    d.tabla_header_texto, d.tabla_monto_texto,
-                ];
-            }
+          () => {
+            this._render();
+          },
+          () => {
+            const d = this.props.record.data;
+            return [
+              d.titulo_documento, d.subtitulo_documento, d.mostrar_numero_grande,
+              d.border_radius, d.empresa_nombre, d.empresa_slogan,
+              d.empresa_direccion, d.empresa_ciudad, d.empresa_telefono,
+              d.empresa_email, d.empresa_nit, d.usar_logo_imagen,
+              d.layout_logo, d.logo, d.logo_ancho,
+              d.qr_cobranzas, d.qr_soporte,
+              d.firma_nombre, d.firma_cargo, d.firma_celular,
+              d.mostrar_pie, d.texto_pie,
+              d.numero_cobranzas, d.numero_soporte,
+              d.color_primario, d.color_secundario, d.color_texto_header,
+              d.color_borde, d.color_fondo, d.color_texto, d.color_fondo_monto,
+              d.fuente_familia, d.tamano_fuente_base, d.tamano_titulo,
+              d.tamano_empresa, d.fuente_titulo_negrita,
+              d.mostrar_banda_decorativa, d.ancho_banda,
+              d.mostrar_columna_codigo, d.mostrar_equipos_instalados,
+              d.mostrar_materiales, d.mostrar_observaciones, d.mostrar_conformidad,
+              d.tabla_header_texto, d.tabla_monto_texto,
+              // new textual fields and toggles
+              d.titulo_datos_tecnicos, d.titulo_equipos, d.titulo_materiales, d.titulo_observaciones, d.titulo_conformidad,
+              d.texto_observaciones, d.texto_conformidad,
+              d.titulo_cobranzas, d.texto_para_pago, d.titulo_soporte, d.texto_para_soporte,
+              d.label_servicio, d.label_razon_social, d.label_nombre, d.label_email, d.label_celular, d.label_telefono, d.label_direccion, d.label_coordenadas,
+              d.col_equipo, d.col_marca, d.col_modelo, d.col_nro_serie, d.col_nro_serie_pon,
+              d.instrucciones_texto, d.texto_legal,
+              d.mostrar_qr_cobranzas, d.mostrar_qr_soporte, d.mostrar_firma, d.mostrar_datos_tecnicos, d.mostrar_bloque_soporte,
+            ];
+          }
         );
     }
 
@@ -97,6 +105,38 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         const pieTexto    = d.texto_pie         || "La información de esta OT es parte del control técnico.";
         const tablaHeader = d.tabla_header_texto || "DESCRIPCIÓN";
         const tablaMonto = d.tabla_monto_texto || "MONTO (Bs.)";        
+        // New configurable labels and blocks
+        const tituloDatosTecnicos = d.titulo_datos_tecnicos || 'DATOS TÉCNICOS DEL SERVICIO';
+        const tituloEquipos = d.titulo_equipos || 'EQUIPOS INSTALADOS';
+        const tituloMateriales = d.titulo_materiales || 'MATERIALES';
+        const tituloObservaciones = d.titulo_observaciones || 'OBSERVACIONES';
+        const tituloConformidad = d.titulo_conformidad || 'CONFORMIDAD';
+
+        const textoObservaciones = d.texto_observaciones || '';
+        const textoConformidad = d.texto_conformidad || 'Declaro haber recibido el servicio y/o material descrito. Conforme.';
+
+        const tituloCobranzas = d.titulo_cobranzas || 'Para Pago de Facturas';
+        const textoParaPago = d.texto_para_pago || 'Para Pago de Facturas';
+        const tituloSoporte = d.titulo_soporte || 'Para Soporte Técnico';
+        const textoParaSoporte = d.texto_para_soporte || 'Para Soporte Técnico';
+
+        const labelServicio = d.label_servicio || 'SERVICIO';
+        const labelRazonSocial = d.label_razon_social || 'Razón Social';
+        const labelNombre = d.label_nombre || 'Nombre';
+        const labelEmail = d.label_email || 'email';
+        const labelCelular = d.label_celular || 'Celular';
+        const labelTelefono = d.label_telefono || 'Teléfono';
+        const labelDireccion = d.label_direccion || 'Dirección';
+        const labelCoordenadas = d.label_coordenadas || 'Coordenadas';
+
+        const colEquipo = d.col_equipo || 'EQUIPO';
+        const colMarca = d.col_marca || 'MARCA';
+        const colModelo = d.col_modelo || 'MODELO';
+        const colNroSerie = d.col_nro_serie || 'NRO DE SERIE';
+        const colNroSeriePon = d.col_nro_serie_pon || 'NRO DE SERIE (PON S/N)';
+
+        const instruccionesTexto = d.instrucciones_texto || '';
+        const textoLegal = d.texto_legal || '';
 
         // --- QR ---
           const numCob = d.numero_cobranzas || '73802898';
@@ -172,7 +212,7 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         </tr>
       </table>
 
-      <div style="text-align:center;background:${cp};color:${cht};font-weight:700;padding:3px 6px;margin-top:2px;">DATOS TÉCNICOS DEL SERVICIO</div>
+      <div style="text-align:center;background:${cp};color:${cht};font-weight:700;padding:3px 6px;margin-top:2px;">${tituloDatosTecnicos}</div>
       <table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:${Math.max(fb - 1, 8)}px;">
         <tr>
           <th style="${thStyle}text-align:left;" colspan="3">Instalación</th>
@@ -196,32 +236,32 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // ============================================================
         const clientHtml = `
 <table style="${tblStyle}margin-bottom:4px;font-size:${fsBody};">
-  <tr>
-    <th style="${thStyle}width:12%;">SERVICIO</th>
+        <tr>
+    <th style="${thStyle}width:12%;">${labelServicio}</th>
     <td colspan="7" style="${tdStyle}text-align:center;">Internet PPPoE + Wi Fi</td>
   </tr>
   <tr>
-    <th style="${thStyle}">Razón Social</th>
+    <th style="${thStyle}">${labelRazonSocial}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">Nombre del cliente</td>
     <th style="${thStyle}width:10%;">Zona</th>
     <td colspan="3" style="${tdStyle}text-align:center;">04P</td>
   </tr>
   <tr>
-    <th style="${thStyle}">Nombre</th>
+    <th style="${thStyle}">${labelNombre}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">Responsable recepción</td>
-    <th style="${thStyle}">email</th>
+    <th style="${thStyle}">${labelEmail}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">correo@dominio.com</td>
   </tr>
   <tr>
-    <th style="${thStyle}">Celular</th>
+    <th style="${thStyle}">${labelCelular}</th>
     <td style="${tdStyle}text-align:center;">68506287</td>
-    <th style="${thStyle}">Teléfono</th>
+    <th style="${thStyle}">${labelTelefono}</th>
     <td style="${tdStyle}text-align:center;">72273625</td>
-    <th style="${thStyle}">Dirección</th>
+    <th style="${thStyle}">${labelDireccion}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">Floresta 04P</td>
   </tr>
   <tr>
-    <th style="${thStyle}">Coordenadas</th>
+    <th style="${thStyle}">${labelCoordenadas}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">17°20'50.9"S 66°09'38.2"W</td>
     <th style="${thStyle}">Zona</th>
     <td colspan="3" style="${tdStyle}text-align:center;">04P</td>
@@ -232,7 +272,7 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // DATOS TÉCNICOS — replica la estructura del PDF con ODN en rowspan
         // ============================================================
         const techHtml = `
-<div style="${secStyle}">DATOS TÉCNICOS DEL SERVICIO</div>
+        <div style="${secStyle}">${tituloDatosTecnicos}</div>
 <table style="${tblStyle}margin-bottom:4px;font-size:${fsBody};">
   <tr>
     <th style="${thStyle}width:14%;">PLAN</th>
@@ -263,15 +303,15 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // EQUIPOS INSTALADOS
         // ============================================================
         const eqHtml = showEq ? `
-<div style="${secStyle}">EQUIPOS INSTALADOS</div>
+        <div style="${secStyle}">${tituloEquipos}</div>
 <table style="${tblStyle}margin-bottom:4px;font-size:${fsBody};">
   <thead>
     <tr>
-      <th style="${thStyle}width:14%;">EQUIPO</th>
-      <th style="${thStyle}width:14%;">MARCA</th>
-      <th style="${thStyle}width:20%;">MODELO</th>
-      <th style="${thStyle}width:26%;">NRO DE SERIE</th>
-      <th style="${thStyle}">NRO DE SERIE (PON S/N)</th>
+              <th style="${thStyle}width:14%;">${colEquipo}</th>
+              <th style="${thStyle}width:14%;">${colMarca}</th>
+              <th style="${thStyle}width:20%;">${colModelo}</th>
+              <th style="${thStyle}width:26%;">${colNroSerie}</th>
+              <th style="${thStyle}">${colNroSeriePon}</th>
     </tr>
   </thead>
   <tbody>
@@ -303,7 +343,7 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // MATERIAL — replica estructura del PDF con QR en rowspan
         // ============================================================
         const matHtml = showMat ? `
-<div style="${secStyle}">MATERIAL</div>
+        <div style="${secStyle}">${tituloMateriales}</div>
 <table style="${tblStyle}margin-bottom:4px;font-size:${fsBody};">
   <thead>
     <tr>
@@ -312,10 +352,9 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
       <th style="${thStyle}width:22%;">${tablaHeader}</th>
       <th style="${thStyle}width:10%;">Unidad</th>
       <th style="${thStyle}width:8%;">CANT.</th>
-      <th style="${thStyle}width:16%;" rowspan="2">
-        <div>Número de</div>
-        <div>Cobranzas</div>
-      </th>
+              <th style="${thStyle}width:16%;" rowspan="2">
+                <div>${tituloCobranzas}</div>
+              </th>
     </tr>   
   </thead>
   <tbody>
@@ -326,10 +365,10 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
       <td style="${tdStyle}text-align:center;">(metros)</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
       <td style="${tdStyle}text-align:center;" rowspan="6">
-        <div style="font-size:8px;font-weight:700;">Para Pago de Facturas</div>
+        <div style="font-size:8px;font-weight:700;">${textoParaPago}</div>
         <div style="font-size:8px;margin-top:2px;">Comuniquese al:</div>
         <div style="font-weight:700;margin:2px 0;">${numCob}</div>
-        <div style="display:flex;justify-content:center;margin-top:4px;">${qrCobHtml}</div>
+        <div style="display:flex;justify-content:center;margin-top:4px;">${d.mostrar_qr_cobranzas ? qrCobHtml : ''}</div>
       </td>
     </tr>
     <tr>
@@ -374,9 +413,9 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // OBSERVACIONES
         // ============================================================
         const obsHtml = showObs ? `
-<div style="${secStyle}">OBSERVACIONES</div>
+<div style="${secStyle}">${tituloObservaciones}</div>
 <div style="border:1px solid ${cb};border-top:none;min-height:58px;padding:4px 6px;font-size:${fsBody};line-height:1.45;margin-bottom:4px;">
-  <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+  ${textoObservaciones ? `<div style="white-space:pre-wrap;">${textoObservaciones}</div>` : '<div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>'}
 </div>` : '';
 
         // ============================================================
@@ -385,22 +424,19 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         const conformHtml = showConform ? `
 <table style="${tblStyle}margin-top:4px;font-size:${fsBody};">
   <tr>
-    <th style="${thStyle}width:72%;">CONFORMIDAD DEL CLIENTE</th>
-    <th style="${thStyle}">Número de Atención/Soporte</th>
+    <th style="${thStyle}width:72%;">${tituloConformidad}</th>
+    <th style="${thStyle}">${tituloSoporte}</th>
   </tr>
   <tr>
     <td style="${tdStyle}padding:5px 6px;text-align:justify;vertical-align:top;">
-      El cliente/responsable de recepción del servicio, previa verificación, declara haber recibido el servicio de
-      internet WiGo-Fast de ASISCORP S.R.L. con las características descritas arriba, además del equipo instalado
-      en sus ambientes, de la misma manera se compromete al cuidado y buen uso de los equipos entregados en calidad
-      de comodato. En conformidad firma al pie.
+      ${textoConformidad}
     </td>
     <td style="${tdStyle}padding:5px 6px;text-align:center;vertical-align:middle;">
-      <div style="font-size:8px;">Para</div>
-      <div style="font-weight:700;font-size:9px;">Soporte Técnico</div>
+      <div style="font-size:8px;">${tituloSoporte}</div>
+      <div style="font-weight:700;font-size:9px;">${textoParaSoporte}</div>
       <div style="font-size:8px;">comuníquese al:</div>
       <div style="font-weight:700;font-size:11px;">${numSop}</div>
-      <div style="display:flex;justify-content:center;margin-top:4px;">${qrSupHtml}</div>
+      <div style="display:flex;justify-content:center;margin-top:4px;">${d.mostrar_qr_soporte ? qrSupHtml : ''}</div>
     </td>
   </tr>
 </table>` : '';
@@ -408,7 +444,7 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         // ============================================================
         // FIRMAS
         // ============================================================
-        const firmasHtml = `
+        const firmasHtml = d.mostrar_firma !== false ? `
 <table style="${tblStyle}margin-top:10px;font-size:${fsBody};">
   <tr>
     <td style="width:50%;border:none;padding-top:16px;text-align:center;vertical-align:bottom;">
@@ -419,11 +455,11 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
     </td>
     <td style="width:50%;border:none;padding-top:16px;text-align:center;vertical-align:bottom;">
       <div style="border-top:1px solid #3d73c9;margin:0 20px 3px;"></div>
-      <div style="font-weight:700;">Firma Responsable ASISCORP S.R.L.</div>
+      <div style="font-weight:700;">Firma Responsable</div>
       <div style="margin-top:2px;text-align:left;font-weight:700;">Nombre y Apellido:</div>
     </td>
   </tr>
-</table>`;
+</table>` : '';
 
         // ============================================================
         // PIE DE PÁGINA
