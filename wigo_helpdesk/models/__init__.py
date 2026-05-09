@@ -18,3 +18,4 @@ from . import helpdesk_close_wizard
 from . import helpdesk_sla_advanced_wizard
 from . import helpdesk_postventa
 from . import helpdesk_visit
+from . import ftth_client_service_ext

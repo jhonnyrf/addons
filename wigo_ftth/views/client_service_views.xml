@@ -158,7 +158,7 @@
                             </field>
                         </page>
 
-                        <page string="Incidencias">
+                        <page string="Incidencias" name="incidencias">
                             <field name="incident_summary_html" nolabel="1" readonly="1" widget="html"/>
                         </page>
 

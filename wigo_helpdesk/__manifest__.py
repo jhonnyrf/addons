@@ -60,6 +60,7 @@
         'views/helpdesk_assign_wizard_views.xml',
         'views/helpdesk_close_wizard_views.xml',
         'views/helpdesk_sla_advanced_wizard_views.xml',
+        'views/ftth_client_service_inherit_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_helpdesk_ticket_tree_ftth" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.tree.ftth.compact</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list default_order="create_date desc, id desc">
+                <field name="name" string="N°"/>
+                <field name="title" string="Título"/>
+                <field name="stage_id" string="Estado"/>
+                <field name="priority" string="Prioridad" widget="priority"/>
+                <field name="sla_status" string="SLA" widget="badge" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
+                <field name="sla_deadline" string="Fecha límite SLA"/>
+                <field name="create_date" string="Creado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ftth_cs_form_inherit_helpdesk" model="ir.ui.view">
+        <field name="name">wigo.ftth.client.service.form.inherit.helpdesk</field>
+        <field name="model">wigo.ftth.client.service</field>
+        <field name="inherit_id" ref="wigo_ftth.view_ftth_cs_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='incidencias']/field[@name='incident_summary_html']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//page[@name='incidencias']/field[@name='incident_summary_html']" position="after">
+                <div class="o_form_field" style="margin-bottom: 8px;">
+                    <button name="action_register_incident" type="object" string="Nueva Incidencia" class="btn btn-primary btn-sm" icon="fa-plus"/>
+                    <button name="action_view_incidents" type="object" string="Ver Todas" class="btn btn-secondary btn-sm" icon="fa-list"/>
+                </div>
+                <field name="helpdesk_ticket_ids" readonly="1" nolabel="1" options="{'tree_view_ref': 'wigo_helpdesk.view_helpdesk_ticket_tree_ftth'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

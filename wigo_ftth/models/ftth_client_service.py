@@ -167,7 +167,7 @@ class FtthClientService(models.Model):
         readonly=True,
     )
 
-    # ── Incidencias ─────────────────────────────────────────────
+    # ── Incidencias (integrado desde wigo_helpdesk) ─────────────
     incident_count = fields.Integer(
         string='Incidencias',
         compute='_compute_incident_data',
