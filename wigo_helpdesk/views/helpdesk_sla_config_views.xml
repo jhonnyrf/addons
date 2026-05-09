@@ -5,142 +5,59 @@
         <field name="name">helpdesk.sla.config.form</field>
         <field name="model">helpdesk.sla.config</field>
         <field name="arch" type="xml">
-            <form string="Semáforo SLA">
+            <form string="Semáforo SLA" close_button="1" create="false">
+                <header>
+                    <button name="action_regenerate_priorities" string="Restablecer configuración" type="object" class="btn-secondary" icon="fa-undo" confirm="¿Restablecer toda la configuración? Se perderán los cambios." />
+                </header>
                 <sheet>
-
                     <div class="oe_title">
-                        <h1>🚦 Configuración del Semáforo SLA</h1>
-                        <field name="company_id" invisible="1"/>
+                        <h1>Configuración del Semáforo SLA</h1>
                         <field name="name" invisible="1"/>
                     </div>
 
-                    <!-- ══ SECCIÓN 1: TIEMPOS SLA POR PRIORIDAD ══ -->
-                    <group string="⏱ Tiempos límite por prioridad">
-                        <div class="alert alert-info d-flex align-items-start gap-2 mb-3" role="alert">
-                            <i class="fa fa-info-circle fa-lg mt-1" title="Info"/>
-                            <div>
-                                Al crear un ticket, el sistema asigna automáticamente un límite SLA
-                                según la prioridad. El agente puede ajustarlo desde el propio ticket.
-                            </div>
-                        </div>
-                        <div class="o_group">
-                            <table class="table table-bordered table-sm w-auto">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th style="width:200px">Prioridad</th>
-                                        <th style="width:180px">Horas límite</th>
-                                        <th>Referencia</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="table-danger">
-                                        <td>
-                                            <strong>🔴 Crítica</strong>
-                                        </td>
-                                        <td>
-                                            <field name="sla_hours_critical" class="o_field_widget"/>
- h</td>
-                                        <td class="text-muted small">Cortes de fibra, sin señal, ONU offline</td>
-                                    </tr>
-                                    <tr class="table-warning">
-                                        <td>
-                                            <strong>🟠 Alta</strong>
-                                        </td>
-                                        <td>
-                                            <field name="sla_hours_high" class="o_field_widget"/>
- h</td>
-                                        <td class="text-muted small">Problemas técnicos graves</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <strong>🟡 Media</strong>
-                                        </td>
-                                        <td>
-                                            <field name="sla_hours_medium" class="o_field_widget"/>
- h</td>
-                                        <td class="text-muted small">Consultas y fallas menores</td>
-                                    </tr>
-                                    <tr class="table-success">
-                                        <td>
-                                            <strong>🟢 Baja</strong>
-                                        </td>
-                                        <td>
-                                            <field name="sla_hours_low" class="o_field_widget"/>
- h</td>
-                                        <td class="text-muted small">Solicitudes no urgentes</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- ══ PRIORIDADES SLA ══ -->
+                    <separator string="Tiempos límite por prioridad"/>
+                    <field name="priority_sla_ids" nolabel="1">
+                        <list editable="bottom" string="Prioridades SLA">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name" string="Prioridad"/>
+                            <field name="color" widget="color" string="Color"/>
+                            <field name="hours_limit" string="Horas límite"/>
+                            <field name="attention_time" string="Tiempo de atención"/>
+                            <field name="active" string="Activo" optional="show"/>
+                        </list>
+                    </field>
+
+                    <!-- ══ UMBRAL AMARILLO ══ -->
+                    <group string="¿Cuándo pasa a amarillo?">
+                        <field name="warning_threshold_pct" string="Cuando quede menos del (%) del tiempo total"/>
+                        <field name="warning_threshold_hours" string="O cuando queden menos de N horas (0 = ignorar)"/>
                     </group>
 
-                    <!-- ══ SECCIÓN 2: UMBRAL AMARILLO ══ -->
-                    <group string="🟡 ¿Cuándo pasa a amarillo?">
-                        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
-                            <i class="fa fa-lightbulb-o fa-lg mt-1" title="Tip"/>
-                            <div>
-                                El semáforo cambia a <strong>amarillo</strong> cuando el tiempo restante
-                                supera alguno de estos umbrales. Se activa el que ocurra primero.
-                                Pon <strong>0</strong> para desactivar.
-                            </div>
-                        </div>
-                        <group col="2">
-                            <group>
-                                <field name="warning_threshold_pct" string="Cuando quede menos del (%) del tiempo total"/>
-                            </group>
-                            <group>
-                                <field name="warning_threshold_hours" string="O cuando queden menos de (horas)"/>
-                            </group>
+                    <!-- ══ ETIQUETAS SEMÁFORO ══ -->
+                    <group string="Etiquetas del semáforo">
+                        <group string="Verde · En tiempo">
+                            <field name="ok_label" string="Etiqueta"/>
+                            <field name="ok_color" widget="color" string="Color"/>
+                        </group>
+                        <group string="Amarillo · Advertencia">
+                            <field name="warning_label" string="Etiqueta"/>
+                            <field name="warning_color" widget="color" string="Color"/>
+                        </group>
+                        <group string="Rojo · Vencido">
+                            <field name="danger_label" string="Etiqueta"/>
+                            <field name="danger_color" widget="color" string="Color"/>
+                        </group>
+                        <group string="Gris · Cerrado">
+                            <field name="closed_label" string="Etiqueta"/>
+                            <field name="closed_color" widget="color" string="Color"/>
                         </group>
                     </group>
 
-                    <!-- ══ SECCIÓN 3: PREVIEW SEMÁFORO ══ -->
-                    <group string="🎨 Apariencia del semáforo">
-                        <div class="alert alert-secondary d-flex align-items-center gap-2 mb-3" role="alert">
-                            <i class="fa fa-eye" title="Vista previa"/>
-                            <div>Edita las etiquetas directamente sobre los badges.</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded border mb-3 align-items-center justify-content-center">
-                                <div class="text-center">
-                                    <span class="badge fs-6 px-3 py-2 d-inline-flex align-items-center gap-1" style="background-color:#28a745; color:white;">
-                                        <i class="fa fa-check-circle" title="Verde"/>
-                                        <field name="ok_label" class="border-0 bg-transparent text-white p-0 m-0" style="min-width:80px; font-size:inherit;" placeholder="En tiempo"/>
-                                    </span>
-                                    <div class="text-muted small mt-1">Verde · a tiempo</div>
-                                </div>
-                                <i class="fa fa-arrow-right fa-lg text-muted" title="siguiente"/>
-                                <div class="text-center">
-                                    <span class="badge fs-6 px-3 py-2 d-inline-flex align-items-center gap-1" style="background-color:#ffc107; color:#212529;">
-                                        <i class="fa fa-clock-o" title="Amarillo"/>
-                                        <field name="warning_label" class="border-0 bg-transparent p-0 m-0" style="min-width:80px; font-size:inherit; color:#212529;" placeholder="Próximo a vencer"/>
-                                    </span>
-                                    <div class="text-muted small mt-1">Amarillo · advertencia</div>
-                                </div>
-                                <i class="fa fa-arrow-right fa-lg text-muted" title="siguiente"/>
-                                <div class="text-center">
-                                    <span class="badge fs-6 px-3 py-2 d-inline-flex align-items-center gap-1" style="background-color:#dc3545; color:white;">
-                                        <i class="fa fa-exclamation-circle" title="Rojo"/>
-                                        <field name="danger_label" class="border-0 bg-transparent text-white p-0 m-0" style="min-width:80px; font-size:inherit;" placeholder="SLA Vencido"/>
-                                    </span>
-                                    <div class="text-muted small mt-1">Rojo · vencido</div>
-                                </div>
-                                <i class="fa fa-arrow-right fa-lg text-muted" title="siguiente"/>
-                                <div class="text-center">
-                                    <span class="badge fs-6 px-3 py-2 d-inline-flex align-items-center gap-1" style="background-color:#6c757d; color:white;">
-                                        <i class="fa fa-check" title="Cerrado"/>
-                                        <field name="closed_label" class="border-0 bg-transparent text-white p-0 m-0" style="min-width:60px; font-size:inherit;" placeholder="Cerrado"/>
-                                    </span>
-                                    <div class="text-muted small mt-1">Gris · cerrado</div>
-                                </div>
-                            </div>
-                        </div>
-                    </group>
-
-                    <!-- ══ SECCIÓN 4: AUTOMATIZACIONES ══ -->
-                    <group string="⚡ Automatizaciones">
-                        <field name="escalate_on_expire" string="Escalar ticket automáticamente al vencer el SLA" help="El cron moverá los tickets vencidos a la etapa En Espera."/>
-                        <field name="notify_on_warning" string="Notificar al responsable cuando entre en zona amarilla" help="Envía una notificación interna al agente asignado."/>
+                    <!-- ══ AUTOMATIZACIONES ══ -->
+                    <group string="Automatizaciones">
+                        <field name="escalate_on_expire" string="Escalar ticket automáticamente al vencer el SLA"/>
+                        <field name="notify_on_warning" string="Notificar al responsable cuando entre en zona amarilla"/>
                     </group>
 
                 </sheet>
@@ -148,29 +65,42 @@
         </field>
     </record>
 
-    <!-- Vista lista mínima -->
     <record id="view_helpdesk_sla_config_list" model="ir.ui.view">
         <field name="name">helpdesk.sla.config.list</field>
         <field name="model">helpdesk.sla.config</field>
         <field name="arch" type="xml">
-            <list string="Configuración SLA" create="false" delete="false">
+            <list string="Configuración SLA" create="false" delete="false" edit="false">
                 <field name="name"/>
-                <field name="sla_hours_critical" string="Crítica (h)"/>
-                <field name="sla_hours_high" string="Alta (h)"/>
-                <field name="sla_hours_medium" string="Media (h)"/>
-                <field name="sla_hours_low" string="Baja (h)"/>
                 <field name="warning_threshold_pct" string="Umbral amarillo (%)"/>
             </list>
         </field>
     </record>
 
-    <!-- Acción — abre directamente el formulario del singleton -->
+    <record id="action_helpdesk_sla_config_prepare" model="ir.actions.server">
+        <field name="name">Preparar y Abrir Semáforo SLA</field>
+        <field name="model_id" ref="model_helpdesk_sla_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['helpdesk.sla.config'].get_config()
+config._ensure_default_priorities(config.id)
+action = {
+    'type': 'ir.actions.act_window',
+    'name': '🚦 Semáforo SLA',
+    'res_model': 'helpdesk.sla.config',
+    'view_mode': 'form',
+    'res_id': config.id,
+    'target': 'current',
+}
+        </field>
+    </record>
+
     <record id="action_helpdesk_sla_config" model="ir.actions.act_window">
         <field name="name">Semáforo SLA</field>
         <field name="res_model">helpdesk.sla.config</field>
         <field name="view_mode">form</field>
         <field name="target">current</field>
-        <field name="context">{'create': False}</field>
+        <field name="context">{'create': False, 'delete': False, 'edit': True}</field>
+        <field name="domain">[('id', '>', 0)]</field>
     </record>
 
 </odoo>

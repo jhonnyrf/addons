@@ -1,3 +1,8 @@
+/* ═══════════════════════════════════════════════════════════════════
+   WIGO HELPDESK — Estilos del formulario de ticket
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── SLA Section Block ─────────────────────────────────────────── */
 .o_form_view .wigo_sla_block {
     border: 1px solid var(--o-border-color, #d4deea);
     border-left: 4px solid var(--o-border-color, #d4deea);
@@ -9,46 +14,21 @@
     color: inherit;
 }
 
-.o_form_view .wigo_sla_block_ok {
-    border-left-color: rgb(var(--bs-success-rgb, 25, 135, 84));
-}
+.o_form_view .wigo_sla_block_ok    { border-left-color: rgb(var(--bs-success-rgb,   25, 135,  84)); }
+.o_form_view .wigo_sla_block_warning { border-left-color: rgb(var(--bs-warning-rgb, 255, 193,   7)); }
+.o_form_view .wigo_sla_block_danger  { border-left-color: rgb(var(--bs-danger-rgb,  220,  53,  69)); }
+.o_form_view .wigo_sla_block_closed  { border-left-color: rgb(var(--bs-secondary-rgb, 108, 117, 125)); }
 
-.o_form_view .wigo_sla_block_warning {
-    border-left-color: rgb(var(--bs-warning-rgb, 255, 193, 7));
-}
-
-.o_form_view .wigo_sla_block_danger {
-    border-left-color: rgb(var(--bs-danger-rgb, 220, 53, 69));
-}
-
-.o_form_view .wigo_sla_block_closed {
-    border-left-color: rgb(var(--bs-secondary-rgb, 108, 117, 125));
-}
-
-.o_form_view .wigo_sla_block .o_inner_group {
-    gap: 12px;
-}
+.o_form_view .wigo_sla_block .o_inner_group { gap: 12px; }
 
 .o_form_view .wigo_sla_block .wigo_sla_col_left,
-.o_form_view .wigo_sla_block .wigo_sla_col_right {
-    min-width: 320px;
-}
+.o_form_view .wigo_sla_block .wigo_sla_col_right { min-width: 320px; }
 
 .o_form_view .wigo_sla_block .wigo_sla_header_row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;
 }
-
-.o_form_view .wigo_sla_block .wigo_sla_header_row .o_field_widget[name="sla_status"] {
-    margin: 0;
-}
-
-.o_form_view .wigo_sla_block .wigo_sla_row_dates {
-    align-items: end;
-}
+.o_form_view .wigo_sla_block .wigo_sla_header_row .o_field_widget[name="sla_status"] { margin: 0; }
+.o_form_view .wigo_sla_block .wigo_sla_row_dates { align-items: end; }
 
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_start_datetime"],
 .o_form_view .wigo_sla_block .o_field_widget[name="sla_end_datetime"],
@@ -59,42 +39,17 @@
     border-radius: 8px;
     color: inherit;
 }
-
-.o_form_view .wigo_sla_block .o_field_widget[name="sla_status"] {
-    margin-top: 2px;
-}
-
-.o_form_view .wigo_sla_block .btn {
-    border-radius: 8px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.o_form_view .wigo_sla_block .wigo_sla_summary {
-    width: 100%;
-}
-
-.o_form_view .wigo_sla_block .wigo_sla_top_row {
-    row-gap: 8px;
-}
-
-.o_form_view .wigo_sla_block .wigo_sla_data_row {
-    row-gap: 6px;
-    column-gap: 14px;
-}
-
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_status"] { margin-top: 2px; }
+.o_form_view .wigo_sla_block .btn { border-radius: 8px; font-weight: 600; white-space: nowrap; }
+.o_form_view .wigo_sla_block .wigo_sla_summary { width: 100%; }
+.o_form_view .wigo_sla_block .wigo_sla_top_row { row-gap: 8px; }
+.o_form_view .wigo_sla_block .wigo_sla_data_row { row-gap: 6px; column-gap: 14px; }
 .o_form_view .wigo_sla_block .wigo_sla_data_row > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: inherit;
+    display: inline-flex; align-items: center; gap: 6px; color: inherit;
 }
+.o_form_view .wigo_sla_block .o_field_widget[name="sla_hours_remaining"] { font-weight: 600; color: inherit; }
 
-.o_form_view .wigo_sla_block .o_field_widget[name="sla_hours_remaining"] {
-    font-weight: 600;
-    color: inherit;
-}
-
+/* ─── Resolution Block ───────────────────────────────────────────── */
 .o_form_view .wigo_resolution_block {
     border: 1px solid #d7e0ea;
     border-radius: 14px;
@@ -102,115 +57,156 @@
     background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
     box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
 }
-
 .o_form_view .wigo_resolution_block .wigo_resolution_grid,
-.o_form_view .wigo_resolution_block .wigo_resolution_footer {
-    width: 100%;
-}
-
-.o_form_view .wigo_resolution_block .wigo_resolution_card {
-    min-width: 320px;
-}
-
+.o_form_view .wigo_resolution_block .wigo_resolution_footer { width: 100%; }
+.o_form_view .wigo_resolution_block .wigo_resolution_card { min-width: 320px; }
 .o_form_view .wigo_resolution_block .wigo_resolution_card .o_field_html,
-.o_form_view .wigo_resolution_block .wigo_resolution_card .o_field_text {
-    min-height: 220px;
-}
-
+.o_form_view .wigo_resolution_block .wigo_resolution_card .o_field_text { min-height: 220px; }
 .o_form_view .wigo_resolution_block .o_field_widget[name="resolution_notes"],
 .o_form_view .wigo_resolution_block .o_field_widget[name="technical_notes"] {
-    background: #ffffff;
-    border: 1px solid #e6edf5;
-    border-radius: 10px;
+    background: #ffffff; border: 1px solid #e6edf5; border-radius: 10px;
 }
+.o_form_view .wigo_resolution_block .note-editable { min-height: 220px; }
+.o_form_view .wigo_resolution_block .alert { border-radius: 12px; }
 
-.o_form_view .wigo_resolution_block .note-editable {
-    min-height: 220px;
-}
-
-.o_form_view .wigo_resolution_block .alert {
-    border-radius: 12px;
-}
-
+/* ─── Priority stars (big) ───────────────────────────────────────── */
 .o_form_view .wigo_priority_big.o_field_widget,
 .o_form_view .wigo_priority_big .o_field_widget,
-.o_form_view .wigo_priority_big .o_priority {
-    font-size: 1.35rem;
-    line-height: 1;
-}
-
+.o_form_view .wigo_priority_big .o_priority { font-size: 1.35rem; line-height: 1; }
 .o_form_view .wigo_priority_big .fa,
 .o_form_view .wigo_priority_big .o_priority_star,
-.o_form_view .wigo_priority_big i {
-    font-size: 1.35rem;
-}
+.o_form_view .wigo_priority_big i { font-size: 1.35rem; }
 
 .o_form_view .o_field_widget[name="resolution_notes"] {
-    border: 1px solid #d5dee9;
-    border-radius: 8px;
-    background: #fff;
+    border: 1px solid #d5dee9; border-radius: 8px; background: #fff;
 }
+.o_form_view .o_field_widget[name="resolution_notes"] .note-editable { min-height: 240px; }
+.o_form_view .o_field_widget[name="technical_notes"] textarea { min-height: 220px; border-radius: 8px; }
 
-.o_form_view .o_field_widget[name="resolution_notes"] .note-editable {
-    min-height: 240px;
-}
-
-.o_form_view .o_field_widget[name="technical_notes"] textarea {
-    min-height: 220px;
-    border-radius: 8px;
-}
-
-/* SLA wizard (modal): keep status rows clean and non-overlapping in all themes */
-.o_dialog .wigo_sla_wizard_status {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.o_dialog .wigo_sla_wizard_header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
+/* ─── SLA Wizard (modal) ─────────────────────────────────────────── */
+.o_dialog .wigo_sla_wizard_status { display: flex; flex-direction: column; gap: 10px; }
+.o_dialog .wigo_sla_wizard_header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .o_dialog .wigo_sla_wizard_row {
     display: grid;
     grid-template-columns: 120px minmax(220px, 1fr) minmax(220px, 1fr);
-    gap: 10px 14px;
-    align-items: center;
+    gap: 10px 14px; align-items: center;
 }
-
-.o_dialog .wigo_sla_wizard_label {
-    font-weight: 600;
-}
-
+.o_dialog .wigo_sla_wizard_label { font-weight: 600; }
 .o_dialog .wigo_sla_wizard_col {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex-wrap: wrap;
+    display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap;
 }
-
 .o_dialog .wigo_sla_wizard_col .o_field_widget,
-.o_dialog .wigo_sla_wizard_col .o_field_widget .o_input {
-    min-width: 0;
+.o_dialog .wigo_sla_wizard_col .o_field_widget .o_input { min-width: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BARRA DE PROGRESO SLA — Basado en código fuente real de Odoo 19
+   Estructura del widget (progress_bar_field.xml):
+     .o_progressbar (flex, w-100)
+       .o_progress (track — core tiene width:100px hardcoded → override)
+         div.bg-primary (fill con width dinámico %)
+       .o_progressbar_value (texto "57 %", FUERA del track)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1) Wrappers de cada estado: bloque completo */
+.wigo_pb_ok,
+.wigo_pb_warning,
+.wigo_pb_danger,
+.wigo_pb_closed {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
 }
 
+/* 2) .o_progressbar ya tiene w-100 del widget, asegurar bloque */
+.wigo_pb_ok .o_progressbar,
+.wigo_pb_warning .o_progressbar,
+.wigo_pb_danger .o_progressbar,
+.wigo_pb_closed .o_progressbar {
+    gap: 10px;
+}
+
+/* 3) .o_progress es el TRACK — es un flex-item dentro de .o_progressbar (d-flex)
+   NO usar width:100% (conflicto con el texto flex-item).
+   Usar flex-grow:1 flex-basis:0 para llenar el espacio disponible. */
+.wigo_pb_ok .o_progress,
+.wigo_pb_warning .o_progress,
+.wigo_pb_danger .o_progress,
+.wigo_pb_closed .o_progress {
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
+    flex-basis: 0 !important;
+    min-width: 0 !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #e5e7eb !important;
+    overflow: hidden !important;
+}
+
+/* 4) El fill usa clase Bootstrap .bg-primary → sobreescribir por estado */
+
+/* ✅ Verde — En tiempo */
+.wigo_pb_ok .o_progress .bg-primary {
+    background-color: #16a34a !important;
+    background-image: linear-gradient(90deg, #16a34a, #15803d) !important;
+}
+
+/* ⚠️ Amarillo — Próximo a vencer */
+.wigo_pb_warning .o_progress .bg-primary {
+    background-color: #d97706 !important;
+    background-image: linear-gradient(90deg, #d97706, #b45309) !important;
+}
+
+/* 🔴 Rojo — Vencido */
+.wigo_pb_danger .o_progress .bg-primary {
+    background-color: #dc2626 !important;
+    background-image: linear-gradient(90deg, #dc2626, #b91c1c) !important;
+}
+
+/* ▪️ Gris — Cerrado */
+.wigo_pb_closed .o_progress .bg-primary {
+    background-color: #6b7280 !important;
+    background-image: linear-gradient(90deg, #6b7280, #4b5563) !important;
+}
+
+/* 5) .o_progressbar_value: texto del % FUERA del track, hacerlo visible */
+.wigo_pb_ok .o_progressbar_value,
+.wigo_pb_warning .o_progressbar_value,
+.wigo_pb_danger .o_progressbar_value,
+.wigo_pb_closed .o_progressbar_value {
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    color: #374151 !important;
+    min-width: 48px !important;
+    text-align: right !important;
+}
+
+
+
+
+/* ─── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 992px) {
     .o_form_view .wigo_sla_block .wigo_sla_col_left,
-    .o_form_view .wigo_sla_block .wigo_sla_col_right {
-        min-width: 100%;
-    }
+    .o_form_view .wigo_sla_block .wigo_sla_col_right { min-width: 100%; }
+    .o_form_view .wigo_resolution_block .wigo_resolution_card { min-width: 100%; }
+    .o_dialog .wigo_sla_wizard_row { grid-template-columns: 1fr; gap: 6px; }
+}
 
-    .o_form_view .wigo_resolution_block .wigo_resolution_card {
-        min-width: 100%;
-    }
+/* ─── Pestañas de Trabajo (Visita, Resolución, Postventa) ────────── */
+.o_form_view .nav-tabs .nav-link[name="visit"],
+.o_form_view .nav-tabs .nav-link[name="resolution"],
+.o_form_view .nav-tabs .nav-link[name="postventa"] {
+    font-weight: 700 !important;
+    background-color: #f0f7fc !important; /* Fondo azul clarito */
+    color: #0b5ead !important;
+    border-top: 3px solid transparent;
+}
 
-    .o_dialog .wigo_sla_wizard_row {
-        grid-template-columns: 1fr;
-        gap: 6px;
-    }
+.o_form_view .nav-tabs .nav-link.active[name="visit"],
+.o_form_view .nav-tabs .nav-link.active[name="resolution"],
+.o_form_view .nav-tabs .nav-link.active[name="postventa"] {
+    background-color: #ffffff !important; /* Fondo blanco al estar activa */
+    color: #014380 !important;
+    border-top: 3px solid #0b5ead !important; /* Borde azul superior */
 }
 

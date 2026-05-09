@@ -8,7 +8,7 @@ class HelpdeskIncidentType(models.Model):
     _description = 'Tipo de Incidencia'
     _order = 'sequence, name'
 
-    name = fields.Char(string='Nombre', required=True, translate=True)
+    name = fields.Char(string='Nombre', required=True)
     code = fields.Char(string='Código', readonly=True, help='Se genera automáticamente')
     sequence = fields.Integer(string='Secuencia', default=10)
     
@@ -27,42 +27,21 @@ class HelpdeskIncidentType(models.Model):
         help='Define para qué tipo de ticket estará disponible este síntoma.',
     )
     
-    priority_suggestion = fields.Selection(
-        selection=[
-            ('0', 'Baja'),
-            ('1', 'Media'),
-            ('2', 'Alta'),
-            ('3', 'Crítica'),
-        ],
-        string='Prioridad sugerida',
-        default='1',
-        required=True,
+    priority_suggestion = fields.Many2one(
+        comodel_name='helpdesk.priority.sla',
+        string='Prioridad',
+        help='Prioridad sugerida para este tipo de incidencia',
+        ondelete='set null',
     )
     
-    # Color automático según la prioridad
-    color = fields.Integer(
+    color = fields.Char(
         string='Color',
-        compute='_compute_color',
+        related='priority_suggestion.color',
         store=True,
-        help='Se asigna automáticamente según la prioridad',
     )
     
     active = fields.Boolean(string='Activo', default=True)
     ticket_count = fields.Integer(string='Tickets', compute='_compute_ticket_count')
-
-    # Mapeo de colores por prioridad
-    PRIORITY_COLORS = {
-        '0': 9,  # Verde (Baja)
-        '1': 3,  # Azul (Media)
-        '2': 6,  # Naranja (Alta)
-        '3': 1,  # Rojo (Crítica)
-    }
-
-    @api.depends('priority_suggestion')
-    def _compute_color(self):
-        """Asignar color automáticamente según la prioridad"""
-        for rec in self:
-            rec.color = self.PRIORITY_COLORS.get(rec.priority_suggestion, 0)
 
     @api.onchange('name')
     def _onchange_name(self):

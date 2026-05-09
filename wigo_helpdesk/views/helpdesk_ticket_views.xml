@@ -51,23 +51,33 @@
                 <header>
                     <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
                     <button name="action_assign_to_me" string="Asignarme" type="object" invisible="user_id == uid" class="btn-secondary" icon="fa-user-plus"/>
-                    <button name="action_resolve" string="Marcar Resuelto" type="object" invisible="is_closed" class="btn-secondary" icon="fa-check"/>
                     <button name="action_escalate" string="Escalar" type="object" invisible="is_closed or is_escalated" class="btn-warning" icon="fa-arrow-up"/>
                     <button name="action_mark_postventa" string="Postventa" type="object" class="btn-secondary" icon="fa-phone"/>
                     <button name="action_close" string="Cerrar Ticket" type="object" class="btn-primary" invisible="is_closed" icon="fa-check-circle"/>
                     <button name="action_open" string="Reabrir" type="object" invisible="not is_closed" class="btn-secondary" icon="fa-refresh"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Cerrado" bg_color="text-bg-success" invisible="not is_closed"/>
                     <div class="alert alert-warning d-flex align-items-center gap-2" role="alert" invisible="not is_escalated">
                         <i class="fa fa-arrow-up fa-lg" title="Escalado"/>
                         <strong>Ticket Escalado</strong>
                     </div>
 
                     <div class="oe_title">
-                        <label for="title" string="Ticket"/>
-                        <h1>
-                            <field name="title" placeholder="Descripción breve del Ticket..."/>
-                        </h1>
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="flex-grow-1">
+                                <label for="title" string="Ticket"/>
+                                <h1>
+                                    <field name="title" placeholder="Descripción breve del Ticket..."/>
+                                </h1>
+                            </div>
+                            <div class="text-end" style="min-width: 120px;">
+                                <span class="text-muted" style="font-size: 11px;">Número</span>
+                                <div style="font-size: 20px; font-weight: bold; color: #666;">
+                                    <field name="name_display"/>
+                                </div>
+                            </div>
+                        </div>
                         <div class="d-flex justify-content-end">
                             <field name="priority" widget="priority" class="wigo_priority_big" style="transform: scale(1.5); display: inline-block;"/>
                         </div>
@@ -76,7 +86,7 @@
                     <group>
                         <group string="Clasificación">
                             <field name="ticket_type_id" options="{'no_create': True}" help="Seleccione el tipo de ticket para clasificar correctamente la atencion."/>
-                            <field name="incident_type_id" string="Síntoma" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_incident_type_form'}" domain="[('active', '=', True)]" help="Seleccione sintoma/incidencia y complete la informacion relacionada para guiar la atencion."/>
+                            <field name="incident_type_id" string="Síntoma" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_incident_type_form'}" domain="[('ticket_type_id', '=', ticket_type_id), ('active', '=', True)]" help="Seleccione sintoma/incidencia y complete la informacion relacionada para guiar la atencion."/>
                             <field name="symptom_priority" readonly="1"/>
                             <field name="channel"/>
                             <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
@@ -90,60 +100,86 @@
                         </group>
                     </group>
 
-                    <group string="CONTRATO DEL CLIENTE" class="oe_title">
-                        <group>
-                            <field name="contract_id" string="Selecciona cliente" options="{'no_create': True}" help="Selecciona contrato + cliente (solo firmados o activos)."/>
-                            <field name="customer_plan_id" options="{'no_create': True}"/>
-                        </group>
-                    </group>
+                    <div class="card p-3 mb-3 border shadow-sm">
+                        <h4 class="text-primary mb-3" style="font-weight: 700; font-size: 1.25rem;"><i class="fa fa-file-text-o me-2"/> CONTRATO DEL CLIENTE</h4>
+                        <div style="font-size: 1.15rem; font-weight: 600;">
+                            <group>
+                                <field name="contract_id" string="Selecciona cliente" options="{'no_create': True}" help="Selecciona contrato + cliente (solo firmados o activos)."/>
+                                <field name="customer_plan_id" string="Plan Contratado" options="{'no_create': True}"/>
+                            </group>
+                        </div>
+                    </div>
 
                     <div class="wigo_sla_section card-body p-3">
                         <!-- Título con Estado a la derecha -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">⏱ Fechas y SLA</h6>
+                            <h6 class="mb-0"><i class="fa fa-clock-o me-1"/> Fechas y SLA</h6>
                             <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
                         </div>
 
-                        <!-- Botón Configurar SLA -->
-                        <div class="mb-2">
-                            <button name="action_open_sla_advanced_wizard" type="object" string="⚙ Configurar SLA" class="btn btn-sm btn-secondary" invisible="sla_start_datetime or sla_deadline"/>
-                            <button name="action_open_sla_advanced_wizard" type="object" string="✏ Editar SLA" class="btn btn-sm btn-secondary" invisible="not sla_start_datetime and not sla_deadline"/>
-                        </div>
-
-                        <!-- Fila: Inicio (izquierda) y Límite (derecha) -->
-                        <div class="d-flex gap-3 mb-2">
-                            <div class="flex-grow-1">
-                                <span invisible="not sla_start_datetime">
+                        <!-- LÍNEA TEMPORAL SLA CON PROGRESO -->
+                        <div class="mb-3" invisible="not sla_deadline">
+                            <!-- Información: Inicio | Límite -->
+                            <div class="d-flex justify-content-between mb-2" style="font-size: 13px; color: #666;">
+                                <span>
                                     <strong>Inicio:</strong>
                                     <field name="sla_start_datetime" nolabel="1" readonly="1"/>
                                 </span>
-                            </div>
-                            <div class="flex-grow-1 text-end">
-                                <span invisible="not sla_deadline">
+                                <span>
                                     <strong>Límite:</strong>
                                     <field name="sla_deadline" nolabel="1" readonly="1"/>
                                 </span>
                             </div>
+
+                            <!-- BARRA DE PROGRESO SLA — 4 variantes por estado para color correcto -->
+                            <div class="wigo_pb_ok" invisible="sla_status != 'ok'">
+                                <field name="sla_progress_pct" widget="progressbar" nolabel="1" readonly="1"/>
+                            </div>
+                            <div class="wigo_pb_warning" invisible="sla_status != 'warning'">
+                                <field name="sla_progress_pct" widget="progressbar" nolabel="1" readonly="1"/>
+                            </div>
+                            <div class="wigo_pb_danger" invisible="sla_status != 'danger'">
+                                <field name="sla_progress_pct" widget="progressbar" nolabel="1" readonly="1"/>
+                            </div>
+                            <div class="wigo_pb_closed" invisible="sla_status != 'closed'">
+                                <field name="sla_progress_pct" widget="progressbar" nolabel="1" readonly="1"/>
+                            </div>
+
+                            <!-- Información debajo: Restante y Estado -->
+                            <div class="d-flex justify-content-between align-items-center" style="font-size: 13px; padding: 0 4px;">
+                                <span invisible="is_closed or not sla_deadline" style="color: #333;">
+                                    <i class="fa fa-hourglass-end" style="color: #0066cc; margin-right: 8px; font-size: 14px;"/>
+                                    <strong>Tiempo restante:</strong>
+                                    <span style="margin-left: 8px; font-family: monospace; font-weight: bold; color: #0066cc; font-size: 14px;">
+                                        <field name="sla_hours_remaining_display" nolabel="1" readonly="1"/>
+                                    </span>
+                                </span>
+                                <span invisible="not is_closed" style="color: #666;">
+                                    <i class="fa fa-info-circle" style="margin-right: 6px;"/>
+                                    <strong>Estado:</strong>
+                                    <span style="margin-left: 6px; font-weight: bold; color: #0066cc;">
+                                        <field name="sla_badge_label" nolabel="1" readonly="1"/>
+                                    </span>
+                                </span>
+                            </div>
                         </div>
 
-                        <!-- Fila: Horas restantes -->
-                        <div class="d-flex">
-                            <span invisible="is_closed or not sla_deadline">
-                                <strong>Horas restantes:</strong>
-                                <field name="sla_hours_remaining_display" nolabel="1" readonly="1"/>
-                            </span>
+                        <!-- Botón Configurar SLA -->
+                        <div class="mb-2">
+                            <button name="action_open_sla_advanced_wizard" type="object" string="Configurar SLA" icon="fa-cog" class="btn btn-sm btn-secondary" invisible="sla_start_datetime or sla_deadline"/>
+                            <button name="action_open_sla_advanced_wizard" type="object" string="Editar SLA" icon="fa-pencil" class="btn btn-sm btn-secondary" invisible="not sla_start_datetime and not sla_deadline"/>
                         </div>
                     </div>
 
                     <notebook>
-                        <page string="👤 Cliente WigoFast" name="customer">
+                        <page string="Cliente WigoFast" name="customer">
                             <group>
-                                <group string="📋 Identificación">
+                                <group string="Identificación">
                                     <field name="customer_code" placeholder="CF-001"/>
                                     <field name="customer_name"/>
                                     <field name="customer_ci"/>
                                 </group>
-                                <group string="📞 Contacto">
+                                <group string="Contacto">
                                     <field name="customer_phone" widget="phone"/>
                                     <field name="customer_phone_alt" widget="phone"/>
                                     <field name="customer_address"/>
@@ -152,7 +188,7 @@
                             </group>
                         </page>
 
-                        <page string="📡 Datos Técnicos" name="technical">
+                        <page string="Datos Técnicos" name="technical">
                             <group col="2">
                                 <group string="Origen FTTH">
                                     <field name="ftth_service_id" options="{'no_create': True}" help="Este es el enlace para ver mas detalle del servicio. Presiona para abrir la ficha tecnica."/>
@@ -183,59 +219,90 @@
                             </group>
                         </page>
 
-                        <page string="Descripción" name="description">
-                            <field name="description" nolabel="1" placeholder="Describe el problema en detalle..."/>
-                        </page>
-
-                        <page string="✅ Resolución" name="resolution">
-                            <group col="2">
-                                <group string="🔍 Diagnóstico">
-                                    <field name="resolution_diagnosis_id" string="Diagnóstico" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_diagnosis_type_form'}"/>
-                                    <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Detalle del diagnóstico técnico..." class="wigo_resolution_text"/>
-                                </group>
-                                <group string="🔧 Solución Aplicada">
-                                    <field name="resolution_solution_id" string="Solución" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_solution_type_form'}"/>
-                                    <field name="resolution_solution_detail" nolabel="1" placeholder="Detalle de la solución aplicada..." class="wigo_resolution_text"/>
-                                </group>
-                            </group>
-
-                            <group col="2">
-                                <group string="Conocimiento">
-                                    <field name="knowledge_id" string="Artículo KB relacionado"/>
-                                </group>
-                                <group string="Tiempo">
-                                    <field name="resolution_hours" readonly="1" string="Horas de Resolución" invisible="not is_closed"/>
-                                    <div class="text-muted small" invisible="is_closed">
-                                        Se calcula automáticamente al cerrar el ticket.
-                                    </div>
-                                </group>
-                            </group>
-                        </page>
 
                         <page string="Visita Técnica" name="visit">
-                            <group>
-                                <group string="Programación de visita">
-                                    <field name="technician_id" required="1" string="Asignar a" help="Asigna un técnico para que reciba la actividad en su bitácora."/>
-                                    <field name="visit_date" required="1" string="Fecha programada"/>
-                                    <field name="visit_result" string="Estado de visita"/>
+                            <div class="p-3 bg-light border rounded mb-3 mt-2">
+                                <group>
+                                    <field name="requires_visit" string="Requiere visita técnica" widget="boolean_toggle"/>
                                 </group>
-                            </group>
+                            </div>
+                            
+                            <div invisible="not requires_visit" class="row px-2">
+                                <div class="col-12">
+                                    <div class="p-4 border rounded shadow-sm">
+                                        <h5 class="text-info mb-4" style="font-weight: 600;"><i class="fa fa-calendar-check-o me-2"/> Detalles de la Visita Técnica</h5>
+                                        <group>
+                                            <group>
+                                                <field name="technician_id" string="Técnico asignado" widget="many2one_avatar_employee" required="requires_visit"/>
+                                                <field name="visit_date" invisible="1"/>
+                                                <field name="visit_deadline" string="Fecha límite"/>
+                                            </group>
+                                            <group>
+                                                <field name="visit_result" string="Estado de la visita"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="visit_notes" string="Notas de la visita" placeholder="Escribe aquí las notas o instrucciones para el técnico..."/>
+                                        </group>
+                                    </div>
+                                    <field name="visit_ids" invisible="1"/>
+                                </div>
+                            </div>
+                        </page>
+
+                        <page string="Resolución" name="resolution">
+                            <div class="row mt-3 px-2">
+                                <div class="col-md-6 pe-md-3">
+                                    <div class="p-3 border rounded shadow-sm h-100">
+                                        <h5 class="text-primary mb-3" style="font-weight: 600;"><i class="fa fa-search me-2"/> Diagnóstico Técnico</h5>
+                                        <group>
+                                            <field name="resolution_diagnosis_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_diagnosis_type_form'}"/>
+                                            <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Describe aquí los hallazgos y el diagnóstico extenso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
+                                        </group>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 ps-md-3 mt-3 mt-md-0">
+                                    <div class="p-3 border rounded shadow-sm h-100">
+                                        <h5 class="text-success mb-3" style="font-weight: 600;"><i class="fa fa-wrench me-2"/> Solución Aplicada</h5>
+                                        <group>
+                                            <field name="resolution_solution_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_solution_type_form'}"/>
+                                            <field name="resolution_solution_detail" nolabel="1" placeholder="Describe aquí la solución que aplicaste paso a paso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
+                                        </group>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4 px-2">
+                                <div class="col-12">
+                                    <div class="p-3 border rounded shadow-sm" style="border-left: 4px solid #ffc107 !important;">
+                                        <h5 class="text-warning mb-2" style="font-weight: 600;"><i class="fa fa-book me-2"/> Base de Conocimiento</h5>
+                                        <p class="text-muted small mb-3">Vincula un artículo de la Wiki/Base de Conocimientos si te sirvió de guía o si tu solución puede documentarse para el futuro.</p>
+                                        <group>
+                                            <field name="knowledge_id" string="Artículo relacionado"/>
+                                        </group>
+                                    </div>
+                                </div>
+                            </div>
                         </page>
 
                         <page string="Postventa" name="postventa">
-                            <field name="activity_ids" string="Llamadas postventa (actividades)" domain="[('summary', '=', 'Llamada de seguimiento postventa')]" context="{'default_res_id': id}" nolabel="1" style="min-height: 520px;">
-                                <list string="Llamadas postventa" create="false" delete="false" open_form_view="1" default_order="helpdesk_postventa_call_date desc, id desc" limit="50">
-                                    <field name="helpdesk_postventa_state" string="Estado" decoration-success="helpdesk_postventa_state == 'done'" decoration-warning="helpdesk_postventa_state == 'pending'"/>
-                                    <field name="helpdesk_postventa_call_date" string="Fecha llamada"/>
-                                    <field name="date_deadline" string="Fecha límite"/>
-                                    <field name="user_id" string="Asignado a"/>
-                                    <field name="helpdesk_postventa_done_by" string="Realizado por"/>
-                                    <field name="helpdesk_postventa_satisfaction" string="Satisfacción"/>
-                                    <field name="helpdesk_postventa_comment" string="Comentario"/>
-                                </list>
-                            </field>
+                            <div class="p-3 mt-2">
+                                <field name="postventa_call_ids" nolabel="1" class="w-100 border rounded shadow-sm">
+                                    <list string="Llamadas postventa" create="false" delete="false" default_order="call_date desc, id desc" editable="bottom">
+                                        <field name="state" string="Estado" decoration-success="state == 'done'" decoration-warning="state == 'pending'" decoration-danger="state == 'cancelled'" widget="badge" readonly="1"/>
+                                        <field name="call_date" string="Fecha programada" readonly="1"/>
+                                        <field name="deadline_date" string="Límite" readonly="1"/>
+                                        <field name="user_id" string="Asignado a" widget="many2one_avatar_user" readonly="1"/>
+
+                                        <field name="satisfaction" string="Satisfacción" readonly="1"/>
+                                        <field name="comment" string="Comentarios del cliente" optional="show" readonly="1"/>
+                                    </list>
+                                </field>
+                            </div>
                         </page>
                     </notebook>
+                    <separator string="Descripción"/>
+                    <field name="description" placeholder="Describe el problema en detalle..."/>
                 </sheet>
                 <chatter/>
             </form>
@@ -260,12 +327,12 @@
                 <field name="channel" optional="hide"/>
                 <field name="area_id" optional="hide"/>
                 <field name="employee_id" optional="show"/>
-                <field name="sla_deadline" optional="show" string="⏳ Límite SLA"/>
-                <field name="sla_hours_remaining" optional="show" string="⏱ Horas restantes"/>
-                <field name="sla_status" optional="show" string="🚦 SLA" decoration-danger="sla_status == 'danger'" decoration-warning="sla_status == 'warning'" decoration-success="sla_status == 'ok'" decoration-muted="sla_status == 'closed'"/>
+                <field name="sla_deadline" optional="show" string="Límite SLA"/>
+                <field name="sla_hours_remaining" optional="show" string="Horas restantes"/>
+                <field name="sla_status" optional="show" string="SLA" decoration-danger="sla_status == 'danger'" decoration-warning="sla_status == 'warning'" decoration-success="sla_status == 'ok'" decoration-muted="sla_status == 'closed'"/>
                 <field name="requires_visit" optional="hide"/>
                 <field name="postventa_done" optional="hide"/>
-                <field name="satisfaction" optional="hide"/>
+                                        <field name="satisfaction" string="Satisfacción" readonly="1"/>
                 <field name="is_escalated" optional="hide"/>
                 <field name="create_date" optional="hide"/>
                 <field name="is_closed" column_invisible="True"/>
@@ -300,6 +367,7 @@
                 <field name="requires_visit"/>
                 <field name="create_date"/>
                 <field name="color"/>
+                <field name="activity_ids"/>
                 <templates>
                     <t t-name="card">
                         <t t-if="record.sla_status.raw_value == 'danger'">
@@ -316,11 +384,9 @@
                         </t>
 
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <field name="priority" widget="priority"/>
+                            <field name="title" class="fw-bold text-truncate" style="font-size: 1.1rem;"/>
                             <field name="employee_id" options="{'size': 24}"/>
                         </div>
-
-                        <field name="title" class="fw-bold"/>
 
                         <div class="text-muted small mt-1">
                             <t t-if="record.name.value and record.name.value != '/'">
@@ -332,15 +398,10 @@
                                 <i class="fa fa-file-text-o"/>
                                 <t t-esc="record.contract_id.value"/>
                             </t>
-                            <t t-if="record.customer_code.value">
-                                &amp;nbsp;·&amp;nbsp;
-                                <i class="fa fa-user"/>
-                                <t t-esc="record.customer_code.value"/>
-                            </t>
                         </div>
-
-                        <t t-if="record.customer_name.value">
-                            <div class="small mt-1 fw-semibold">
+                        
+                        <t t-if="!record.contract_id.value and record.customer_name.value">
+                            <div class="small mt-1 fw-semibold text-truncate">
                                 <i class="fa fa-user-circle-o text-muted"/>
                                 <t t-esc="record.customer_name.value"/>
                             </div>
@@ -403,12 +464,6 @@ h restantes
                                     <t t-esc="record.ticket_type.value"/>
                                 </span>
                             </t>
-                            <t t-if="record.customer_zone.value">
-                                <span class="badge text-bg-info" style="font-size:0.72rem;">
-                                    <i class="fa fa-map-marker"/>
-                                    <t t-esc="record.customer_zone.value"/>
-                                </span>
-                            </t>
                             <t t-if="record.requires_visit.raw_value == true">
                                 <span class="badge text-bg-warning" style="font-size:0.72rem;">
                                     <i class="fa fa-wrench"/>
@@ -423,12 +478,132 @@ h restantes
                             </t>
                         </div>
 
-                        <t t-if="record.sla_deadline.value">
-                            <div class="text-muted mt-2" style="font-size:0.72rem;">
-                                <i class="fa fa-calendar-times-o"/>
-                                Límite SLA: <t t-esc="record.sla_deadline.value"/>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div class="oe_kanban_bottom_left">
+                                <field name="activity_ids" widget="kanban_activity"/>
                             </div>
-                        </t>
+                            <div class="oe_kanban_bottom_right">
+                                <field name="priority" widget="priority"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- KANBAN para Visitas Pendientes — agrupado por visit_result -->
+    <record id="view_helpdesk_ticket_kanban_visit" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.kanban.visit</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="visit_result" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="visit_result"/>
+                <field name="technician_id"/>
+                <field name="customer_name"/>
+                <field name="customer_code"/>
+                <field name="visit_date"/>
+                <field name="priority"/>
+                <field name="area_id"/>
+                <field name="employee_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div style="height:4px; background:#007bff; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <field name="priority" widget="priority"/>
+                            <field name="technician_id" options="{'size': 24}"/>
+                        </div>
+                        <field name="title" class="fw-bold"/>
+                        <div class="text-muted small mt-1">
+                            <t t-if="record.name.value and record.name.value != '/'">
+                                <i class="fa fa-ticket"/>
+                                <t t-esc="record.name.value"/>
+                            </t>
+                            <t t-if="record.customer_code.value">
+                                &amp;nbsp;·&amp;nbsp;
+                                <i class="fa fa-user"/>
+                                <t t-esc="record.customer_code.value"/>
+                            </t>
+                        </div>
+                        <div class="small mt-1 fw-semibold">
+                            <i class="fa fa-user-circle-o text-muted"/>
+                            <t t-esc="record.customer_name.value"/>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            <t t-if="record.area_id.value">
+                                <span class="badge text-bg-primary" style="font-size:0.72rem;">
+                                    <i class="fa fa-sitemap"/>
+                                    <t t-esc="record.area_id.value"/>
+                                </span>
+                            </t>
+                            <t t-if="record.visit_date.value">
+                                <span class="badge text-bg-info" style="font-size:0.72rem;">
+                                    <i class="fa fa-calendar"/>
+                                    <t t-esc="record.visit_date.value"/>
+                                </span>
+                            </t>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- KANBAN para Posventa Pendiente — agrupado por postventa_done -->
+    <record id="view_helpdesk_ticket_kanban_postventa" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.kanban.postventa</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="postventa_done" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="title"/>
+                <field name="postventa_done"/>
+                <field name="postventa_user_id"/>
+                <field name="customer_name"/>
+                <field name="customer_code"/>
+                <field name="postventa_date"/>
+                <field name="priority"/>
+                <field name="area_id"/>
+                <field name="employee_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div style="height:4px; background:#17a2b8; border-radius:3px 3px 0 0; margin:-8px -8px 8px -8px;"/>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <field name="priority" widget="priority"/>
+                            <field name="postventa_user_id" options="{'size': 24}"/>
+                        </div>
+                        <field name="title" class="fw-bold"/>
+                        <div class="text-muted small mt-1">
+                            <t t-if="record.name.value and record.name.value != '/'">
+                                <i class="fa fa-ticket"/>
+                                <t t-esc="record.name.value"/>
+                            </t>
+                            <t t-if="record.customer_code.value">
+                                &amp;nbsp;·&amp;nbsp;
+                                <i class="fa fa-user"/>
+                                <t t-esc="record.customer_code.value"/>
+                            </t>
+                        </div>
+                        <div class="small mt-1 fw-semibold">
+                            <i class="fa fa-user-circle-o text-muted"/>
+                            <t t-esc="record.customer_name.value"/>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            <t t-if="record.area_id.value">
+                                <span class="badge text-bg-primary" style="font-size:0.72rem;">
+                                    <i class="fa fa-sitemap"/>
+                                    <t t-esc="record.area_id.value"/>
+                                </span>
+                            </t>
+                            <t t-if="record.postventa_date.value">
+                                <span class="badge text-bg-success" style="font-size:0.72rem;">
+                                    <i class="fa fa-calendar-check-o"/>
+                                    <t t-esc="record.postventa_date.value"/>
+                                </span>
+                            </t>
+                        </div>
                     </t>
                 </templates>
             </kanban>
@@ -442,7 +617,6 @@ h restantes
             <graph string="Tickets por Etapa" type="bar">
                 <field name="stage_id" type="row"/>
                 <field name="id" type="measure" string="Tickets"/>
-                <field name="resolution_hours" type="measure" string="Horas Resolución"/>
             </graph>
         </field>
     </record>
@@ -462,9 +636,10 @@ h restantes
         <field name="name">helpdesk.ticket.graph.general</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Tickets por Síntoma" type="bar">
-                <field name="incident_type_id" type="row"/>
-                <field name="id" type="measure" string="Tickets"/>
+            <graph string="Tickets (General)" type="bar" sample="1">
+                <field name="stage_id" type="col"/>
+                <field name="area_id" type="row"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
             </graph>
         </field>
     </record>
@@ -473,9 +648,9 @@ h restantes
         <field name="name">helpdesk.ticket.graph.symptom</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Tickets por Síntoma" type="bar">
+            <graph string="Tickets por Síntoma" type="pie" sample="1">
                 <field name="incident_type_id" type="row"/>
-                <field name="id" type="measure" string="Tickets"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
             </graph>
         </field>
     </record>
@@ -484,9 +659,9 @@ h restantes
         <field name="name">helpdesk.ticket.graph.solution</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Tickets por Solución" type="bar">
+            <graph string="Tickets por Solución" type="pie" sample="1">
                 <field name="resolution_solution_id" type="row"/>
-                <field name="id" type="measure" string="Tickets"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
             </graph>
         </field>
     </record>
@@ -495,10 +670,33 @@ h restantes
         <field name="name">helpdesk.ticket.graph.month</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Tickets por Mes" type="bar">
+            <graph string="Tendencia Mensual" type="line" sample="1">
                 <field name="create_date" interval="month" type="row"/>
                 <field name="stage_id" type="col"/>
-                <field name="id" type="measure" string="Tickets"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_resolution_time" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.resolution.time</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tiempo Promedio de Solución" type="line" sample="1">
+                <field name="create_date" interval="month" type="row"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
+                <field name="resolution_time_hrs" type="measure" widget="float_time" string="Promedio Solución (hrs)"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_helpdesk_ticket_graph_priority" model="ir.ui.view">
+        <field name="name">helpdesk.ticket.graph.priority</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Tickets por Prioridad" type="pie" sample="1">
+                <field name="priority" type="row"/>
+                <field name="id" type="measure" string="Total de Tickets"/>
             </graph>
         </field>
     </record>
@@ -518,12 +716,14 @@ h restantes
         <field name="name">helpdesk.ticket.pivot</field>
         <field name="model">helpdesk.ticket</field>
         <field name="arch" type="xml">
-            <pivot string="Análisis de Tickets">
-                <field name="stage_id" type="row"/>
-                <field name="incident_type_id" type="row"/>
-                <field name="ticket_type" type="col"/>
-                <field name="priority" type="col"/>
-                <field name="id" type="measure" string="Tickets"/>
+            <pivot string="Análisis Completo" sample="1" display_quantity="1">
+                <field name="create_date" interval="month" type="col"/>
+                <field name="stage_id" type="col"/>
+                <field name="area_id" type="row"/>
+                <field name="employee_id" type="row"/>
+                <field name="id" type="measure" string="Cantidad de Tickets"/>
+                <field name="sla_hours_remaining" type="measure" widget="float_time" string="Promedio SLA Restante"/>
+                <field name="resolution_time_hrs" type="measure" widget="float_time" string="Promedio Solución (hrs)"/>
             </pivot>
         </field>
     </record>
@@ -533,14 +733,14 @@ h restantes
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">kanban,list,graph,form</field>
         <field name="search_view_id" ref="view_helpdesk_ticket_search"/>
-        <field name="context">{'search_default_filter_my': 1}</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
     </record>
 
     <record id="action_helpdesk_ticket_analytics" model="ir.actions.act_window">
         <field name="name">Gráficas y Reportes</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list,kanban,form</field>
-        <field name="context">{'search_default_filter_open': 1}</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_general"/>
     </record>
 
@@ -548,6 +748,7 @@ h restantes
         <field name="name">Tickets por Diagnóstico</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_diagnosis"/>
     </record>
 
@@ -555,6 +756,7 @@ h restantes
         <field name="name">Tickets por Síntoma</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_symptom"/>
     </record>
 
@@ -562,6 +764,7 @@ h restantes
         <field name="name">Tickets por Solución</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_solution"/>
     </record>
 
@@ -569,29 +772,32 @@ h restantes
         <field name="name">Tickets por Mes</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_month"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_resolution_time" model="ir.actions.act_window">
+        <field name="name">Tiempo de Solución</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_resolution_time"/>
+    </record>
+
+    <record id="action_helpdesk_ticket_graph_priority" model="ir.actions.act_window">
+        <field name="name">Por Prioridad</field>
+        <field name="res_model">helpdesk.ticket</field>
+        <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
+        <field name="view_id" ref="view_helpdesk_ticket_graph_priority"/>
     </record>
 
     <record id="action_helpdesk_ticket_graph_customers" model="ir.actions.act_window">
         <field name="name">Top Clientes con más Tickets</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">graph,list</field>
+        <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_customer"/>
-    </record>
-
-    <record id="action_helpdesk_ticket_my" model="ir.actions.act_window">
-        <field name="name">Mis Tickets</field>
-        <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">['|', ('employee_id.user_id', '=', uid), ('user_id', '=', uid)]</field>
-    </record>
-
-    <record id="action_helpdesk_ticket_open" model="ir.actions.act_window">
-        <field name="name">Tablero Kanban</field>
-        <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('is_closed', '=', False)]</field>
-        <field name="context">{'search_default_filter_my': 1}</field>
     </record>
 
     <record id="action_helpdesk_ticket_sla" model="ir.actions.act_window">
@@ -599,20 +805,25 @@ h restantes
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('sla_status', '=', 'danger'), ('is_closed', '=', False)]</field>
+        <field name="context">{'create': False}</field>
     </record>
 
     <record id="action_helpdesk_ticket_visit" model="ir.actions.act_window">
         <field name="name">Visitas Pendientes</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_helpdesk_ticket_kanban_visit"/>
         <field name="domain">[('requires_visit', '=', True), ('visit_result', 'in', ('pending', 'in_progress', 'rescheduled')), ('is_closed', '=', False)]</field>
+        <field name="context">{'create': False}</field>
     </record>
 
     <record id="action_helpdesk_ticket_postventa" model="ir.actions.act_window">
         <field name="name">Postventa Pendiente</field>
         <field name="res_model">helpdesk.ticket</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="domain">[('postventa_done', '=', False), ('is_closed', '=', True)]</field>
+        <field name="view_id" ref="view_helpdesk_ticket_kanban_postventa"/>
+        <field name="domain">[('postventa_call_ids.state', '=', 'pending')]</field>
+        <field name="context">{'create': False}</field>
     </record>
 
     <record id="view_helpdesk_recurrent_partner_list" model="ir.ui.view">
@@ -635,6 +846,7 @@ h restantes
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="wigo_helpdesk.view_helpdesk_recurrent_partner_list"/>
         <field name="domain">[('helpdesk_ticket_count', '&gt;', 1)]</field>
+        <field name="context">{'create': False}</field>
     </record>
 
 </odoo>

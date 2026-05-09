@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
+from markupsafe import Markup
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -14,7 +15,16 @@ class HelpdeskTicket(models.Model):
     # =========================================================================
     # IDENTIFICACIÓN
     # =========================================================================
-    name = fields.Char(string='Número', readonly=True, copy=False, default='/', index=True)
+    name = fields.Char(
+        string='Número', readonly=True, copy=False, 
+        default='/',
+        index=True
+    )
+    name_display = fields.Char(
+        string='Número', 
+        compute='_compute_name_display',
+        help='Muestra el número del ticket'
+    )
     title = fields.Char(string='Título / Descripción breve', required=True, tracking=True)
     active = fields.Boolean(string='Activo', default=True)
 
@@ -28,6 +38,44 @@ class HelpdeskTicket(models.Model):
         index=True,
         help='Selecciona el contacto de Odoo para auto-completar datos del cliente WigoFast.',
     )
+
+    create_month = fields.Selection([
+        ('01', 'Enero'), ('02', 'Febrero'), ('03', 'Marzo'), ('04', 'Abril'),
+        ('05', 'Mayo'), ('06', 'Junio'), ('07', 'Julio'), ('08', 'Agosto'),
+        ('09', 'Septiembre'), ('10', 'Octubre'), ('11', 'Noviembre'), ('12', 'Diciembre')
+    ], string='Mes', compute='_compute_create_date_parts', store=True)
+
+    create_year = fields.Selection([
+        (str(y), str(y)) for y in range(2024, 2035)
+    ], string='Año', compute='_compute_create_date_parts', store=True)
+
+    resolution_time_hrs = fields.Float(
+        string='Tiempo de Solución (hrs)', 
+        compute='_compute_resolution_time', 
+        store=True, 
+        aggregator='avg',
+        help='Tiempo en horas desde que se creó hasta que se cerró el ticket.'
+    )
+
+    @api.depends('create_date', 'date_closed')
+    def _compute_resolution_time(self):
+        for ticket in self:
+            if ticket.create_date and ticket.date_closed:
+                delta = ticket.date_closed - ticket.create_date
+                ticket.resolution_time_hrs = delta.total_seconds() / 3600.0
+            else:
+                ticket.resolution_time_hrs = 0.0
+
+    @api.depends('create_date')
+    def _compute_create_date_parts(self):
+        for ticket in self:
+            if ticket.create_date:
+                ticket.create_month = ticket.create_date.strftime('%m')
+                ticket.create_year = ticket.create_date.strftime('%Y')
+            else:
+                ticket.create_month = False
+                ticket.create_year = False
+
     contract_id = fields.Many2one(
         comodel_name='customer.contract',
         string='Contrato',
@@ -47,8 +95,8 @@ class HelpdeskTicket(models.Model):
     customer_code = fields.Char(string='Código Cliente', tracking=True, index=True)
     customer_name = fields.Char(string='Nombre completo', required=True, tracking=True)
     customer_ci = fields.Char(string='Cédula de Identidad (CI)', tracking=True)
-    customer_phone = fields.Char(string='Celular Titular', tracking=True)
-    customer_phone_alt = fields.Char(string='Celular Alternativo', help='Familiar u otro contacto de cobranza')
+    customer_phone = fields.Char(string='Celular', tracking=True)
+    customer_phone_alt = fields.Char(string='Telefono', help='Telefono del cliente')
     customer_address = fields.Char(string='Dirección del Cliente', tracking=True)
     customer_zone = fields.Char(string='Zona', tracking=True, index=True)
     customer_plan_id = fields.Many2one(
@@ -183,10 +231,9 @@ class HelpdeskTicket(models.Model):
         index=True,
         help='Seleccione sintoma/incidencia y complete la informacion relacionada para guiar la atencion.',
     )
-    symptom_priority = fields.Selection(
+    symptom_priority = fields.Many2one(
         related='incident_type_id.priority_suggestion',
-        string='Prioridad sugerida del sintoma',
-        store=False,
+        string='Prioridad',
         readonly=True,
     )
     # Kept for backward compat / search
@@ -199,6 +246,12 @@ class HelpdeskTicket(models.Model):
     priority = fields.Selection(
         selection=[('0', 'Baja'), ('1', 'Media'), ('2', 'Alta'), ('3', 'Crítica')],
         string='Prioridad', default='1', tracking=True, index=True,
+    )
+    priority_dirty = fields.Boolean(
+        string='Prioridad modificada',
+        compute='_compute_priority_dirty',
+        store=True,
+        help='Detecta si el usuario cambió la prioridad después de creado el ticket',
     )
     tag_ids = fields.Many2many(
         comodel_name='helpdesk.tag', relation='helpdesk_ticket_tag_rel',
@@ -222,32 +275,30 @@ class HelpdeskTicket(models.Model):
     # =========================================================================
     # ASIGNACIÓN
     # =========================================================================
-    team_id = fields.Many2one(comodel_name='helpdesk.team', string='Área', tracking=True, index=True)
+    team_id = fields.Many2one(comodel_name='helpdesk.team', string='Área', index=True)
     area_id = fields.Many2one(
         comodel_name='hr.department',
         string='Área',
-        tracking=True,
         index=True,
         help='Selecciona el departamento o área responsable del ticket.',
     )
     employee_id = fields.Many2one(
         comodel_name='hr.employee',
         string='Asignado a',
-        tracking=True,
         index=True,
         domain="[('department_id', 'child_of', area_id)]",
         help='Solo muestra empleados del área seleccionada.',
     )
     user_id = fields.Many2one(
-        comodel_name='res.users', string='Asignado a', tracking=True, index=True,
+        comodel_name='res.users', string='Asignado a', index=True,
         domain="[('share', '=', False)]",
     )
     escalated_to_id = fields.Many2one(
-        comodel_name='res.users', string='Escalado a', tracking=True, domain="[('share', '=', False)]",
+        comodel_name='res.users', string='Escalado a', domain="[('share', '=', False)]",
     )
-    escalated_team_id = fields.Many2one(comodel_name='helpdesk.team', string='Área escalada', tracking=True)
-    is_escalated = fields.Boolean(string='Escalado', default=False, tracking=True, index=True)
-    escalation_reason = fields.Text(string='Motivo de Escalamiento', tracking=True)
+    escalated_team_id = fields.Many2one(comodel_name='helpdesk.team', string='Área escalada')
+    is_escalated = fields.Boolean(string='Escalado', default=False, index=True)
+    escalation_reason = fields.Text(string='Motivo de Escalamiento')
 
     # =========================================================================
     # DESCRIPCIÓN Y RESOLUCIÓN
@@ -282,18 +333,49 @@ class HelpdeskTicket(models.Model):
     # VISITA TÉCNICA
     # =========================================================================
     requires_visit = fields.Boolean(string='Requiere visita técnica', default=False, tracking=True)
-    visit_date = fields.Datetime(string='Fecha de visita programada', tracking=True)
     technician_id = fields.Many2one(
-        comodel_name='hr.employee', string='Técnico asignado a visita',
-        tracking=True,
-        help='Selecciona un técnico para la visita programada.'
+        'hr.employee',
+        string='Técnico asignado',
+        compute='_compute_latest_visit',
+        inverse='_inverse_latest_visit',
+        store=True,
+    )
+    visit_date = fields.Datetime(
+        string='Fecha programada',
+        compute='_compute_latest_visit',
+        inverse='_inverse_latest_visit',
+        store=True,
+        default=fields.Datetime.now,
     )
     visit_result = fields.Selection(
-        selection=[
-            ('pending', 'Pendiente'), ('in_progress', 'En progreso'), ('done', 'Realizada'),
-            ('rescheduled', 'Reagendada'), ('cancelled', 'Cancelada'),
+        [
+            ('pending', 'Pendiente'),
+            ('in_progress', 'En progreso'),
+            ('done', 'Realizada'),
+            ('rescheduled', 'Reagendada'),
+            ('cancelled', 'Cancelada')
         ],
-        string='Estado de visita', default='pending', tracking=True,
+        string='Estado de la visita',
+        compute='_compute_latest_visit',
+        inverse='_inverse_latest_visit',
+        store=True,
+    )
+    visit_ids = fields.One2many(
+        'helpdesk.visit',
+        'ticket_id',
+        string='Historial de Visitas'
+    )
+    visit_deadline = fields.Date(
+        string='Fecha límite de la visita',
+        compute='_compute_latest_visit',
+        inverse='_inverse_latest_visit',
+        store=True,
+    )
+    visit_notes = fields.Text(
+        string='Notas de la visita',
+        compute='_compute_latest_visit',
+        inverse='_inverse_latest_visit',
+        store=True,
     )
     visit_diagnosis_id = fields.Many2one(
         comodel_name='helpdesk.visit.diagnosis.type',
@@ -320,7 +402,7 @@ class HelpdeskTicket(models.Model):
             ('advanced', 'Avanzado (fecha y hora)'),
         ],
         string='Modo SLA',
-        default='quick',
+        default='advanced',
         tracking=True,
     )
     sla_start_datetime = fields.Datetime(
@@ -357,7 +439,8 @@ class HelpdeskTicket(models.Model):
             ('ok', 'En tiempo'), ('warning', 'Próximo a vencer'),
             ('danger', 'Vencido'), ('closed', 'Cerrado'),
         ],
-        string='Estado SLA', compute='_compute_sla_status', store=True, index=True,
+        string='Estado SLA', compute='_compute_sla_status', store=False,
+        search='_search_sla_status',
     )
     sla_hours_remaining = fields.Float(
         string='Horas restantes SLA', compute='_compute_sla_hours_remaining', store=False,
@@ -374,6 +457,10 @@ class HelpdeskTicket(models.Model):
     )
     sla_badge_color = fields.Char(
         string='Color SLA', compute='_compute_sla_badge', store=False,
+    )
+    sla_progress_pct = fields.Float(
+        string='Progreso SLA (%)', compute='_compute_sla_progress_pct', store=False,
+        help='Porcentaje de tiempo transcurrido del SLA total (0-100%). Se recalcula en cada lectura.',
     )
     # Estado SLA ya notificado por cron para evitar repetir mensajes
     sla_last_notified_status = fields.Selection(
@@ -393,7 +480,6 @@ class HelpdeskTicket(models.Model):
         copy=False,
         tracking=False,
     )
-    resolution_hours = fields.Float(string='Horas de Resolución', compute='_compute_resolution_hours', store=True, aggregator=False)
 
     # =========================================================================
     # POSTVENTA / SATISFACCIÓN
@@ -417,6 +503,11 @@ class HelpdeskTicket(models.Model):
         string='Nivel de Satisfacción', tracking=True,
     )
     postventa_notes = fields.Text(string='Observaciones postventa')
+    postventa_call_ids = fields.One2many(
+        'helpdesk.postventa.call', 
+        'ticket_id', 
+        string='Llamadas de Seguimiento Postventa'
+    )
 
     # =========================================================================
     # ESTADO CALCULADO
@@ -426,23 +517,47 @@ class HelpdeskTicket(models.Model):
     # =========================================================================
     # COMPUTES
     # =========================================================================
-    @api.onchange('sla_mode', 'sla_quick_days', 'sla_start_datetime', 'sla_end_datetime', 'priority', 'incident_type_id', 'category_id')
+    @api.onchange('sla_mode', 'sla_quick_days', 'sla_start_datetime', 'sla_end_datetime', 'category_id')
     def _onchange_sla_deadline(self):
-        """Sugiere fecha límite SLA automáticamente usando config dinámica."""
+        """Sugiere fecha límite SLA automáticamente usando prioridades SLA.
+        NOTA: incident_type_id se maneja exclusivamente en _onchange_incident_type
+        para garantizar que el cambio de síntoma SIEMPRE recalcule el SLA.
+        Las estrellas (priority) son selección manual y NO recalculan el SLA.
+        """
         cfg = self.env['helpdesk.sla.config'].get_config()
-        sla_by_priority = {
-            '0': cfg.sla_hours_low,
-            '1': cfg.sla_hours_medium,
-            '2': cfg.sla_hours_high,
-            '3': cfg.sla_hours_critical,
-        }
-        critical_types = {'no_signal', 'fiber_cut', 'onu_offline'}
+        
+        priority_hours = {}
+        for p in cfg.priority_sla_ids:
+            if p.sequence == 50:
+                priority_hours['3'] = p.hours_limit
+            elif p.sequence == 20:
+                priority_hours['2'] = p.hours_limit
+            elif p.sequence == 30:
+                priority_hours['1'] = p.hours_limit
+            elif p.sequence == 40:
+                priority_hours['0'] = p.hours_limit
+        
+        sla_by_priority = priority_hours
+        
         for ticket in self:
             now_dt = fields.Datetime.now()
             base = ticket.sla_start_datetime or ticket.date_open or ticket.create_date or now_dt
 
             if ticket.sla_mode == 'advanced':
+                # Si ya hay sla_deadline guardado, no sobreescribir desde este onchange
+                # (el síntoma tiene su propio onchange que sí recalcula)
+                if ticket.sla_deadline:
+                    if not ticket.sla_end_datetime:
+                        ticket.sla_end_datetime = ticket.sla_deadline
+                    continue
+                
+                # Si hay sla_end_datetime establecido, usarlo
                 if ticket.sla_end_datetime:
+                    ticket.sla_deadline = ticket.sla_end_datetime
+                # Si no hay nada, y hay síntoma, calcular desde horas del síntoma
+                elif ticket.incident_type_id and ticket.incident_type_id.priority_suggestion and ticket.incident_type_id.priority_suggestion.hours_limit:
+                    hours = ticket.incident_type_id.priority_suggestion.hours_limit
+                    ticket.sla_end_datetime = base + timedelta(hours=hours)
                     ticket.sla_deadline = ticket.sla_end_datetime
                 continue
 
@@ -458,10 +573,10 @@ class HelpdeskTicket(models.Model):
                 continue  # Ya tiene valor manual, no sobreescribir
             if ticket.category_id and ticket.category_id.sla_hours > 0:
                 hours = ticket.category_id.sla_hours
-            elif ticket.incident_type_id and ticket.incident_type_id.code in critical_types:
-                hours = cfg.sla_hours_critical
+            elif ticket.incident_type_id and ticket.incident_type_id.priority_suggestion and ticket.incident_type_id.priority_suggestion.hours_limit:
+                hours = ticket.incident_type_id.priority_suggestion.hours_limit
             else:
-                hours = sla_by_priority.get(ticket.priority or '1', cfg.sla_hours_medium)
+                hours = sla_by_priority.get('1', 72.0)
             ticket.sla_deadline = base + timedelta(hours=hours)
             ticket.sla_end_datetime = ticket.sla_deadline
 
@@ -541,6 +656,96 @@ class HelpdeskTicket(models.Model):
                 in_warning_abs = warn_abs > 0 and remaining < warn_abs
                 ticket.sla_status = 'warning' if (in_warning_pct or in_warning_abs) else 'ok'
 
+    def _search_sla_status(self, operator, value):
+        """Método de búsqueda para sla_status (store=False).
+        Convierte el filtro de SLA en un dominio SQL basado en fechas.
+        """
+        now = fields.Datetime.now()
+        cfg = self.env['helpdesk.sla.config'].get_config()
+        warn_pct = (cfg.warning_threshold_pct or 25.0) / 100.0
+        warn_abs_h = cfg.warning_threshold_hours or 0.0
+
+        if operator not in ('=', '!=', 'in', 'not in'):
+            return []
+
+        values = [value] if isinstance(value, str) else list(value)
+
+        def _domain_for_status(v):
+            if v == 'closed':
+                return [('is_closed', '=', True)]
+            if v == 'danger':
+                return [
+                    ('is_closed', '=', False),
+                    ('sla_deadline', '!=', False),
+                    ('sla_deadline', '<', now),
+                ]
+            if v == 'warning':
+                # Tickets abiertos, no vencidos, pero dentro de umbral
+                # Umbral absoluto: quedan menos de warn_abs_h horas
+                base = [('is_closed', '=', False), ('sla_deadline', '>=', now), ('sla_deadline', '!=', False)]
+                if warn_abs_h > 0:
+                    warn_dt = now + __import__('datetime').timedelta(hours=warn_abs_h)
+                    base.append(('sla_deadline', '<=', warn_dt))
+                return base
+            if v == 'ok':
+                # No vencido y no en warning (aproximación conservadora)
+                domain = [('is_closed', '=', False), ('sla_deadline', '>=', now)]
+                if warn_abs_h > 0:
+                    warn_dt = now + __import__('datetime').timedelta(hours=warn_abs_h)
+                    domain.append(('sla_deadline', '>', warn_dt))
+                domain_no_deadline = [('sla_deadline', '=', False), ('is_closed', '=', False)]
+                return ['|'] + domain + domain_no_deadline
+            return [('id', '=', False)]
+
+        domains = [_domain_for_status(v) for v in values]
+        if not domains:
+            return [('id', '=', False)]
+
+        # Combinar con OR si hay múltiples valores
+        result = domains[0]
+        for extra in domains[1:]:
+            result = ['|'] + result + extra
+
+        if operator in ('!=', 'not in'):
+            return ['!'] + result
+        return result
+
+    @api.depends('visit_ids', 'visit_ids.visit_date', 'visit_ids.deadline_date', 'visit_ids.technician_id', 'visit_ids.state', 'visit_ids.notes')
+    def _compute_latest_visit(self):
+        for ticket in self:
+            if ticket.visit_ids:
+                latest_visit = ticket.visit_ids[0]
+                ticket.technician_id = latest_visit.technician_id.id
+                ticket.visit_date = latest_visit.visit_date
+                ticket.visit_deadline = latest_visit.deadline_date
+                ticket.visit_result = latest_visit.state
+                ticket.visit_notes = latest_visit.notes
+            else:
+                ticket.technician_id = False
+                ticket.visit_date = False
+                ticket.visit_deadline = False
+                ticket.visit_result = 'pending'
+                ticket.visit_notes = False
+
+    def _inverse_latest_visit(self):
+        for ticket in self:
+            if not ticket.requires_visit:
+                continue
+                
+            vals = {
+                'technician_id': ticket.technician_id.id if ticket.technician_id else False,
+                'visit_date': ticket.visit_date,
+                'deadline_date': ticket.visit_deadline,
+                'state': ticket.visit_result or 'pending',
+                'notes': ticket.visit_notes,
+            }
+            
+            if ticket.visit_ids:
+                ticket.visit_ids[0].write(vals)
+            else:
+                vals['ticket_id'] = ticket.id
+                self.env['helpdesk.visit'].create(vals)
+
     @api.depends('sla_deadline', 'is_closed')
     def _compute_sla_hours_remaining(self):
         now = fields.Datetime.now()
@@ -580,14 +785,43 @@ class HelpdeskTicket(models.Model):
             else:
                 ticket.sla_hours_remaining_display = f'{hours} h {minutes:02d} min'
 
-    @api.depends('create_date', 'date_closed')
-    def _compute_resolution_hours(self):
+    @api.depends('sla_deadline', 'sla_start_datetime', 'is_closed')
+    def _compute_sla_progress_pct(self):
+        """Calcula el porcentaje de tiempo usado del SLA."""
         for ticket in self:
-            if ticket.create_date and ticket.date_closed:
-                delta = ticket.date_closed - ticket.create_date
-                ticket.resolution_hours = delta.total_seconds() / 3600.0
+            if not ticket.sla_deadline or not ticket.sla_start_datetime:
+                ticket.sla_progress_pct = 0.0
+                continue
+            
+            if ticket.is_closed:
+                ticket.sla_progress_pct = 100.0
+                continue
+            
+            total_seconds = (ticket.sla_deadline - ticket.sla_start_datetime).total_seconds()
+            if total_seconds <= 0:
+                ticket.sla_progress_pct = 100.0
+                continue
+            
+            now = fields.Datetime.now()
+            elapsed_seconds = max(0, (now - ticket.sla_start_datetime).total_seconds())
+            progress = min(100.0, (elapsed_seconds / total_seconds) * 100.0)
+            ticket.sla_progress_pct = progress
+
+    @api.model
+    def default_get(self, fields_list):
+        """No genera el número aquí para evitar que avance la secuencia sin guardar."""
+        res = super().default_get(fields_list)
+        if 'name' in fields_list:
+            res['name'] = '/'
+        return res
+
+    @api.depends('name')
+    def _compute_name_display(self):
+        for ticket in self:
+            if ticket.id:
+                ticket.name_display = ticket.name or '/'
             else:
-                ticket.resolution_hours = 0.0
+                ticket.name_display = ''
 
     @api.depends('name', 'title')
     def _compute_display_name(self):
@@ -603,6 +837,14 @@ class HelpdeskTicket(models.Model):
 
         for ticket in self:
             ticket.is_recurrent_customer = ticket.id in recurrent_ticket_ids
+
+    @api.depends('priority', 'create_date')
+    def _compute_priority_dirty(self):
+        for ticket in self:
+            if not ticket.create_date:
+                ticket.priority_dirty = False
+                continue
+            ticket.priority_dirty = True
 
     @api.model
     def _get_recurrent_customer_keys(self):
@@ -842,36 +1084,47 @@ class HelpdeskTicket(models.Model):
 
     @api.onchange('incident_type_id')
     def _onchange_incident_type(self):
-        """Sugerir prioridad y equipo según tipo de incidencia."""
+        """Sugerir prioridad, área y SLA (en horas exactas) según tipo de incidencia.
+        
+        SIEMPRE recalcula el SLA cuando cambia el síntoma, incluso si ya existe
+        un SLA guardado. Esto es el comportamiento deseado:
+          - Síntoma Crítico (6 h) → SLA = ahora + 6h
+          - Síntoma Baja   (72 h) → SLA = ahora + 72h
+        Las estrellas (priority) se actualizan automáticamente pero NO
+        afectan el SLA por sí solas (solo el síntoma define el SLA).
+        """
         if not self.incident_type_id:
             return
         inc = self.incident_type_id
-        # Usar prioridad sugerida del tipo de incidencia
+
+        # ── 1. Actualizar estrellas (prioridad visual) según el síntoma ──────
         if inc.priority_suggestion:
-            self.priority = inc.priority_suggestion
-        area_department = False
-        area_terms = {
-            'technical': ['tecnica', 'técnica', 'technical'],
-            'commercial': ['comercial', 'commercial'],
-            'both': ['soporte', 'support', 'general'],
-        }.get(inc.area, [])
-        for term in area_terms:
-            area_department = self.env['hr.department'].search(
-                [('name', 'ilike', term), ('parent_id', '=', False)],
-                limit=1,
-            )
-            if area_department:
-                break
-        if area_department:
-            self.area_id = area_department
-        # Asignar equipo según área del tipo de incidencia
-        area = inc.area
-        if area in ('technical', 'both'):
-            team = self.env['helpdesk.team'].search([('area', '=', 'technical')], limit=1)
-        else:
-            team = self.env['helpdesk.team'].search([('area', '=', 'commercial')], limit=1)
-        if team:
-            self.team_id = team
+            priority_map = {
+                'Crítica': '3',
+                'Muy Alta': '3',
+                'Alta': '2',
+                'Media': '1',
+                'Baja': '0',
+            }
+            priority_name = inc.priority_suggestion.name
+            self.priority = priority_map.get(priority_name, '1')
+        
+        # ── 2. Auto-asignar área desde el síntoma ────────────────────────────
+        if inc.area_id:
+            self.area_id = inc.area_id
+        
+        # ── 3. Recalcular SLA SIEMPRE que haya horas en el síntoma ──────────
+        # Se recalcula incluso si ya hay un sla_deadline guardado, porque el
+        # usuario cambió deliberadamente el síntoma y espera que el SLA se
+        # ajuste al nuevo síntoma (Crítico=6h, Baja=72h, etc.).
+        if inc.priority_suggestion and inc.priority_suggestion.hours_limit:
+            hours = inc.priority_suggestion.hours_limit
+            self.sla_mode = 'advanced'
+            base = self.sla_start_datetime or fields.Datetime.now()
+            if not self.sla_start_datetime:
+                self.sla_start_datetime = base
+            self.sla_end_datetime = base + timedelta(hours=hours)
+            self.sla_deadline = self.sla_end_datetime
 
     @api.onchange('ticket_type_id')
     def _onchange_ticket_type_id(self):
@@ -911,18 +1164,16 @@ class HelpdeskTicket(models.Model):
             if ticket.visit_solution_id and not ticket.visit_solution:
                 ticket.visit_solution = ticket.visit_solution_id.name
 
-    @api.onchange('technician_id')
-    def _onchange_technician_id(self):
-        """Valida que el técnico asignado tenga usuario asociado."""
-        for ticket in self:
-            if ticket.technician_id and ticket.requires_visit and not ticket.technician_id.user_id:
-                ticket.technician_id = False
-
-    @api.constrains('requires_visit', 'technician_id', 'visit_date')
-    def _check_visit_assignment(self):
-        for ticket in self:
-            if ticket.requires_visit and (not ticket.technician_id or not ticket.visit_date):
-                raise ValidationError('Para visita técnica debes asignar técnico y fecha programada.')
+    @api.onchange('requires_visit')
+    def _onchange_requires_visit(self):
+        """Si desmarca "Requiere visita técnica", limpiar los campos de visita."""
+        if not self.requires_visit:
+            self.technician_id = False
+            self.visit_date = False
+            self.visit_result = 'pending'
+        else:
+            if not self.visit_date:
+                self.visit_date = fields.Datetime.now()
 
     def _sync_visit_activity(self):
         activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
@@ -938,30 +1189,41 @@ class HelpdeskTicket(models.Model):
             ]
             activities = self.env['mail.activity'].search(domain)
 
-            if not ticket.requires_visit or not ticket.technician_id or not ticket.visit_date:
+            if not ticket.requires_visit or not ticket.technician_id:
                 activities.unlink()
                 continue
+            
+            visit_date_val = ticket.visit_date or fields.Datetime.now()
 
             note = (
                 f"Ticket: {ticket.display_name}<br/>"
                 f"Tecnico: {ticket.technician_id.name}<br/>"
-                f"Fecha programada: {fields.Datetime.to_string(ticket.visit_date)}"
+                f"Fecha programada: {fields.Datetime.to_string(visit_date_val)}<br/>"
             )
+            if ticket.visit_deadline:
+                note += f"Fecha límite: {fields.Date.to_string(ticket.visit_deadline)}<br/>"
+            if ticket.visit_notes:
+                note += f"Notas: {ticket.visit_notes}<br/>"
+
             vals = {
                 'activity_type_id': activity_type.id,
                 'summary': 'Visita tecnica programada',
                 'note': note,
-                'user_id': ticket.technician_id.user_id.id if ticket.technician_id.user_id else None,
-                'date_deadline': fields.Date.to_date(ticket.visit_date),
+                'user_id': ticket.technician_id.user_id.id if ticket.technician_id.user_id else self.env.uid,
+                'date_deadline': ticket.visit_deadline if ticket.visit_deadline else fields.Date.to_date(visit_date_val),
                 'res_id': ticket.id,
                 'res_model_id': model_id,
             }
 
             if activities:
                 activities.write(vals)
+                if ticket.visit_ids and not ticket.visit_ids[0].activity_id:
+                    ticket.visit_ids[0].activity_id = activities[0].id
             else:
-                if vals.get('user_id'):
-                    self.env['mail.activity'].create(vals)
+                if vals.get('user_id') and ticket.visit_result in ('pending', 'in_progress', 'rescheduled'):
+                    new_activity = self.env['mail.activity'].create(vals)
+                    if ticket.visit_ids:
+                        ticket.visit_ids[0].activity_id = new_activity.id
 
             if ticket.visit_result in ('done', 'cancelled'):
                 self.env['mail.activity'].search(domain).action_feedback(
@@ -969,11 +1231,15 @@ class HelpdeskTicket(models.Model):
                 )
 
             ticket.message_post(
-                body=(
+                body=Markup(
                     '<b>Visita tecnica actualizada</b><br/>'
-                    f'Tecnico asignado: {ticket.technician_id.name}<br/>'
-                    f'Fecha programada: {fields.Datetime.to_string(ticket.visit_date)}<br/>'
-                    f'Estado: {dict(ticket._fields["visit_result"].selection).get(ticket.visit_result, "Pendiente")}'
+                    'Tecnico asignado: %s<br/>'
+                    'Fecha programada: %s<br/>'
+                    'Estado: %s'
+                ) % (
+                    ticket.technician_id.name,
+                    fields.Datetime.to_string(ticket.visit_date),
+                    dict(ticket._fields["visit_result"].selection).get(ticket.visit_result, "Pendiente"),
                 ),
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
@@ -1059,12 +1325,19 @@ class HelpdeskTicket(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         cfg = self.env['helpdesk.sla.config'].get_config()
-        sla_by_priority = {
-            '0': cfg.sla_hours_low,
-            '1': cfg.sla_hours_medium,
-            '2': cfg.sla_hours_high,
-            '3': cfg.sla_hours_critical,
-        }
+        
+        priority_hours = {}
+        for p in cfg.priority_sla_ids:
+            if p.sequence == 50:
+                priority_hours['3'] = p.hours_limit
+            elif p.sequence == 20:
+                priority_hours['2'] = p.hours_limit
+            elif p.sequence == 30:
+                priority_hours['1'] = p.hours_limit
+            elif p.sequence == 40:
+                priority_hours['0'] = p.hours_limit
+        
+        sla_by_priority = priority_hours
         critical_types = {'no_signal', 'fiber_cut', 'onu_offline'}
         
         # Establecer el ticket_type_id por defecto si no está especificado
@@ -1095,8 +1368,8 @@ class HelpdeskTicket(models.Model):
                 if service.box_id and not vals.get('customer_box'):
                     vals['customer_box'] = self._get_box_identifier(service.box_id)
             now_dt = fields.Datetime.now()
-            if vals.get('name', '/') == '/':
-                vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.ticket') or '/'
+            if not vals.get('name') or vals.get('name') in ('/', ''):
+                vals['name'] = self.env['ir.sequence'].next_by_code('helpdesk.ticket') or 'T-00001'
             vals.setdefault('date_open', now_dt)
             vals.setdefault('sla_start_datetime', vals.get('date_open') or now_dt)
             if not vals.get('stage_id'):
@@ -1106,7 +1379,7 @@ class HelpdeskTicket(models.Model):
             # Auto-calcular SLA al crear si no fue especificado
             if not vals.get('sla_deadline'):
                 base = vals.get('sla_start_datetime') or now_dt
-                mode = vals.get('sla_mode') or 'quick'
+                mode = vals.get('sla_mode') or 'advanced'
 
                 if mode == 'advanced' and vals.get('sla_end_datetime'):
                     vals['sla_deadline'] = vals['sla_end_datetime']
@@ -1119,7 +1392,8 @@ class HelpdeskTicket(models.Model):
                     continue
 
                 cat_id = vals.get('category_id')
-                hours = cfg.sla_hours_medium
+                default_hours = sla_by_priority.get('1', 72.0)
+                hours = default_hours
                 if cat_id:
                     cat = self.env['helpdesk.category'].browse(cat_id)
                     if cat.sla_hours > 0:
@@ -1127,16 +1401,16 @@ class HelpdeskTicket(models.Model):
                     else:
                         inc = vals.get('incident_type', '')
                         if inc in critical_types:
-                            hours = cfg.sla_hours_critical
+                            hours = sla_by_priority.get('3', 6.0)
                         else:
-                            hours = sla_by_priority.get(vals.get('priority', '1'), cfg.sla_hours_medium)
+                            hours = sla_by_priority.get(vals.get('priority', '1'), default_hours)
                 else:
                     inc_id = vals.get('incident_type_id')
                     inc_code = self.env['helpdesk.incident.type'].browse(inc_id).code if inc_id else ''
                     if inc_code in critical_types:
-                        hours = cfg.sla_hours_critical
+                        hours = sla_by_priority.get('3', 6.0)
                     else:
-                        hours = sla_by_priority.get(vals.get('priority', '1'), cfg.sla_hours_medium)
+                        hours = sla_by_priority.get(vals.get('priority', '1'), default_hours)
                 vals['sla_deadline'] = base + timedelta(hours=hours)
 
             if vals.get('sla_deadline') and not vals.get('sla_end_datetime'):
@@ -1154,6 +1428,8 @@ class HelpdeskTicket(models.Model):
         return records
 
     def write(self, vals):
+        # NOTA: El campo priority (estrellas) es selección manual del usuario
+        # y NO debe afectar el SLA. Solo el síntoma (incident_type_id) define el SLA.
         if vals.get('employee_id'):
             employee = self.env['hr.employee'].browse(vals['employee_id'])
             if employee.department_id and not vals.get('area_id'):
@@ -1170,6 +1446,7 @@ class HelpdeskTicket(models.Model):
                 vals['olt_interface'] = self._get_subinterface_code(service.subinterface_id)
             if service.box_id and not vals.get('customer_box'):
                 vals['customer_box'] = self._get_box_identifier(service.box_id)
+
         if 'stage_id' in vals:
             stage = self.env['helpdesk.stage'].browse(vals['stage_id'])
             now = fields.Datetime.now()
@@ -1180,12 +1457,18 @@ class HelpdeskTicket(models.Model):
                 vals['date_closed'] = now
             else:
                 vals['date_closed'] = False
+
         res = super().write(vals)
-        if any(k in vals for k in ('requires_visit', 'visit_date', 'technician_id', 'visit_result')):
+
+        if any(k in vals for k in ('requires_visit', 'visit_date', 'technician_id', 'visit_result', 'visit_ids')):
             self._sync_visit_activity()
         if any(k in vals for k in ('stage_id', 'postventa_done', 'postventa_date', 'postventa_user_id', 'satisfaction', 'postventa_notes', 'user_id')):
             self._sync_postventa_activity()
         return res
+
+    # _recalculate_sla_on_priority_change fue eliminado intencionalmente.
+    # Las estrellas (priority) son un campo visual/manual del usuario
+    # y NO deben afectar el SLA. El SLA solo lo define el síntoma (incident_type_id).
 
     def _get_runtime_sla_status(self, now=None, cfg=None):
         """Calcula el estado SLA en tiempo real para un ticket."""
@@ -1252,7 +1535,10 @@ class HelpdeskTicket(models.Model):
     # =========================================================================
     @api.model
     def _cron_check_sla_deadline(self):
-        """Notifica transiciones del semáforo SLA y escala tickets vencidos sin repetir avisos."""
+        """Notifica transiciones del semáforo SLA y escala tickets vencidos sin repetir avisos.
+        También recalcula sla_progress_pct y sla_status para todos los tickets abiertos
+        con deadline, ya que el tiempo pasa pero los campos depend de fechas estáticas.
+        """
         now = fields.Datetime.now()
         cfg = self.env['helpdesk.sla.config'].get_config()
         tickets = self.search([
@@ -1262,6 +1548,16 @@ class HelpdeskTicket(models.Model):
         ])
         if not tickets:
             return
+
+        # ── Forzar recomputación de sla_progress_pct y sla_status ──────────────
+        # Estos campos son store=True con depends en campos de fecha estáticos.
+        # Odoo no los recalcula automáticamente cuando pasa el tiempo, por eso
+        # el cron los invalida explicitamente para forzar el recompute.
+        tickets.invalidate_recordset(['sla_progress_pct', 'sla_status',
+                                      'sla_exceeded', 'sla_hours_remaining'])
+        tickets._compute_sla_progress_pct()
+        tickets._compute_sla_status()
+        tickets._compute_sla_exceeded()
 
         waiting_stage = self.env['helpdesk.stage'].search([('name', '=', 'En Espera')], limit=1)
 

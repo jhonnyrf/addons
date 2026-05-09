@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
 from odoo import models, fields, api, _
 
 
@@ -45,10 +46,28 @@ class HelpdeskAssignWizard(models.TransientModel):
             if self.escalation_reason:
                 vals['escalation_reason'] = self.escalation_reason
         self.ticket_id.write(vals)
+        # Generar un mensaje bonito para el chatter
+        msg_parts = []
+        is_escalation = self.env.context.get('escalate_mode')
+        
+        if is_escalation:
+            msg_parts.append('<b class="text-danger">Ticket Escalado</b><br/>')
+            if self.escalation_reason:
+                msg_parts.append(f'<b>Motivo:</b> {self.escalation_reason}<br/>')
+        else:
+            msg_parts.append('<b class="text-primary">Ticket Reasignado</b><br/>')
+
+        if self.area_id:
+            msg_parts.append(f'<b>Nueva Área:</b> {self.area_id.name}<br/>')
+        if self.employee_id:
+            msg_parts.append(f'<b>Nuevo Asignado:</b> {self.employee_id.name}<br/>')
+            
         if self.note:
-            self.ticket_id.message_post(
-                body=self.note,
-                message_type='comment',
-                subtype_xmlid='mail.mt_note',
-            )
+            msg_parts.append(f'<br/><b>Nota interna:</b><br/>{self.note}')
+            
+        self.ticket_id.message_post(
+            body=Markup(''.join(msg_parts)),
+            message_type='comment',
+            subtype_xmlid='mail.mt_note',
+        )
         return {'type': 'ir.actions.act_window_close'}

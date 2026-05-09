@@ -40,7 +40,7 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
     sla_mode = fields.Selection([
         ('quick', 'Dias'),
         ('advanced', 'Avanzado'),
-    ], string='Modo', default='quick', required=True)
+    ], string='Modo', default='advanced', required=True)
 
     sla_quick_days = fields.Selection([
         ('1', '1 día'),
@@ -114,15 +114,15 @@ class HelpdeskSlaAdvancedWizard(models.TransientModel):
         ticket_id = self.env.context.get('default_ticket_id') or self.env.context.get('active_id')
         if ticket_id:
             ticket = self.env['helpdesk.ticket'].browse(ticket_id)
-            mode = ticket.sla_mode or 'quick'
-            vals.setdefault('ticket_id', ticket.id)
-            vals.setdefault('sla_mode', mode)
-            vals.setdefault('sla_quick_days', ticket.sla_quick_days or '2')
-            if mode == 'quick':
-                vals.setdefault('sla_start_datetime', ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now())
-            else:
-                vals.setdefault('sla_start_datetime', ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now())
-            vals.setdefault('sla_end_datetime', ticket.sla_end_datetime or ticket.sla_deadline or fields.Datetime.now())
+            vals['ticket_id'] = ticket.id
+            # Usar el modo del ticket actual, o 'advanced' por defecto si está vacío
+            vals['sla_mode'] = ticket.sla_mode or 'advanced'
+            # IMPORTANTE: Cargar valores GUARDADOS del ticket, no recalcular
+            # Si sla_deadline existe, usarlo como sla_end_datetime
+            vals['sla_start_datetime'] = ticket.sla_start_datetime or ticket.date_open or ticket.create_date or fields.Datetime.now()
+            # Priorizar sla_deadline guardado si existe, luego sla_end_datetime
+            vals['sla_end_datetime'] = ticket.sla_deadline or ticket.sla_end_datetime or fields.Datetime.now()
+            vals['sla_quick_days'] = ticket.sla_quick_days or '2'
         return vals
 
     def action_apply(self):

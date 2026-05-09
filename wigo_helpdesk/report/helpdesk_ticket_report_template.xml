@@ -256,6 +256,12 @@
                                             </td>
                                         </tr>
                                     </table>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Artículo de Conocimiento:</strong>
+                                            <p t-esc="o.knowledge_id.name if o.knowledge_id else 'Ninguno'"/>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <table class="table table-sm table-borderless">

@@ -37,6 +37,7 @@
                                 <separator/>
                                 <!-- Filtros por mes -->
                                 <filter name="filter_this_month" string="Este Mes" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                                <filter name="filter_this_month_panel" string="Este Mes (Panel)" domain="[('create_year', '=', context_today().strftime('%Y')), ('create_month', '=', context_today().strftime('%m'))]"/>
                                 <filter name="filter_last_month" string="Todo (Sin filtro de mes)" domain="[]"/>
 
                                 <group>
@@ -53,6 +54,13 @@
                                         <filter name="group_channel" string="Canal" context="{'group_by': 'channel'}"/>
                                         <filter name="group_date" string="Fecha de Creación" context="{'group_by': 'create_date:month'}"/>
                                 </group>
+                                
+                                <searchpanel>
+                                        <field name="create_year" select="multi" icon="fa-calendar" expand="0"/>
+                                        <field name="create_month" select="multi" icon="fa-calendar-o" expand="0"/>
+                                        <field name="area_id" select="multi" icon="fa-users" enable_counters="1" expand="0"/>
+                                        <field name="ticket_type_id" select="multi" icon="fa-tags" enable_counters="1" expand="0"/>
+                                </searchpanel>
                         </search>
                 </field>
         </record>

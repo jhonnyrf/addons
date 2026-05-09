@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Helpdesk WigoFast',
-    'version': '19.0.5.2.0',
+    'version': '19.0.5.6.0',
     'category': 'Services/Helpdesk',
     'summary': 'Gestión de tickets de soporte para ISP WigoFast',
     'description': """

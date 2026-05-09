@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from . import helpdesk_priority_sla
 from . import helpdesk_sla_config
 from . import helpdesk_stage
 from . import helpdesk_team
@@ -15,3 +16,5 @@ from . import res_partner
 from . import helpdesk_assign_wizard
 from . import helpdesk_close_wizard
 from . import helpdesk_sla_advanced_wizard
+from . import helpdesk_postventa
+from . import helpdesk_visit

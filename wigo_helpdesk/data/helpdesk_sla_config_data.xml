@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Singleton de configuración SLA — se crea una vez al instalar -->
+        <!-- Singleton de configuración SLA -->
         <record id="helpdesk_sla_config_default" model="helpdesk.sla.config">
             <field name="name">Configuración SLA WigoFast</field>
             <field name="ok_label">En tiempo</field>
@@ -18,12 +18,68 @@
             <field name="closed_label">Cerrado</field>
             <field name="closed_icon">fa-check</field>
             <field name="closed_color">#6c757d</field>
-            <field name="sla_hours_critical">4.0</field>
+            <field name="sla_hours_critical">6.0</field>
             <field name="sla_hours_high">24.0</field>
             <field name="sla_hours_medium">48.0</field>
-            <field name="sla_hours_low">72.0</field>
+            <field name="sla_hours_low">48.0</field>
             <field name="escalate_on_expire" eval="True"/>
             <field name="notify_on_warning" eval="True"/>
         </record>
+
+        <!-- ── Prioridad 1: Muy Alta — Rojo vivo ── -->
+        <record id="priority_sla_muy_alta" model="helpdesk.priority.sla">
+            <field name="config_id" ref="helpdesk_sla_config_default"/>
+            <field name="sequence">10</field>
+            <field name="name">Muy Alta</field>
+            <field name="color">#e53935</field>
+            <field name="hours_limit">24.0</field>
+            <field name="attention_time">Inmediato (30 min. Después de notificación ya se debe estar atendiendo)</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ── Prioridad 2: Alta — Naranja ── -->
+        <record id="priority_sla_alta" model="helpdesk.priority.sla">
+            <field name="config_id" ref="helpdesk_sla_config_default"/>
+            <field name="sequence">20</field>
+            <field name="name">Alta</field>
+            <field name="color">#f57c00</field>
+            <field name="hours_limit">72.0</field>
+            <field name="attention_time">Inmediato según orden de prelación</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ── Prioridad 3: Media — Amarillo ── -->
+        <record id="priority_sla_media" model="helpdesk.priority.sla">
+            <field name="config_id" ref="helpdesk_sla_config_default"/>
+            <field name="sequence">30</field>
+            <field name="name">Media</field>
+            <field name="color">#fdd835</field>
+            <field name="hours_limit">72.0</field>
+            <field name="attention_time">Priorizado según orden de prelación</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ── Prioridad 4: Baja — Verde lima ── -->
+        <record id="priority_sla_baja" model="helpdesk.priority.sla">
+            <field name="config_id" ref="helpdesk_sla_config_default"/>
+            <field name="sequence">40</field>
+            <field name="name">Baja</field>
+            <field name="color">#8bc34a</field>
+            <field name="hours_limit">48.0</field>
+            <field name="attention_time">Priorizado según orden de prelación</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ── Prioridad 5: Crítica — Rojo oscuro ── -->
+        <record id="priority_sla_critica" model="helpdesk.priority.sla">
+            <field name="config_id" ref="helpdesk_sla_config_default"/>
+            <field name="sequence">50</field>
+            <field name="name">Crítica</field>
+            <field name="color">#7b0000</field>
+            <field name="hours_limit">6.0</field>
+            <field name="attention_time">Inmediato (15 min. Después de notificación ya se debe estar atendiendo)</field>
+            <field name="active" eval="True"/>
+        </record>
+
     </data>
 </odoo>

@@ -13,3 +13,6 @@ access_helpdesk_incident_type_user,helpdesk.incident.type user,model_helpdesk_in
 access_helpdesk_sla_config_all,helpdesk.sla.config all,model_helpdesk_sla_config,,1,1,1,1
 access_helpdesk_visit_diagnosis_type_user,helpdesk.visit.diagnosis.type user,model_helpdesk_visit_diagnosis_type,base.group_user,1,1,1,1
 access_helpdesk_visit_solution_type_user,helpdesk.visit.solution.type user,model_helpdesk_visit_solution_type,base.group_user,1,1,1,1
+access_helpdesk_priority_sla_all,helpdesk.priority.sla all,model_helpdesk_priority_sla,,1,1,1,1
+access_helpdesk_postventa_call_all,helpdesk.postventa.call all,model_helpdesk_postventa_call,,1,1,1,1
+access_helpdesk_visit_all,helpdesk.visit all,model_helpdesk_visit,,1,1,1,1

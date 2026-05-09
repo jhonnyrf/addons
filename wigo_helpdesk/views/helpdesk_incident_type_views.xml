@@ -23,10 +23,11 @@
 
                 <separator/>
 
-                <filter name="filter_priority_baja" string="Prioridad: Baja" domain="[('priority_suggestion', '=', '0')]"/>
-                <filter name="filter_priority_media" string="Prioridad: Media" domain="[('priority_suggestion', '=', '1')]"/>
-                <filter name="filter_priority_alta" string="Prioridad: Alta" domain="[('priority_suggestion', '=', '2')]"/>
-                <filter name="filter_priority_critica" string="Prioridad: Crítica" domain="[('priority_suggestion', '=', '3')]"/>
+                <filter name="filter_by_priority_baja" string="Prioridad: Baja" domain="[('priority_suggestion.name', '=', 'Baja')]"/>
+                <filter name="filter_by_priority_media" string="Prioridad: Media" domain="[('priority_suggestion.name', '=', 'Media')]"/>
+                <filter name="filter_by_priority_alta" string="Prioridad: Alta" domain="[('priority_suggestion.name', '=', 'Alta')]"/>
+                <filter name="filter_by_priority_muy_alta" string="Prioridad: Muy Alta" domain="[('priority_suggestion.name', '=', 'Muy Alta')]"/>
+                <filter name="filter_by_priority_critica" string="Prioridad: Crítica" domain="[('priority_suggestion.name', '=', 'Crítica')]"/>
 
                 <separator/>
 
@@ -47,7 +48,7 @@
                 <field name="name"/>
                 <field name="area_id"/>
                 <field name="ticket_type_id"/>
-                <field name="priority_suggestion" decoration-danger="priority_suggestion == '3'" decoration-warning="priority_suggestion == '2'" decoration-info="priority_suggestion == '1'" decoration-success="priority_suggestion == '0'"/>
+                <field name="priority_suggestion"/>
                 <field name="ticket_count" readonly="1"/>
                 <field name="active"/>
             </list>

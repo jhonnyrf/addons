@@ -8,7 +8,6 @@
             <xpath expr="//field[@name='summary']" position="after">
                 <group string="Seguimiento Postventa Helpdesk" invisible="not is_helpdesk_postventa_activity" col="2">
                     <field name="helpdesk_postventa_call_date"/>
-                    <field name="helpdesk_postventa_done_by"/>
                     <field name="helpdesk_postventa_state"/>
                     <field name="helpdesk_postventa_satisfaction" required="helpdesk_postventa_state == 'done'"/>
                 </group>
@@ -27,7 +26,6 @@
             <xpath expr="//field[@name='summary']" position="after">
                 <group string="Seguimiento Postventa Helpdesk" invisible="not is_helpdesk_postventa_activity" col="2">
                     <field name="helpdesk_postventa_call_date"/>
-                    <field name="helpdesk_postventa_done_by"/>
                     <field name="helpdesk_postventa_state"/>
                     <field name="helpdesk_postventa_satisfaction" required="helpdesk_postventa_state == 'done'"/>
                 </group>
