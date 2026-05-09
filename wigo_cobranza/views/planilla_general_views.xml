@@ -20,13 +20,25 @@
         </field>
     </record>
 
+    <!-- Form variant used by Planilla General: disable create from this form -->
+    <record id="view_pago_estado_form_no_create" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.form.no.create.for.planilla</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="inherit_id" ref="wigo_cobranza.view_pago_estado_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Lista semaforizadas por estado — replica el Excel de Dania -->
     <record id="view_planilla_general_list" model="ir.ui.view">
         <field name="name">wigo.pago.estado.list.planilla</field>
         <field name="model">wigo.pago.estado</field>
         <field name="priority" eval="1"/>
         <field name="arch" type="xml">
-            <list string="Planilla de Cobros" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc, codigo_cliente">
+            <list create="false" string="Planilla de Cobros" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'" default_order="anio desc, mes desc, codigo_cliente">
                 <field name="anio" optional="show"/>
                 <field name="mes" optional="show"/>
                 <field name="codigo_cliente"/>
@@ -84,6 +96,23 @@
                 <filter name="diciembre" string="Diciembre" domain="[('mes','=','12')]"/>
                 <separator/>
                 <filter name="anio_actual" string="Año actual" domain="[('anio','=', context_today().year)]"/>
+                <filter name="mes_actual" string="Mes actual" domain="[
+                            ('mes', '=',
+                                '1' if context_today().month == 1 else
+                                '2' if context_today().month == 2 else
+                                '3' if context_today().month == 3 else
+                                '4' if context_today().month == 4 else
+                                '5' if context_today().month == 5 else
+                                '6' if context_today().month == 6 else
+                                '7' if context_today().month == 7 else
+                                '8' if context_today().month == 8 else
+                                '9' if context_today().month == 9 else
+                                '10' if context_today().month == 10 else
+                                '11' if context_today().month == 11 else
+                                '12'
+                            ),
+                            ('anio', '=', context_today().year)
+                        ]"/>
                 <separator/>
                 <filter name="group_partner" string="Agrupar por Cliente" context="{'group_by': 'partner_id'}"/>
                 <filter name="group_mes" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
@@ -104,15 +133,16 @@
     <record id="action_planilla_general" model="ir.actions.act_window">
         <field name="name">Planilla General de Cobros</field>
         <field name="res_model">wigo.pago.estado</field>
-        <field name="view_mode">list,pivot,graph</field>
+        <field name="view_mode">list,form,pivot,graph</field>
         <field name="view_id" ref="view_planilla_general_list"/>
         <field name="views" eval="[
             (ref('wigo_cobranza.view_planilla_general_list'), 'list'),
+            (ref('wigo_cobranza.view_pago_estado_form_no_create'), 'form'),
             (ref('wigo_cobranza.view_planilla_general_pivot'), 'pivot'),
             (False, 'graph'),
         ]"/>
         <field name="search_view_id" ref="view_planilla_general_search"/>
-        <field name="context">{'search_default_anio_actual': 1}</field>
+        <field name="context">{'search_default_anio_actual': 1, 'create': False, 'show_create': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay registros en la planilla para el período seleccionado.

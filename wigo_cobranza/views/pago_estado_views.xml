@@ -192,6 +192,7 @@
                 <field name="partner_id" string="Cliente"/>
                 <field name="codigo_cliente" string="Código CF"/>
                 <field name="periodo" string="Período"/>
+                <field name="anio" string="Año"/>
                 <field name="plan_id" string="Plan"/>
                 <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
                 <field name="payment_mode" string="Modalidad de pago"/>
@@ -225,6 +226,7 @@
                             ),
                             ('anio', '=', context_today().year)
                         ]"/>
+                <filter name="anio_actual" string="Año actual" domain="[('anio','=', context_today().year)]"/>
                 <filter name="suspender_hoy" string="Suspender hoy (mora mes anterior)" domain="[
                             ('estado_pago','in',['pendiente','mora']), 
                             ('anio', '=', context_today().year if context_today().month > 1 else context_today().year - 1), 

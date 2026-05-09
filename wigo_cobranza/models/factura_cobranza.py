@@ -70,10 +70,10 @@ class WigoFacturaCobranza(models.Model):
 
     # ── Estado ──────────────────────────────────────────────────
     state = fields.Selection([
-        ('registrada', 'Registrada'),
-        ('pagada', 'Pagada'),
+        ('pendiente', 'Pendiente'),
+        ('emitido', 'Emitido'),
         ('anulada', 'Anulada'),
-    ], string='Estado', default='registrada', required=True, tracking=True, index=True)
+    ], string='Estado', default='pendiente', required=True, tracking=True, index=True)
 
     # ── Observaciones ────────────────────────────────────────────
     notas = fields.Text(string='Notas')
@@ -106,6 +106,34 @@ class WigoFacturaCobranza(models.Model):
         for rec in self:
             rec.monto_neto = rec.monto_total - rec.descuento
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        # Al guardar la factura pasa a estado emitido y envía notificación.
+        for rec in records.filtered(lambda r: r.state != 'anulada'):
+            rec.write({'state': 'emitido'})
+            self.env['bus.bus']._sendone(
+                self.env.user.partner_id,
+                'simple_notification',
+                {
+                    'title': '✓ Factura Emitida',
+                    'message': f'Factura {rec.numero_factura} emitida correctamente',
+                    'sticky': False,
+                }
+            )
+        
+        for rec in records.filtered(lambda r: r.state == 'anulada'):
+            self.env['bus.bus']._sendone(
+                self.env.user.partner_id,
+                'simple_notification',
+                {
+                    'title': '✗ Factura Anulada',
+                    'message': f'Factura {rec.numero_factura} ha sido anulada',
+                    'sticky': False,
+                }
+            )
+        return records
+
     @api.onchange('pago_id')
     def _onchange_pago_id(self):
         if self.pago_id:
@@ -118,7 +146,13 @@ class WigoFacturaCobranza(models.Model):
 
     def action_marcar_pagada(self):
         for rec in self:
-            rec.state = 'pagada'
+            rec.state = 'emitido'
+
+    def action_emitir(self):
+        """Transiciona la factura a emitido y cierra el diálogo."""
+        self.ensure_one()
+        self.state = 'emitido'
+        return {'type': 'ir.actions.act_window_close'}
 
     def action_anular(self):
         for rec in self:

@@ -7,13 +7,13 @@
         <field name="arch" type="xml">
             <form string="Configuración del Recibo">
                 <header>
-                    <button name="action_reset_defaults" string="↺ Restaurar diseño por defecto"
-                            type="object" class="btn-secondary"
-                            confirm="¿Restaurar todos los valores de diseño a los predeterminados?"/>
+                    <button name="action_reset_defaults" icon="fa-refresh" string="Restaurar diseño por defecto" type="object" class="btn-secondary" confirm="¿Restaurar todos los valores de diseño a los predeterminados?"/>
                 </header>
                 <sheet style="max-width: none;">
                     <div class="oe_title">
-                        <h1>⚙️ Configuración del Recibo de Cobro</h1>
+                        <h1>
+                            <i class="fa fa-cogs me-2 text-primary"/>
+ Configuración del Recibo de Cobro</h1>
                         <p class="text-muted">
                             Personaliza todos los aspectos visuales del recibo. Los cambios se
                             aplican inmediatamente al siguiente recibo sin reiniciar el servidor.
@@ -28,7 +28,9 @@
 
                             <!-- ─ Datos de empresa ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">🏢 Datos de la Empresa</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-building me-2 text-primary"/>
+Datos de la Empresa</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <group>
@@ -48,28 +50,45 @@
 
                             <!-- ─ Logo ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">🖼️ Logo</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-image me-2 text-info"/>
+        Logo
+                                </div>
+
                                 <div class="card-body">
-                                    <group col="2">
-                                        <group>
-                                            <field name="logo" widget="image"
-                                                   options="{'size': [350, 140]}"
-                                                   string="Logo del recibo"/>
-                                            <field name="usar_logo_imagen"/>
-                                        </group>
-                                        <group>
-                                            <field name="logo_ancho"
-                                                   widget="integer"
-                                                   string="Ancho máximo (px)"/>
-                                            <field name="layout_logo"/>
-                                        </group>
-                                    </group>
+                                    <div class="row align-items-start">
+
+                                        <!-- Logo -->
+                                        <div class="col-lg-5 text-center">
+
+                                            <field name="logo" widget="image" class="oe_avatar" options="{'size': [220, 120]}" nolabel="1"/>
+
+                                            <div class="mt-3">
+                                                <field name="usar_logo_imagen"/>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- Configuración -->
+                                        <div class="col-lg-7">
+
+                                            <group>
+                                                <field name="logo_ancho" widget="integer" string="Ancho máximo (px)"/>
+
+                                                <field name="layout_logo"/>
+                                            </group>
+
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- ─ Firma ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">✍️ Datos de la Firma</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-pencil-square-o me-2 text-secondary"/>
+Datos de la Firma</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <field name="firma_nombre"/>
@@ -81,20 +100,22 @@
 
                             <!-- ─ Pie de página ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">📄 Pie de Página</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-file-text-o me-2 text-dark"/>
+ Pie de Página</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <field name="mostrar_pie"/>
-                                        <field name="texto_pie"
-                                               placeholder="Gracias por su pago puntual."
-                                               invisible="not mostrar_pie"/>
+                                        <field name="texto_pie" placeholder="Gracias por su pago puntual." invisible="not mostrar_pie"/>
                                     </group>
                                 </div>
                             </div>
 
                             <!-- ─ Colores ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">🎨 Colores</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-paint-brush me-2 text-danger"/>
+ Colores</div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-6">
@@ -124,7 +145,9 @@
 
                             <!-- ─ Tipografía ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">🔤 Tipografía</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-font me-2 text-primary"/>
+Tipografía</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <group>
@@ -142,7 +165,9 @@
 
                             <!-- ─ Layout ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">📐 Layout y Estructura</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-th-large me-2 text-warning"/>
+ Layout y Estructura</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <group>
@@ -152,8 +177,7 @@
                                         </group>
                                         <group>
                                             <field name="mostrar_banda_decorativa"/>
-                                            <field name="ancho_banda"
-                                                   invisible="not mostrar_banda_decorativa"/>
+                                            <field name="ancho_banda" invisible="not mostrar_banda_decorativa"/>
                                         </group>
                                     </group>
                                 </div>
@@ -161,7 +185,9 @@
 
                             <!-- ─ Tabla ─ -->
                             <div class="card mb-3">
-                                <div class="card-header fw-bold">📋 Tabla de Detalle</div>
+                                <div class="card-header fw-bold">
+                                    <i class="fa fa-table me-2 text-success"/>
+ Tabla de Detalle</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <field name="tabla_header_texto"/>
@@ -171,15 +197,16 @@
                                 </div>
                             </div>
 
-                        </div><!-- /col-xl-6 -->
+                        </div>                        <!-- /col-xl-6 -->
 
                         <!-- COLUMNA DERECHA: preview REACTIVO (OWL widget) -->
                         <div class="col-xl-6 ps-3">
                             <div style="position: sticky; top: 70px;">
                                 <div class="card">
-                                    <div class="card-header fw-bold d-flex justify-content-between align-items-center"
-                                         style="background: linear-gradient(135deg, #1e3a5f, #2d5a9e); color: white;">
-                                        <span><i class="fa fa-eye me-2"/>Vista Previa en Tiempo Real</span>
+                                    <div class="card-header fw-bold d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e3a5f, #2d5a9e); color: white;">
+                                        <span>
+                                            <i class="fa fa-eye me-2"/>
+Vista Previa en Tiempo Real</span>
                                         <small style="opacity:0.8;">Se actualiza al instante</small>
                                     </div>
                                     <div class="card-body p-2" style="background:#f3f4f6;max-height:80vh;overflow-y:auto;">
@@ -193,7 +220,7 @@
                             </div>
                         </div>
 
-                                        </div><!-- /row -->
+                    </div>                    <!-- /row -->
 
                 </sheet>
             </form>

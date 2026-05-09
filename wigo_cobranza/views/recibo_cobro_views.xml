@@ -51,8 +51,8 @@ Código: <field name="codigo_cliente"/>
                             </div>
                         </main>
                         <footer class="d-flex justify-content-end gap-2">
-                            <button name="action_emitir" string="✅ Emitir" type="object" class="btn btn-sm btn-success" invisible="state != 'borrador'"/>
-                            <button name="action_imprimir" string="🖨️ Imprimir" type="object" class="btn btn-sm btn-primary" invisible="state == 'anulado'"/>
+                            <button name="action_emitir" string="Emitir" type="object" class="btn btn-sm btn-success" invisible="state != 'borrador'"/>
+                            <button name="action_imprimir" string="Imprimir" type="object" class="btn btn-sm btn-primary" invisible="state == 'anulado'"/>
                         </footer>
                     </t>
                 </templates>
@@ -67,7 +67,7 @@ Código: <field name="codigo_cliente"/>
         <field name="name">wigo.recibo.cobro.list</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
-            <list string="Recibos de Cobro" decoration-success="state == 'emitido'" decoration-muted="state == 'anulado'" decoration-warning="state == 'borrador'">
+            <list string="Recibos de Cobro" decoration-success="state == 'emitido'" decoration-danger="state == 'anulado'" decoration-warning="state == 'borrador'">
                 <field name="numero"/>
                 <field name="partner_id"/>
                 <field name="codigo_cliente"/>
@@ -77,7 +77,7 @@ Código: <field name="codigo_cliente"/>
                 <field name="fecha_pago"/>
                 <field name="registrado_por" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'borrador'" decoration-danger="state == 'anulado'"/>
-                <button name="action_imprimir" string="🖨️ PDF" type="object" invisible="state == 'anulado'"/>
+                <button name="action_imprimir" string="PDF" type="object" invisible="state == 'anulado'"/>
             </list>
         </field>
     </record>
@@ -95,16 +95,16 @@ Código: <field name="codigo_cliente"/>
             <form string="Recibo de Cobro">
                 <header>
                     <!-- BORRADOR: emitir -->
-                    <button name="action_emitir" string="✅ Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
+                    <button name="action_emitir" string="Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
 
                     <!-- EMITIDO: imprimir -->
-                    <button name="action_imprimir" string="🖨️ Imprimir" type="object" class="btn-primary" invisible="state != 'emitido'"/>
+                    <button name="action_imprimir" string="Imprimir" type="object" class="btn-primary" invisible="state != 'emitido'"/>
 
                     <!-- EMITIDO: editar -->
-                    <button name="action_volver_borrador" string="✏️ Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/>
+                    <button name="action_volver_borrador" string="Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/>
 
                     <!-- Anular -->
-                    <button name="action_anular" string="❌ Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
+                    <button name="action_anular" string="Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
                 </header>
@@ -153,8 +153,8 @@ Datos del Pago
                             <!-- MONTO -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
-                                    <i class="fa fa-bolivianoSign me-2 text-success"/>
-💰 Monto
+                                    <i class="fa fa-money me-2 text-success"/>
+    Monto
                                 </div>
                                 <div class="card-body p-2">
                                     <group>
@@ -168,7 +168,7 @@ Datos del Pago
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-pencil me-2 text-warning"/>
-📝 Descripción del servicio
+Descripción del servicio
                                     <small class="text-muted fw-normal ms-2">(editable)</small>
                                 </div>
                                 <div class="card-body p-2">
@@ -176,7 +176,7 @@ Datos del Pago
                                     <div class="text-muted mt-1" style="font-size:11px;">
                                         <i class="fa fa-info-circle me-1"/>
                                         Puedes editar la descripción aunque el recibo esté emitido.
-                                        Usa <strong>✏️ Editar</strong> en el header para cambiar otros datos.
+                                        Usa <strong>Editar</strong> en el header para cambiar otros datos.
                                     </div>
                                 </div>
                             </div>
@@ -185,7 +185,7 @@ Datos del Pago
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-pencil-square-o me-2"/>
-✍️ Firmante
+Firmante
                                     <small class="text-muted fw-normal ms-2">(vacío = usa configuración global)</small>
                                 </div>
                                 <div class="card-body p-2">
@@ -232,7 +232,7 @@ Diseño y colores:
                     </div>                    <!-- /row -->
                 </sheet>
 
-                <chatter/>
+                <!-- <chatter/> -->
             </form>
         </field>
     </record>

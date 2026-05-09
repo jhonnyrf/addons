@@ -8,7 +8,7 @@
         <field name="name">wigo.incobrable.list</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
-            <list string="Incobrables" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'">
+            <list create="false" string="Incobrables" decoration-warning="state == 'activo'" decoration-info="state == 'in_cut'" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'">
                 <field name="codigo_cliente" optional="show"/>
                 <field name="partner_id"/>
                 <field name="plan_id" optional="show"/>
@@ -16,7 +16,7 @@
                 <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
                 <field name="monto_cobrado" optional="show" widget="monetary" options="{'currency_field': False}"/>
                 <field name="fecha_declaracion"/>
-                <field name="state" widget="badge" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'" decoration-warning="state == 'activo'" decoration-muted="state == 'condonado'"/>
+                <field name="state" widget="badge" decoration-warning="state == 'activo'" decoration-info="state == 'in_cut'" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'"/>
             </list>
         </field>
     </record>
@@ -30,15 +30,16 @@
         <field name="arch" type="xml">
             <form string="Registro Incobrable">
                 <header>
-                    <button name="action_marcar_en_corte" string="Marcar en corte" type="object" class="btn-warning" invisible="state in ['in_cut','baja_incobrable','recuperado']"/>
-                    <button name="action_marcar_baja_incobrable" string="Baja Incobrable" type="object" class="btn-danger" invisible="state == 'baja_incobrable'" confirm="¿Confirma declarar esta deuda como incobrable y dar de baja el servicio?"/>
-                    <button name="action_marcar_recuperado" string="Marcar recuperado" type="object" class="btn-success" invisible="state in ['recuperado','condonado']"/>
+                    <button name="action_marcar_en_corte" string="Marcar en corte" type="object" class="btn-info" invisible="state in ['in_cut','baja_incobrable','recuperado']"/>
+                    <button name="action_marcar_baja_incobrable" string="Baja Incobrable" type="object" class="btn-danger" invisible="state in ['recuperado','baja_incobrable']" confirm="¿Confirma declarar esta deuda como incobrable y dar de baja el servicio?"/>
+                    <button name="action_marcar_recuperado" string="Marcar recuperado" type="object" class="btn-success" invisible="state in ['recuperado','baja_incobrable']"/>
                     <field name="state" widget="statusbar" statusbar_visible="activo,in_cut,baja_incobrable,recuperado"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="BAJA INCOBRABLE" bg_color="text-bg-danger" invisible="state != 'baja_incobrable'"/>
                     <widget name="web_ribbon" title="Recuperado" bg_color="text-bg-success" invisible="state != 'recuperado'"/>
-                    <widget name="web_ribbon" title="Condonado" bg_color="text-bg-secondary" invisible="state != 'condonado'"/>
+                    <widget name="web_ribbon" title="En corte" bg_color="text-bg-info" invisible="state != 'in_cut'"/>
+
                     <div class="d-flex justify-content-between align-items-center mb-4" style="gap:1rem;">
                         <div class="d-flex align-items-center gap-3">
                             <div>
@@ -47,7 +48,6 @@
                                 </h1>
                             </div>
                         </div>
-                        <button name="action_open_pagos_contrato" string="Ver pagos contrato" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
 
                     </div>
                     <!-- <div class="oe_title">
@@ -75,6 +75,8 @@
                             <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
                             <field name="monto_cobrado" widget="monetary" options="{'currency_field': False}"/>
                             <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
+                            <button name="action_open_pagos_contrato" string="Ver pagos" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
+
                         </group>
                     </group>
 
@@ -96,6 +98,8 @@
         </field>
     </record>
 
+
+
     <!-- ══════════════════════════════════════════════════════════
          SEARCH VIEW
     ══════════════════════════════════════════════════════════ -->
@@ -109,9 +113,10 @@
                 <field name="meses_adeudados"/>
                 <separator/>
                 <filter name="activos" string="En gestión" domain="[('state','=','activo')]"/>
+                <filter name="in_cut" string="En corte" domain="[('state','=','in_cut')]"/>
+
                 <filter name="baja_incobrable" string="Baja Incobrable" domain="[('state','=','baja_incobrable')]"/>
                 <filter name="recuperados" string="Recuperados" domain="[('state','=','recuperado')]"/>
-                <filter name="condonados" string="Condonados" domain="[('state','=','condonado')]"/>
                 <separator/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
@@ -140,12 +145,26 @@
         <field name="name">Incobrables</field>
         <field name="res_model">wigo.incobrable</field>
         <field name="view_mode">list,form,pivot</field>
+        <field name="view_id" ref="view_incobrable_list"/>
         <field name="search_view_id" ref="view_incobrable_search"/>
-        <field name="context">{'search_default_activos': 1}</field>
+        <field name="domain">[]</field>
+        <field name="context">{'active_test': False, 'create': False, 'show_create': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay registros incobrables. ¡Excelente gestión!
             </p>
+        </field>
+    </record>
+
+    <!-- Variante del formulario sin opción de crear, usada por la Planilla/acciones donde no se debe permitir crear -->
+    <record id="view_incobrable_form_no_create" model="ir.ui.view">
+        <field name="name">wigo.incobrable.form.no.create</field>
+        <field name="model">wigo.incobrable</field>
+        <field name="inherit_id" ref="wigo_cobranza.view_incobrable_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="/form" position="attributes">
+                <attribute name="create">false</attribute>
+            </xpath>
         </field>
     </record>
 

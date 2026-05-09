@@ -22,9 +22,9 @@
 
      <!-- <menuitem id="menu_cobranza_todos" name="Pagos Mensuales" parent="menu_cobranza_gestion" action="wigo_cobranza.action_open_pago_estado_auto" sequence="30"/> -->
 
-     <menuitem id="menu_cobranza_mora" name="Clientes en Mora" parent="menu_cobranza_gestion" action="wigo_cobranza.action_mora" sequence="40"/>
+     <!-- <menuitem id="menu_cobranza_mora" name="Clientes en Mora" parent="menu_cobranza_gestion" action="wigo_cobranza.action_mora" sequence="20"/> -->
 
-     <menuitem id="menu_cobranza_suspender_hoy" name="Suspender Hoy" parent="menu_cobranza_gestion" action="wigo_cobranza.action_suspender_hoy" sequence="50"/>
+     <!-- <menuitem id="menu_cobranza_suspender_hoy" name="Suspender Hoy" parent="menu_cobranza_gestion" action="wigo_cobranza.action_suspender_hoy" sequence="50"/> -->
 
 
      <!-- ─── Planilla General ─────────────────────────────── -->
@@ -39,7 +39,7 @@
      <!-- ─── Incobrables ─────────────────────────────────── -->
      <menuitem id="menu_incobrables_gestion" name="Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable" sequence="55"/>
 
-     <menuitem id="menu_baja_incobrable" name="Baja - Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable_baja" sequence="60"/>
+     <!-- <menuitem id="menu_baja_incobrable" name="Baja - Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable_baja" sequence="60"/> -->
 
      <!-- ─── Reportes ─────────────────────────────────────────── -->
      <!--      <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>

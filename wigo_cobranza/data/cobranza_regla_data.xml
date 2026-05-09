@@ -1,22 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-
-    <!-- Regla por defecto para todas las modalidades -->
-    <record id="regla_cobranza_todas" model="wigo.cobranza.regla">
-        <field name="name">Regla General (Todas)</field>
-        <field name="active">True</field>
-        <field name="sequence">100</field>
-        <field name="payment_mode">all</field>
-        <field name="dia_generacion">1</field>
-        <field name="generacion_automatica">True</field>
-        <field name="mora_criterio">dias</field>
-        <field name="dias_mora">30</field>
-        <field name="incobrable_criterio">dias</field>
-        <field name="dias_incobrable">90</field>
-        <field name="meses_incobrable">3</field>
-        <field name="estado_inicial">pendiente</field>
-    </record>
-
     <!-- Regla específica para Prepago (opcional, puede desactivarse si se usa la general) -->
     <record id="regla_cobranza_prepaid" model="wigo.cobranza.regla">
         <field name="name">Regla Prepago</field>

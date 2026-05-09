@@ -8,10 +8,7 @@
         <field name="name">wigo.factura.cobranza.list</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
-            <list string="Facturas de Cobranza"
-                  decoration-success="state == 'pagada'"
-                  decoration-warning="state == 'registrada'"
-                  decoration-muted="state == 'anulada'">
+            <list string="Facturas de Cobranza" decoration-success="state == 'emitido'" decoration-warning="state == 'pendiente'" decoration-danger="state == 'anulada'">
                 <field name="numero_factura"/>
                 <field name="partner_id"/>
                 <field name="codigo_cliente" optional="show"/>
@@ -23,10 +20,7 @@
                 <field name="descuento" optional="show" widget="monetary" options="{'currency_field': False}"/>
                 <field name="monto_neto" widget="monetary" options="{'currency_field': False}"/>
                 <field name="pago_id" optional="show"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'pagada'"
-                       decoration-warning="state == 'registrada'"
-                       decoration-danger="state == 'anulada'"/>
+                <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'pendiente'" decoration-danger="state == 'anulada'"/>
             </list>
         </field>
     </record>
@@ -40,28 +34,22 @@
         <field name="arch" type="xml">
             <form string="Factura de Cobranza">
                 <header>
-                    <button name="action_marcar_pagada" string="✅ Marcar Pagada"
-                            type="object" class="btn-primary"
-                            invisible="state != 'registrada'"/>
-                    <button name="action_anular" string="❌ Anular"
-                            type="object" class="btn-danger"
-                            invisible="state == 'anulada'"
-                            confirm="¿Confirma anular esta factura?"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="registrada,pagada,anulada"/>
+                    <button name="action_marcar_pagada" string="Marcar Emitida" type="object" class="btn-primary" invisible="state != 'pendiente'"/>
+                    <button name="action_anular" string="Anular" type="object" class="btn-danger" invisible="state == 'anulada'" confirm="¿Confirma anular esta factura?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pendiente,emitido,anulada"/>
+                    <field name="pago_id" invisible="1"/>
                 </header>
                 <sheet>
-                    <widget name="web_ribbon" title="Pagada" bg_color="text-bg-success"
-                            invisible="state != 'pagada'"/>
-                    <widget name="web_ribbon" title="Anulada" bg_color="text-bg-danger"
-                            invisible="state != 'anulada'"/>
+                    <widget name="web_ribbon" title="Emitida" bg_color="text-bg-success" invisible="state != 'emitido'"/>
+                    <widget name="web_ribbon" title="Anulada" bg_color="text-bg-danger" invisible="state != 'anulada'"/>
 
                     <div class="oe_title">
                         <label for="numero_factura" string="Nº Factura"/>
-                        <h1><field name="numero_factura"/></h1>
+                        <h1>
+                            <field name="numero_factura"/>
+                        </h1>
                         <h3>
-                            <field name="numero_autorizacion"
-                                   placeholder="Nº Autorización SIAT (opcional)"/>
+                            <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
                         </h3>
                     </div>
 
@@ -69,9 +57,8 @@
                         <group string="Cliente / Pago origen">
                             <field name="pago_id" options="{'no_create': True}"/>
                             <field name="partner_id"/>
-                            <field name="contract_id"
-                                   domain="[('partner_id','=',partner_id)]"/>
-                            <field name="codigo_cliente" readonly="1"/>
+                            <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
+                            <field name="codigo_cliente" />
                         </group>
                         <group string="Datos de factura">
                             <field name="razon_social"/>
@@ -83,17 +70,70 @@
 
                     <group col="2">
                         <group string="Montos">
-                            <field name="monto_total"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="descuento"
-                                   widget="monetary" options="{'currency_field': False}"/>
-                            <field name="monto_neto" readonly="1"
-                                   widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_total" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="descuento" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_neto" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                     </group>
 
-                    <field name="notas" string="Notas"
-                           placeholder="Observaciones de la factura..."/>
+                    <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════
+         FORM VIEW PARA EMITIR DESDE PAGO
+    ══════════════════════════════════════════════════════════ -->
+    <record id="view_factura_cobranza_form_emit" model="ir.ui.view">
+        <field name="name">wigo.factura.cobranza.form.emit</field>
+        <field name="model">wigo.factura.cobranza</field>
+        <field name="arch" type="xml">
+            <form string="Emitir Factura">
+                <header>
+                    <button name="action_anular" string="Anular" type="object" class="btn-danger" invisible="state != 'emitido'" confirm="¿Confirma anular esta factura?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pendiente,emitido,anulada"/>
+                    <field name="pago_id" invisible="1"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Emitida" bg_color="text-bg-success" invisible="state != 'emitido'"/>
+                    <widget name="web_ribbon" title="Anulada" bg_color="text-bg-danger" invisible="state != 'anulada'"/>
+
+                    <div class="oe_title">
+                        <label for="numero_factura" string="Nº Factura"/>
+                        <h2>
+                            <field name="numero_factura" placeholder="Número de factura"/>
+                        </h2>
+                        <h3>
+                            <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
+                        </h3>
+                    </div>
+
+                    <group col="2">
+                        <group string="Cliente / Pago origen">
+                            <field name="pago_id" options="{'no_create': True}"/>
+                            <field name="partner_id"/>
+                            <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
+                            <field name="codigo_cliente" />
+                        </group>
+                        <group string="Datos de factura">
+                            <field name="razon_social"/>
+                            <field name="nit_ci"/>
+                            <field name="fecha_emision"/>
+                            <field name="periodo_facturado"/>
+                        </group>
+                    </group>
+
+                    <group col="2">
+                        <group string="Montos">
+                            <field name="monto_total" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="descuento" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_neto" readonly="1" widget="monetary" options="{'currency_field': False}"/>
+                        </group>
+                    </group>
+
+                    <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
                 </sheet>
                 <chatter/>
             </form>
@@ -113,17 +153,14 @@
                 <field name="codigo_cliente"/>
                 <field name="periodo_facturado"/>
                 <separator/>
-                <filter name="registradas" string="Registradas" domain="[('state','=','registrada')]"/>
-                <filter name="pagadas" string="Pagadas" domain="[('state','=','pagada')]"/>
+                <filter name="pendientes" string="Pendientes" domain="[('state','=','pendiente')]"/>
+                <filter name="emitidas" string="Emitidas" domain="[('state','=','emitido')]"/>
                 <filter name="anuladas" string="Anuladas" domain="[('state','=','anulada')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual"
-                        domain="[('fecha_emision','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="mes_actual" string="Mes actual" domain="[('fecha_emision','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
                 <separator/>
-                <filter name="group_estado" string="Agrupar por Estado"
-                        context="{'group_by': 'state'}"/>
-                <filter name="group_periodo" string="Agrupar por Período"
-                        context="{'group_by': 'periodo_facturado'}"/>
+                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_periodo" string="Agrupar por Período" context="{'group_by': 'periodo_facturado'}"/>
             </search>
         </field>
     </record>
@@ -151,7 +188,7 @@
         <field name="res_model">wigo.factura.cobranza</field>
         <field name="view_mode">list,form,pivot</field>
         <field name="search_view_id" ref="view_factura_cobranza_search"/>
-        <field name="context">{'search_default_registradas': 1}</field>
+        <field name="context">{'search_default_pendientes': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay facturas registradas aún.

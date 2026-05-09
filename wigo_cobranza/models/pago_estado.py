@@ -252,28 +252,36 @@ class WigoPagoEstado(models.Model):
     # ─────────────────────────────────────────────────────────────
     # Constraints (Odoo 19: @api.constrains en lugar de _sql_constraints)
     # ─────────────────────────────────────────────────────────────
-    @api.constrains('contract_id', 'client_service_id', 'mes', 'anio')
+    @api.constrains('contract_id', 'client_service_id', 'plan_id', 'mes', 'anio')
     def _check_unique_cliente_periodo(self):
         for rec in self:
             if not rec.contract_id and not rec.client_service_id:
                 continue
+
             domain = [
                 ('mes', '=', rec.mes),
                 ('anio', '=', rec.anio),
+                ('plan_id', '=', rec.plan_id.id),
                 ('id', '!=', rec.id),
             ]
+
             if rec.contract_id:
                 domain.append(('contract_id', '=', rec.contract_id.id))
             else:
                 domain.append(('client_service_id', '=', rec.client_service_id.id))
+
             duplicado = self.search(domain, limit=1)
+
             if duplicado:
                 periodo_txt = rec.periodo or (
                     f"{dict(self._fields['mes'].selection).get(rec.mes, '')} {rec.anio}".strip()
                     if rec.mes and rec.anio else ''
                 )
+
                 raise ValidationError(
-                    f'Ya existe un registro de pago para {rec.codigo_cliente} '
+                    f'Ya existe un registro de pago para '
+                    f'{rec.codigo_cliente} '
+                    f'con el plan {rec.plan_id.display_name} '
                     f'en el periodo {periodo_txt}.'
                 )
 
@@ -529,6 +537,7 @@ class WigoPagoEstado(models.Model):
                 rec.monto_a_cobrar = rec.monto_a_cobrar_manual
             elif rec.tipo_ajuste_id:
                 rec.monto_a_cobrar = rec.monto_prorrateo if rec.tipo_ajuste_id.enable_proration else rec.monto_plan
+                rec.monto_pagado = rec.monto_prorrateo if rec.tipo_ajuste_id.enable_proration else rec.monto_plan
             elif rec.es_primer_mes:
                 rec.monto_a_cobrar = rec.monto_prorrateo
             else:                                
@@ -550,7 +559,18 @@ class WigoPagoEstado(models.Model):
                     rec.motivo = False
             elif not rec.es_primer_mes:
                 rec.monto_prorrateo = 0.0
+            # Primero calcular el monto a cobrar (ya muestra correctamente en la vista)
+            #rec.monto_a_cobrar = rec.monto_prorrateo if (rec.tipo_ajuste_id and rec.tipo_ajuste_id.enable_proration) or rec.es_primer_mes else rec.monto_plan
             rec.monto_a_cobrar = rec.monto_prorrateo if (rec.tipo_ajuste_id and rec.tipo_ajuste_id.enable_proration) or rec.es_primer_mes else rec.monto_plan
+            _logger.info(f"Onchange tipo_ajuste_id: recalculando monto_a_cobrar={rec.monto_a_cobrar} para pago {rec.id} (ajuste: {rec.tipo_ajuste_id.name if rec.tipo_ajuste_id else 'N/A'}, es_primer_mes: {rec.es_primer_mes}, monto_prorrateo: {rec.monto_prorrateo}, monto_plan: {rec.monto_plan})")
+            # Sincronizar el monto pagado con el monto a cobrar por defecto
+            # (esto asegura que al seleccionar un tipo con prorrateo el campo 'monto_pagado'
+            # se actualice inmediatamente en la vista al mismo valor que se mostrará en
+            # 'monto_a_cobrar').
+            rec.monto_pagado = rec.monto_a_cobrar or 0.0
+            _logger.info(f"Onchange tipo_ajuste_id: recalculando monto_pagado={rec.monto_pagado} para pago {rec.id} (ajuste: {rec.tipo_ajuste_id.name if rec.tipo_ajuste_id else 'N/A'}, es_primer_mes: {rec.es_primer_mes}, monto_prorrateo: {rec.monto_prorrateo}, monto_plan: {rec.monto_plan})")
+            
+
             self._apply_default_amounts_onchange()
 
     @api.constrains('tipo_ajuste_id', 'monto_prorrateo', 'motivo')
@@ -1731,7 +1751,7 @@ class WigoPagoEstado(models.Model):
         ya_existe = Incobrable.search([
             ('partner_id', '=', contract.partner_id.id),
             ('contract_id', '=', contract.id),
-            ('state', 'not in', ['recuperado','in_cut','baja_incobrable']),
+            ('state', 'not in', ['recuperado']),
         ], limit=1)
 
         # =========================================================
@@ -2040,7 +2060,7 @@ class WigoPagoEstado(models.Model):
         """Abre un formulario para registrar la factura vinculada a este pago."""
         self.ensure_one()
         Factura = self.env['wigo.factura.cobranza']
-        factura = Factura.search([('pago_id', '=', self.id)], limit=1)
+        factura = Factura.search([('pago_id', '=', self.id), ('state', '!=', 'anulada')], limit=1)
         ctx = {
             'default_pago_id': self.id,
             'default_partner_id': self.partner_id.id,
@@ -2054,6 +2074,7 @@ class WigoPagoEstado(models.Model):
             'name': f'Factura — {self.display_name}',
             'res_model': 'wigo.factura.cobranza',
             'view_mode': 'form',
+            'views': [(self.env.ref('wigo_cobranza.view_factura_cobranza_form_emit').id, 'form')],
             'res_id': factura.id if factura else False,
             'target': 'new',
             'context': ctx,
