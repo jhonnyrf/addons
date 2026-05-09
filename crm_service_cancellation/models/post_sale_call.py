@@ -11,7 +11,8 @@ class CrmPostSaleCall(models.Model):
     lead_id = fields.Many2one('crm.lead', string='Oportunidad/Cliente', ondelete='set null')
     post_sale_client_id = fields.Many2one('res.partner', string='Cliente', required=True)
     post_sale_cf_code = fields.Char(string='Codigo CF')
-    post_sale_call_date = fields.Datetime(string='Fecha de llamada', required=True)
+    post_sale_call_date = fields.Datetime(string='Fecha de programación', required=True)
+    date_deadline = fields.Date(string='Fecha límite')
     post_sale_done_by = fields.Many2one('res.users', string='Realizada por', required=True)
     post_sale_satisfaction = fields.Selection(
         [
@@ -21,9 +22,9 @@ class CrmPostSaleCall(models.Model):
         ],
         string='Nivel de satisfaccion',
     )
-    post_sale_customer_comment = fields.Text(string='Comentarios del cliente')
+    post_sale_customer_comment = fields.Html(string='Comentarios del cliente')
     post_sale_state = fields.Selection(
-        [('pending', 'Pendiente'), ('done', 'Realizada')],
+        [('pending', 'Pendiente'), ('done', 'Realizada'), ('cancelled', 'Cancelada')],
         string='Estado posventa',
         default='pending',
         required=True,

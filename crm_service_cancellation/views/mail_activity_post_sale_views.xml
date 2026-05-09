@@ -31,15 +31,9 @@
                 <group string="Seguimiento Posventa" invisible="not is_post_sale_activity" col="2">
                     <field name="post_sale_client_id" readonly="1"/>
                     <field name="post_sale_cf_code" readonly="1"/>
-                    <field name="post_sale_contact_phone" readonly="1"/>
-                    <field name="post_sale_is_active_customer" readonly="1"/>
-                    <field name="post_sale_call_date"/>
                     <field name="post_sale_done_by"/>
                     <field name="post_sale_state"/>
                     <field name="post_sale_satisfaction" required="post_sale_state == 'done'"/>
-                </group>
-                <group string="Comentarios del cliente" invisible="not is_post_sale_activity">
-                    <field name="post_sale_customer_comment" required="post_sale_state == 'done'" placeholder="Detalle lo comentado por el cliente sobre el servicio..."/>
                 </group>
             </xpath>
         </field>
@@ -54,15 +48,9 @@
                 <group string="Seguimiento Posventa" invisible="not is_post_sale_activity" col="2">
                     <field name="post_sale_client_id" readonly="1"/>
                     <field name="post_sale_cf_code" readonly="1"/>
-                    <field name="post_sale_contact_phone" readonly="1"/>
-                    <field name="post_sale_is_active_customer" readonly="1"/>
-                    <field name="post_sale_call_date"/>
                     <field name="post_sale_done_by"/>
                     <field name="post_sale_state"/>
                     <field name="post_sale_satisfaction" required="post_sale_state == 'done'"/>
-                </group>
-                <group string="Comentarios del cliente" invisible="not is_post_sale_activity">
-                    <field name="post_sale_customer_comment" required="post_sale_state == 'done'"/>
                 </group>
             </xpath>
         </field>
@@ -138,6 +126,4 @@
         <field name="domain">[]</field>
         <field name="context">{}</field>
     </record>
-
-    <menuitem id="crm_menu_post_sale_calls" name="Llamadas Posventa" parent="crm.crm_menu_root" action="action_mail_activity_post_sale" sequence="29"/>
 </odoo>

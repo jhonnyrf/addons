@@ -46,7 +46,7 @@ class MailActivity(models.Model):
         readonly=True,
     )
     post_sale_call_date = fields.Datetime(
-        string='Fecha de llamada',
+        string='Fecha de programación',
         default=lambda self: fields.Datetime.now(),
     )
     post_sale_done_by = fields.Many2one(
@@ -62,11 +62,8 @@ class MailActivity(models.Model):
         ],
         string='Nivel de satisfaccion',
     )
-    post_sale_customer_comment = fields.Text(
-        string='Comentarios del cliente',
-    )
     post_sale_state = fields.Selection(
-        [('pending', 'Pendiente'), ('done', 'Realizada')],
+        [('pending', 'Pendiente'), ('done', 'Realizada'), ('cancelled', 'Cancelada')],
         string='Estado posventa',
         default='pending',
         required=True,
@@ -97,13 +94,13 @@ class MailActivity(models.Model):
         call_date = fields.Datetime.to_string(self.post_sale_call_date) if self.post_sale_call_date else '-'
         done_by = self.post_sale_done_by.name or '-'
         cf_code = self.post_sale_cf_code or '-'
-        comment = self.post_sale_customer_comment or '-'
+        comment = self.note or '-'
 
         return Markup(
             "<b>Seguimiento Posventa</b><br/>"
             f"Cliente: {self.post_sale_client_id.display_name or self.res_name or '-'}<br/>"
             f"Codigo CF: {cf_code}<br/>"
-            f"Fecha de llamada: {call_date}<br/>"
+            f"Fecha de programación: {call_date}<br/>"
             f"Realizada por: {done_by}<br/>"
             f"Estado: {state_text}<br/>"
             f"Nivel de satisfaccion: {satisfaction_text}<br/>"
@@ -120,9 +117,10 @@ class MailActivity(models.Model):
                 'post_sale_client_id': activity.post_sale_client_id.id,
                 'post_sale_cf_code': activity.post_sale_cf_code or False,
                 'post_sale_call_date': activity.post_sale_call_date or fields.Datetime.now(),
+                'date_deadline': activity.date_deadline or False,
                 'post_sale_done_by': activity.post_sale_done_by.id or self.env.user.id,
                 'post_sale_satisfaction': activity.post_sale_satisfaction or False,
-                'post_sale_customer_comment': activity.post_sale_customer_comment or False,
+                'post_sale_customer_comment': activity.note or False,
                 'post_sale_state': activity.post_sale_state or 'pending',
             }
 
@@ -183,7 +181,7 @@ class MailActivity(models.Model):
         'post_sale_done_by',
         'post_sale_state',
         'post_sale_satisfaction',
-        'post_sale_customer_comment',
+        'note',
     )
     def _check_post_sale_requirements(self):
         for activity in self:
@@ -209,8 +207,8 @@ class MailActivity(models.Model):
             if activity.post_sale_state == 'done' and not activity.post_sale_satisfaction:
                 raise ValidationError(_('Debe registrar el nivel de satisfaccion cuando la llamada este realizada.'))
 
-            if activity.post_sale_state == 'done' and not activity.post_sale_customer_comment:
-                raise ValidationError(_('Debe registrar los comentarios del cliente cuando la llamada este realizada.'))
+            if activity.post_sale_state == 'done' and not activity.note:
+                raise ValidationError(_('Debe registrar notas (comentarios) cuando la llamada este realizada.'))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -242,3 +240,11 @@ class MailActivity(models.Model):
                 lead.message_post(body=activity._post_sale_summary_html())
 
         return res
+
+    def unlink(self):
+        # Only mark as cancelled if the activity wasn't marked as done
+        post_sale_activities = self.filtered(lambda a: a.is_post_sale_activity and a.post_sale_state != 'done')
+        histories = post_sale_activities.mapped('post_sale_call_history_id')
+        if histories:
+            histories.write({'post_sale_state': 'cancelled'})
+        return super().unlink()

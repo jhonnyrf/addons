@@ -101,24 +101,19 @@ class ServiceCancellationWizard(models.TransientModel):
     )
     cobranza_estado_pago = fields.Selection(
         [
-            ('al_dia', 'Al día'),
+            ('pagado', 'Cobrado / Al día'),
             ('pendiente', 'Pendiente'),
             ('mora', 'En mora'),
-            ('deuda_parcial', 'Deuda parcial'),
-            ('baja_definitiva', 'Baja definitiva'),
         ],
-        string='Estado de pago cobranza',
+        string='Estado de cobranza',
         readonly=True,
     )
-    cobranza_ultimo_pago_fecha = fields.Date(string='Último pago registrado', readonly=True)
-    cobranza_meses_pendientes = fields.Integer(string='Meses pendientes cobranza', readonly=True)
-    cobranza_total_registros = fields.Integer(string='Registros de pago cobranza', readonly=True)
-    cobranza_monto_pendiente = fields.Monetary(
-        string='Monto pendiente cobranza',
-        currency_field='currency_id',
-        readonly=True,
-    )
-    cobranza_resumen = fields.Text(string='Resumen de deuda por períodos', readonly=True)
+    cobranza_ultimo_periodo_pagado = fields.Char(string='Último mes pagado', readonly=True)
+    cobranza_ultimo_pago_fecha = fields.Date(string='Fecha de pago', readonly=True)
+    cobranza_ultimo_monto_pagado = fields.Monetary(string='Monto pagado', currency_field='currency_id', readonly=True)
+    
+    cobranza_monto_deuda_total = fields.Monetary(string='Monto que debe', currency_field='currency_id', readonly=True)
+    cobranza_dias_retraso = fields.Integer(string='Días de retraso', readonly=True)
 
     # ─── Acción sobre contrato ────────────────────────────────────────────────
     terminar_contrato = fields.Boolean(
@@ -213,23 +208,29 @@ class ServiceCancellationWizard(models.TransientModel):
                 f"{pay.estado_pago} | saldo {max((pay.monto_a_cobrar or 0.0) - (pay.monto_pagado or 0.0), 0.0):.2f}"
             )
 
-        last_paid = records.filtered(lambda p: p.estado_pago == 'al_dia' and p.fecha_pago)
-        latest_paid_date = max(last_paid.mapped('fecha_pago')) if last_paid else False
-
-        if service and service.estado_pago:
-            estado_actual = service.estado_pago
-        elif records:
-            estado_actual = records.sorted(key=lambda p: ((p.anio or 0), int(p.mes or 0), p.id or 0), reverse=True)[0].estado_pago
+        # Determine status
+        if records.filtered(lambda p: p.estado_pago == 'mora'):
+            estado_actual = 'mora'
+        elif records.filtered(lambda p: p.estado_pago == 'pendiente'):
+            estado_actual = 'pendiente'
         else:
-            estado_actual = False
+            estado_actual = 'pagado'
+            
+        # Last paid record
+        last_paid = records.filtered(lambda p: p.estado_pago == 'pagado' and p.fecha_pago)
+        latest_paid_record = last_paid.sorted(key=lambda p: p.fecha_pago, reverse=True)[:1] if last_paid else False
+
+        # Debt and days late
+        en_mora_records = records.filtered(lambda p: p.estado_pago == 'mora')
+        max_dias_atraso = max(en_mora_records.mapped('dias_atraso')) if en_mora_records else 0
 
         return {
             'cobranza_estado_pago': estado_actual,
-            'cobranza_ultimo_pago_fecha': latest_paid_date,
-            'cobranza_meses_pendientes': len(unpaid),
-            'cobranza_total_registros': len(records),
-            'cobranza_monto_pendiente': saldo_total,
-            'cobranza_resumen': '\n'.join(resumen_lineas) if resumen_lineas else '',
+            'cobranza_ultimo_periodo_pagado': latest_paid_record.periodo if latest_paid_record else '',
+            'cobranza_ultimo_pago_fecha': latest_paid_record.fecha_pago if latest_paid_record else False,
+            'cobranza_ultimo_monto_pagado': latest_paid_record.monto_pagado if latest_paid_record else 0.0,
+            'cobranza_monto_deuda_total': saldo_total,
+            'cobranza_dias_retraso': max_dias_atraso,
             'meses_deuda': len(unpaid),
             'monto_deuda': saldo_total,
         }
@@ -339,6 +340,8 @@ class ServiceCancellationWizard(models.TransientModel):
         }
 
         for activity in self.lead_id.activity_ids:
+            if getattr(activity, 'is_post_sale_activity', False):
+                continue
             activity_key = (
                 activity.activity_type_id.id,
                 activity.summary or '',
@@ -403,11 +406,11 @@ class ServiceCancellationWizard(models.TransientModel):
             'meses_deuda':                    self.meses_deuda,
             'monto_deuda':                    self.monto_deuda if self.meses_deuda > 0 else 0.0,
             'cobranza_estado_pago':           self.cobranza_estado_pago or False,
+            'cobranza_ultimo_periodo_pagado': self.cobranza_ultimo_periodo_pagado or '',
             'cobranza_ultimo_pago_fecha':     self.cobranza_ultimo_pago_fecha or False,
-            'cobranza_meses_pendientes':      self.cobranza_meses_pendientes,
-            'cobranza_total_registros':       self.cobranza_total_registros,
-            'cobranza_monto_pendiente':       self.cobranza_monto_pendiente or 0.0,
-            'cobranza_resumen':               self.cobranza_resumen or '',
+            'cobranza_ultimo_monto_pagado':   self.cobranza_ultimo_monto_pagado or 0.0,
+            'cobranza_monto_deuda_total':     self.cobranza_monto_deuda_total or 0.0,
+            'cobranza_dias_retraso':          self.cobranza_dias_retraso or 0,
             'contrato_terminado':             self.terminar_contrato,
             'contract_state_at_cancellation': contract_state_label,
             'notas':                          self.notas or '',
@@ -426,6 +429,29 @@ class ServiceCancellationWizard(models.TransientModel):
         self.lead_id.write({
             'stage_id': baja_stage.id,
         })
+
+        # 3.5. Crear automáticamente la orden de trabajo FTTH (Baja / Retiro) si corresponde
+        if self.ftth_client_service_id:
+            WoModel = self.env['wigo.ftth.work.order']
+            motivo_str = self.reason_id.name
+            if self.motivo_detalle:
+                motivo_str += f" - {self.motivo_detalle}"
+
+            wo_vals = {
+                'work_type': 'deactivation',
+                'state': 'pending',
+                'contract_id': self.contract_id.id if self.contract_id else False,
+                'lead_id': self.lead_id.id if self.lead_id else False,
+                'client_service_id': self.ftth_client_service_id.id,
+                'cancellation_reason': motivo_str,
+            }
+            if self.contract_id:
+                wo_vals.update({
+                    'address': self.contract_id.address,
+                    'contact_phone': self.contract_id.mobile,
+                    'location_link': self.contract_id.location_link,
+                })
+            WoModel.with_context(allow_deactivation_create=True).create(wo_vals)
 
         # 4. Crear actividad de recojo de ONU si aplica
         self._create_onu_activity()

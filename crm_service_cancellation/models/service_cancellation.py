@@ -88,26 +88,21 @@ class ServiceCancellation(models.Model):
     onu_mac = fields.Char(string='MAC ONU')
     onu_modelo = fields.Char(string='Modelo ONU')
 
-    # ─── Cobranza (snapshot al momento de la baja) ───────────────────────────
     cobranza_estado_pago = fields.Selection(
         [
-            ('al_dia', 'Al día'),
+            ('pagado', 'Cobrado / Al día'),
             ('pendiente', 'Pendiente'),
             ('mora', 'En mora'),
-            ('deuda_parcial', 'Deuda parcial'),
-            ('baja_definitiva', 'Baja definitiva'),
         ],
-        string='Estado de pago cobranza',
+        string='Estado de cobranza',
         tracking=True,
     )
-    cobranza_ultimo_pago_fecha = fields.Date(string='Último pago registrado')
-    cobranza_meses_pendientes = fields.Integer(string='Meses pendientes cobranza', default=0)
-    cobranza_total_registros = fields.Integer(string='Registros de pago cobranza', default=0)
-    cobranza_monto_pendiente = fields.Monetary(
-        string='Monto pendiente cobranza',
-        currency_field='currency_id',
-    )
-    cobranza_resumen = fields.Text(string='Resumen de deuda por períodos')
+    cobranza_ultimo_periodo_pagado = fields.Char(string='Último mes pagado')
+    cobranza_ultimo_pago_fecha = fields.Date(string='Fecha de pago')
+    cobranza_ultimo_monto_pagado = fields.Monetary(string='Monto pagado', currency_field='currency_id')
+    
+    cobranza_monto_deuda_total = fields.Monetary(string='Monto que debe', currency_field='currency_id')
+    cobranza_dias_retraso = fields.Integer(string='Días de retraso')
 
     # ─── Deuda ───────────────────────────────────────────────────────────────
     meses_deuda = fields.Integer(string='Meses de deuda', default=0)

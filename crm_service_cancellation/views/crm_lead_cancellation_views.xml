@@ -41,6 +41,23 @@
             <xpath expr="//field[@name='won_status']" position="after">
                 <field name="has_cancellation" invisible="1"/>
                 <field name="cancellation_count" invisible="1"/>
+                <field name="has_post_sale_calls" invisible="1"/>
+            </xpath>
+
+            <!-- ── Pestaña de Llamadas Posventa ── -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Llamadas Posventa" name="post_sale_calls" invisible="not has_post_sale_calls">
+                    <field name="post_sale_call_ids" readonly="1">
+                        <list decoration-muted="post_sale_state == 'cancelled'" decoration-success="post_sale_state == 'done'" decoration-warning="post_sale_state == 'pending'">
+                            <field name="post_sale_call_date"/>
+                            <field name="date_deadline"/>
+                            <field name="post_sale_state"/>
+                            <field name="post_sale_done_by"/>
+                            <field name="post_sale_satisfaction"/>
+                            <field name="post_sale_customer_comment"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
 
         </field>

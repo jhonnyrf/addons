@@ -32,7 +32,6 @@
             <form string="Baja de Servicio" create="0">
                 <header>
                     <button name="action_open_ftth_service" type="object" string="Ver ficha FTTH" class="btn-primary" icon="fa-wifi" invisible="not ftth_client_service_id"/>
-                    <button name="action_open_cobranza_payments" type="object" string="Ver pagos cobranza" class="btn-secondary" icon="fa-money" invisible="not partner_id"/>
                     <field name="registrado_reporte" widget="boolean_toggle" string="Registrado en reporte semanal"/>
                 </header>
                 <sheet>
@@ -80,17 +79,20 @@
 
                     <group string="Cobranza">
                         <group>
-                            <field name="cobranza_estado_pago" readonly="1" widget="badge"/>
-                            <field name="cobranza_ultimo_pago_fecha" readonly="1"/>
-                            <field name="cobranza_total_registros" readonly="1"/>
-                            <field name="cobranza_meses_pendientes" readonly="1"/>
-                            <field name="cobranza_monto_pendiente" readonly="1"/>
+                            <field name="cobranza_estado_pago" readonly="1" widget="badge"
+                                   decoration-success="cobranza_estado_pago == 'pagado'"
+                                   decoration-warning="cobranza_estado_pago == 'pendiente'"
+                                   decoration-danger="cobranza_estado_pago == 'mora'"/>
                         </group>
-                        <field name="cobranza_resumen" nolabel="1" readonly="1"/>
-                    </group>
-
-                    <group string="Notas internas">
-                        <field name="notas" nolabel="1"/>
+                        <group invisible="cobranza_estado_pago == 'mora'">
+                            <field name="cobranza_ultimo_periodo_pagado" readonly="1"/>
+                            <field name="cobranza_ultimo_pago_fecha" readonly="1"/>
+                            <field name="cobranza_ultimo_monto_pagado" readonly="1"/>
+                        </group>
+                        <group invisible="cobranza_estado_pago != 'mora'">
+                            <field name="cobranza_monto_deuda_total" readonly="1"/>
+                            <field name="cobranza_dias_retraso" readonly="1"/>
+                        </group>
                     </group>
                 </sheet>
                 <chatter/>

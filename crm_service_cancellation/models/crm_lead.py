@@ -20,6 +20,16 @@ class CrmLead(models.Model):
         compute='_compute_has_cancellation',
         store=True,
     )
+    post_sale_call_ids = fields.One2many(
+        'crm.post.sale.call',
+        'lead_id',
+        string='Llamadas Posventa',
+    )
+    has_post_sale_calls = fields.Boolean(
+        string='¿Tiene llamadas posventa?',
+        compute='_compute_has_post_sale_calls',
+        store=True,
+    )
 
     @api.depends('cancellation_ids')
     def _compute_cancellation_count(self):
@@ -30,6 +40,11 @@ class CrmLead(models.Model):
     def _compute_has_cancellation(self):
         for lead in self:
             lead.has_cancellation = bool(lead.cancellation_ids)
+
+    @api.depends('post_sale_call_ids')
+    def _compute_has_post_sale_calls(self):
+        for lead in self:
+            lead.has_post_sale_calls = bool(lead.post_sale_call_ids)
 
     def action_open_cancellation_wizard(self):
         self.ensure_one()
