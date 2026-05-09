@@ -64,6 +64,8 @@ Empresa / Contacto</div>
                                             <field name="firma_nombre"/>
                                             <field name="firma_cargo"/>
                                             <field name="firma_celular"/>
+                                            <field name="numero_cobranzas"/>
+                                            <field name="numero_soporte"/>
                                         </group>
                                     </group>
                                 </div>

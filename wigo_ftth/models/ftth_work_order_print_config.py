@@ -49,6 +49,12 @@ class FtthWorkOrderPrintConfig(models.Model):
 
     # Colores
     color_primario = fields.Char(string='Color primario', default='#7a3f98')
+    # Números de contacto
+    numero_cobranzas = fields.Char(string='Número de Cobranzas', default='73802898')
+    numero_soporte = fields.Char(string='Número Atención/Soporte', default='63888133')
+
+    # Colores
+    color_primario = fields.Char(string='Color primario', default='#7a3f98')
     color_secundario = fields.Char(string='Color secundario', default='#b564d6')
     color_texto_header = fields.Char(string='Color texto encabezado', default='#ffffff')
     color_borde = fields.Char(string='Color bordes', default='#cfcfd6')
@@ -113,6 +119,8 @@ class FtthWorkOrderPrintConfig(models.Model):
             'mostrar_pie': True,
             'texto_pie': 'La información de esta OT es parte del control técnico.',
             'color_primario': '#7a3f98',
+                        'numero_cobranzas': '73802898',
+                        'numero_soporte': '63888133',
             'color_secundario': '#b564d6',
             'color_texto_header': '#ffffff',
             'color_borde': '#cfcfd6',
@@ -179,6 +187,8 @@ class FtthWorkOrderPrintConfig(models.Model):
             'mostrar_pie': cfg.mostrar_pie,
             'texto_pie': cfg.texto_pie or '',
             'color_primario': cfg.color_primario,
+                        'numero_cobranzas': cfg.numero_cobranzas or '73802898',
+                        'numero_soporte': cfg.numero_soporte or '63888133',
             'color_secundario': cfg.color_secundario,
             'color_texto_header': cfg.color_texto_header,
             'color_borde': cfg.color_borde,
