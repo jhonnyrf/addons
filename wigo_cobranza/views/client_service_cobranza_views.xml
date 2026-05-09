@@ -5,31 +5,26 @@
          Inherited form: añadir pestaña Cobranza + estado_pago
          en la ficha técnica del cliente
     ══════════════════════════════════════════════════════════ -->
-    <record id="view_ftth_cs_form_cobranza_inherit" model="ir.ui.view">
+    <!--     <record id="view_ftth_cs_form_cobranza_inherit" model="ir.ui.view">
         <field name="name">wigo.ftth.client.service.form.cobranza</field>
         <field name="model">wigo.ftth.client.service</field>
         <field name="inherit_id" ref="wigo_ftth.view_ftth_cs_form"/>
         <field name="arch" type="xml">
 
-            <!-- 1. Botón de stat en el button_box: acceso rápido a pagos -->
             <div name="button_box" position="inside">
                 <button name="action_ver_pagos" type="object" class="oe_stat_button" icon="fa-money">
                     <field name="total_pagos" widget="statinfo" string="Pagos"/>
                 </button>
             </div>
 
-            <!-- 2. Semáforo de estado de pago visible junto al estado del servicio -->
             <field name="estado_servicio" position="after">
                 <field name="estado_pago" widget="semaforo_pago" readonly="1" string="Estado de pago"/>
             </field>
 
-            <!-- 3. Información de prorrateo en grupo datos del servicio -->
             <field name="fecha_instalacion" position="after">
                 <field name="monto_prorrateo_primer_mes" readonly="1" string="Prorrateo primer mes (Bs)" help="Monto proporcional desde la fecha de instalación hasta fin de mes."/>
                 <field name="ultimo_pago_fecha" readonly="1" string="Último pago registrado"/>
             </field>
-
-            <!-- 4. Bloque Cobranza dentro del formulario -->
             <xpath expr="//notebook" position="inside">
                 <page string="Cobranza">
 
@@ -69,9 +64,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         Inherited LIST view: añadir columna estado_pago
-    ══════════════════════════════════════════════════════════ -->
+
     <record id="view_ftth_cs_list_cobranza_inherit" model="ir.ui.view">
         <field name="name">wigo.ftth.client.service.list.cobranza</field>
         <field name="model">wigo.ftth.client.service</field>
@@ -82,6 +75,6 @@
                 <field name="ultimo_pago_fecha" optional="hide"/>
             </field>
         </field>
-    </record>
+    </record> -->
 
 </odoo>

@@ -50,9 +50,9 @@
                             <span class="o_stat_text">Dar de baja</span>
                         </button>
 
-                        <button name="action_register_incident" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
+                        <!--  <button name="action_register_incident" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
                             <span class="o_stat_text">Registrar incidencia</span>
-                        </button>
+                        </button> -->
 
                         <button name="action_view_incidents" type="object" class="oe_stat_button" icon="fa-ticket">
                             <div class="o_field_widget o_stat_info">
