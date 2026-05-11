@@ -23,10 +23,10 @@
         <field name="model">wigo.ftth.client.service</field>
         <field name="inherit_id" ref="wigo_ftth.view_ftth_cs_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//page[@name='incidencias']/field[@name='incident_summary_html']" position="attributes">
+            <xpath expr="//field[@name='incident_summary_html']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
-            <xpath expr="//page[@name='incidencias']/field[@name='incident_summary_html']" position="after">
+            <xpath expr="//field[@name='incident_summary_html']" position="after">
                 <div class="o_form_field" style="margin-bottom: 8px;">
                     <button name="action_register_incident" type="object" string="Nueva Incidencia" class="btn btn-primary btn-sm" icon="fa-plus"/>
                     <button name="action_view_incidents" type="object" string="Ver Todas" class="btn btn-secondary btn-sm" icon="fa-list"/>

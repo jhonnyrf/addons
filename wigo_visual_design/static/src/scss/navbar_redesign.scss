@@ -7,7 +7,7 @@
     .dropdown-menu:has(.dropdown-item.o_app) {
         border-radius: 0 8px 8px 0;
         box-shadow: 2px 0 15px rgba(0, 0, 0, 0.12);
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--dropdown-border-color, var(--bs-dropdown-border-color, #e9ecef));
         padding: 0.5rem;
         min-width: 260px;
         max-width: 300px;
@@ -20,7 +20,7 @@
         margin: 0 !important;
         transform: none !important;
         overflow-y: auto;
-        background: white; // Fondo sólido
+        background: var(--dropdown-bg, var(--bs-dropdown-bg, #fff)); // Fondo adaptable
         z-index: 1050; // Asegurar que esté sobre todo
 
         // Scrollbar personalizado
@@ -33,11 +33,11 @@
         }
         
         &::-webkit-scrollbar-thumb {
-            background: #d0d0d0;
+            background: rgba(128, 128, 128, 0.4);
             border-radius: 3px;
             
             &:hover {
-                background: #a0a0a0;
+                background: rgba(128, 128, 128, 0.6);
             }
         }
     }
@@ -64,13 +64,13 @@
         
         .o_app_name {
             font-weight: 500;
-            color: #212529;
+            color: var(--dropdown-color, var(--bs-dropdown-color, #212529));
             font-size: 0.95rem;
             flex: 1;
         }
         
         &:hover {
-            background-color: #f0f1f3;
+            background-color: var(--dropdown-link-hover-bg, var(--bs-dropdown-link-hover-bg, #f0f1f3));
             transform: translateX(2px);
             
             .o_app_icon {
@@ -80,7 +80,7 @@
         }
         
         &:active {
-            background-color: #e9ecef;
+            background-color: var(--dropdown-link-active-bg, var(--bs-dropdown-link-active-bg, #e9ecef));
         }
 
         &:focus-visible {
