@@ -50,13 +50,6 @@
                         </div>
 
                     </div>
-                    <!-- <div class="oe_title">
-                        <label for="codigo_cliente"/>
-                       <h1><field name="partner_id"/></h1> 
-                        <h2>
-                            <field name="codigo_cliente" readonly="1"/>
-                        </h2>
-                    </div> -->
 
                     <group col="2">
                         <group string="Datos del cliente">
@@ -65,8 +58,6 @@
                             <field name="contract_mobile" readonly="1"/>
                             <field name="contract_date" readonly="1"/>
                             <field name="suspension_id" readonly="1"/>
-
-                            <!-- <field name="client_service_id" domain="[('partner_id','=',partner_id)]"/> -->
                             <field name="plan_id" readonly="1"/>
                             <field name="plan_identifier" readonly="1"/>
                             <field name="monto_plan" readonly="1" widget="monetary" options="{'currency_field': False}"/>

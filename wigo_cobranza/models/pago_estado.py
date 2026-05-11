@@ -19,8 +19,7 @@ class WigoPagoEstado(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'anio desc, mes desc, partner_id'
     _rec_name = 'display_name'
-
-    # ── Identificación ────────────────────────────────────────────
+    
     eligible_partner_ids = fields.Many2many(
         'res.partner',
         compute='_compute_eligible_partner_ids',
@@ -65,7 +64,7 @@ class WigoPagoEstado(models.Model):
     crm_ubicacion = fields.Char(string='Ubicación CRM', compute='_compute_crm_data', store=False)
     crm_coordenadas = fields.Char(string='Coordenadas CRM', compute='_compute_crm_data', store=False)
 
-    # ── Período ───────────────────────────────────────────────────
+    
     anio = fields.Char(
         string='Año', required=True,
     )
@@ -86,7 +85,7 @@ class WigoPagoEstado(models.Model):
         string='Período', compute='_compute_periodo', store=True,
     )
 
-    # ── Montos ────────────────────────────────────────────────────
+    
     monto_plan = fields.Float(
         string='Monto del plan (Bs)',
         related='plan_id.price', store=True, readonly=True,
@@ -171,7 +170,7 @@ class WigoPagoEstado(models.Model):
         compute='_compute_diferencia', store=True,
     )
 
-    # ── Pago ──────────────────────────────────────────────────────
+    
     fecha_pago = fields.Date(
         string='Fecha de pago',
         tracking=True,
@@ -212,7 +211,7 @@ class WigoPagoEstado(models.Model):
         store=False,
     )
 
-    # ── Estado ────────────────────────────────────────────────────
+    
     estado_pago = fields.Selection([
         ('pendiente', 'Pendiente'),
         ('pagado', 'Pagado'),
@@ -230,8 +229,7 @@ class WigoPagoEstado(models.Model):
         compute='_compute_dias_atraso', store=False,
         help='Días transcurridos desde la fecha de vencimiento.',
     )
-
-    # ── Notas ─────────────────────────────────────────────────────
+    
     notas = fields.Text(string='Notas de cobranza')
     justificacion_edicion = fields.Text(string='Justificación de edición contable')
 
@@ -2124,7 +2122,7 @@ class WigoPagoEstado(models.Model):
                 self.env['mail.message'].create({
                     'message_type': 'notification',
                     'body': (
-                        f"⚠️ Cliente <b>{rec.partner_id.name}</b> en mora. "
+                        f"Cliente {rec.partner_id.name} en mora. "
                         f"Días de atraso: {rec.dias_atraso}. "
                         f"Regla: {regla.name}."
                     ),

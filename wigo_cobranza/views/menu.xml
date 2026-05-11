@@ -9,23 +9,7 @@
      <!-- ─── Gestión ──────────────────────────────────────────── -->
      <menuitem id="menu_cobranza_gestion" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>
 
-     <record id="action_open_pago_estado_auto" model="ir.actions.server">
-          <field name="name">Abrir Cobros (Auto)</field>
-          <field name="model_id" ref="model_wigo_pago_estado"/>
-          <field name="state">code</field>
-          <field name="code">action = model.action_open_registros_cobro()</field>
-     </record>
-
      <menuitem id="menu_cobranza_clientes" name="Clientes con Contrato" parent="menu_cobranza_gestion" action="wigo_cobranza.action_cobranza_clientes_contrato" sequence="10"/>
-
-     <!-- <menuitem id="menu_cobranza_contratos" name="Contratos Activos" parent="menu_cobranza_gestion" action="customer_contract.action_customer_contract" sequence="20"/> -->
-
-     <!-- <menuitem id="menu_cobranza_todos" name="Pagos Mensuales" parent="menu_cobranza_gestion" action="wigo_cobranza.action_open_pago_estado_auto" sequence="30"/> -->
-
-     <!-- <menuitem id="menu_cobranza_mora" name="Clientes en Mora" parent="menu_cobranza_gestion" action="wigo_cobranza.action_mora" sequence="20"/> -->
-
-     <!-- <menuitem id="menu_cobranza_suspender_hoy" name="Suspender Hoy" parent="menu_cobranza_gestion" action="wigo_cobranza.action_suspender_hoy" sequence="50"/> -->
-
 
      <!-- ─── Planilla General ─────────────────────────────── -->
      <menuitem id="menu_planilla_general" name="Planilla General" parent="menu_cobranza_gestion" action="wigo_cobranza.action_planilla_general" sequence="15"/>
@@ -39,25 +23,11 @@
      <!-- ─── Incobrables ─────────────────────────────────── -->
      <menuitem id="menu_incobrables_gestion" name="Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable" sequence="55"/>
 
-     <!-- <menuitem id="menu_baja_incobrable" name="Baja - Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable_baja" sequence="60"/> -->
-
-     <!-- ─── Reportes ─────────────────────────────────────────── -->
-     <!--      <menuitem id="menu_cobranza_reportes" name="Reportes" parent="menu_cobranza_root" sequence="20"/>
-
-     <menuitem id="menu_reporte_mora" name="Reporte de Mora" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_mora" sequence="10"/>
-
-     <menuitem id="menu_reporte_altas_bajas" name="Altas / Bajas / Cambios de Plan" parent="menu_cobranza_reportes" action="wigo_cobranza.action_reporte_altas_bajas" sequence="20"/> -->
-
      <!-- ─── Configuración ─────────────────────────────────── -->
      <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="menu_cobranza_root" sequence="90"/>
      <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_recibo_config" sequence="10"/>
-     <menuitem id="menu_cobranza_tipo_ajuste" name="Tipos de ajustes" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_tipo_ajuste" sequence="20" groups="base.group_user"/>
+     <menuitem id="menu_cobranza_tipo_ajuste" name="Tipos de ajustes" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_tipo_ajuste" sequence="20" />
      <menuitem id="menu_cobranza_reglas" name="Reglas de Cobranza" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_regla" sequence="30"/>
-
-     <!-- Forzar grupos del menú raíz para limpiar relaciones previas -->
-     <record id="menu_cobranza_root" model="ir.ui.menu">
-          <field name="group_ids" eval="[(6, 0, [ref('base.group_user')])]"/>
-     </record>
 
      <!-- ══════════════════════════════════════════════════════════
          Acceso de solo lectura para Comercial y Técnica:

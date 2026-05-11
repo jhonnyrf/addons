@@ -24,7 +24,7 @@
     <record id="view_pago_estado_form_no_create" model="ir.ui.view">
         <field name="name">wigo.pago.estado.form.no.create.for.planilla</field>
         <field name="model">wigo.pago.estado</field>
-        <field name="inherit_id" ref="wigo_cobranza.view_pago_estado_form"/>
+        <field name="inherit_id" ref="wigo_cobranza.view_pago_estado_contract_form_new"/>
         <field name="arch" type="xml">
             <xpath expr="/form" position="attributes">
                 <attribute name="create">false</attribute>
