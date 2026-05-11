@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_recibo_config_form" model="ir.ui.view">
+    <record id="view_receipt_config_form" model="ir.ui.view">
         <field name="name">wigo.recibo.config.form</field>
         <field name="model">wigo.recibo.config</field>
         <field name="arch" type="xml">
@@ -13,20 +13,14 @@
                     <div class="oe_title">
                         <h1>
                             <i class="fa fa-cogs me-2 text-primary"/>
- Configuración del Recibo de Cobro</h1>
+Configuración del Recibo de Cobro</h1>
                         <p class="text-muted">
                             Personaliza todos los aspectos visuales del recibo. Los cambios se
                             aplican inmediatamente al siguiente recibo sin reiniciar el servidor.
                         </p>
                     </div>
-
-                    <!-- ══════ LAYOUT: OPCIONES + PREVIEW ══════ -->
                     <div class="row g-0">
-
-                        <!-- COLUMNA IZQUIERDA: todos los controles -->
                         <div class="col-xl-6 pe-3">
-
-                            <!-- ─ Datos de empresa ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-building me-2 text-primary"/>
@@ -47,44 +41,28 @@ Datos de la Empresa</div>
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- ─ Logo ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-image me-2 text-info"/>
-        Logo
+Logo
                                 </div>
-
                                 <div class="card-body">
                                     <div class="row align-items-start">
-
-                                        <!-- Logo -->
                                         <div class="col-lg-5 text-center">
-
                                             <field name="logo" widget="image" class="oe_avatar" options="{'size': [220, 120]}" nolabel="1"/>
-
                                             <div class="mt-3">
                                                 <field name="usar_logo_imagen"/>
                                             </div>
-
                                         </div>
-
-                                        <!-- Configuración -->
                                         <div class="col-lg-7">
-
                                             <group>
                                                 <field name="logo_ancho" widget="integer" string="Ancho máximo (px)"/>
-
                                                 <field name="layout_logo"/>
                                             </group>
-
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- ─ Firma ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-pencil-square-o me-2 text-secondary"/>
@@ -97,12 +75,10 @@ Datos de la Firma</div>
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- ─ Pie de página ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-file-text-o me-2 text-dark"/>
- Pie de Página</div>
+Pie de Página</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <field name="mostrar_pie"/>
@@ -110,12 +86,10 @@ Datos de la Firma</div>
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- ─ Colores ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-paint-brush me-2 text-danger"/>
- Colores</div>
+Colores</div>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-6">
@@ -142,8 +116,6 @@ Datos de la Firma</div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- ─ Tipografía ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-font me-2 text-primary"/>
@@ -162,12 +134,10 @@ Tipografía</div>
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- ─ Layout ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-th-large me-2 text-warning"/>
- Layout y Estructura</div>
+Layout y Estructura</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <group>
@@ -182,12 +152,10 @@ Tipografía</div>
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- ─ Tabla ─ -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold">
                                     <i class="fa fa-table me-2 text-success"/>
- Tabla de Detalle</div>
+Tabla de Detalle</div>
                                 <div class="card-body">
                                     <group col="2">
                                         <field name="tabla_header_texto"/>
@@ -196,10 +164,7 @@ Tipografía</div>
                                     </group>
                                 </div>
                             </div>
-
-                        </div>                        <!-- /col-xl-6 -->
-
-                        <!-- COLUMNA DERECHA: preview REACTIVO (OWL widget) -->
+                        </div>
                         <div class="col-xl-6 ps-3">
                             <div style="position: sticky; top: 70px;">
                                 <div class="card">
@@ -219,16 +184,13 @@ Vista Previa en Tiempo Real</span>
                                 </div>
                             </div>
                         </div>
-
-                    </div>                    <!-- /row -->
-
+                    </div>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- Server action para abrir el singleton -->
-    <record id="action_recibo_config" model="ir.actions.server">
+    <record id="action_receipt_config" model="ir.actions.server">
         <field name="name">Configuración del Recibo</field>
         <field name="model_id" ref="model_wigo_recibo_config"/>
         <field name="state">code</field>

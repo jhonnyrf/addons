@@ -1,13 +1,10 @@
-/** @odoo-module **/
+
 
 import { Component, useState, useEffect, useRef } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
-/**
- * ReciboConfigPreview — Widget para la vista de configuración.
- * Renderiza una mini-preview reactiva del recibo al editar los campos.
- */
+
 export class ReciboConfigPreview extends Component {
     static template = "wigo_cobranza.ReciboConfigPreview";
 
@@ -25,7 +22,7 @@ export class ReciboConfigPreview extends Component {
         this.orm = useService("orm");
         this.state = useState({ loading: true });
 
-        // Reaccionar a cambios en CUALQUIER campo relevante
+     
         useEffect(
             () => { this._render(); },
             () => {
@@ -44,35 +41,28 @@ export class ReciboConfigPreview extends Component {
                     d.tabla_header_texto, d.tabla_monto_texto,
                     d.firma_nombre, d.firma_cargo, d.firma_celular,
                     d.mostrar_pie, d.texto_pie,
-                    // logo: en Odoo 19 un campo Binary en el form tiene
-                    // d.logo = false | { data: "base64...", name: "..." } | "base64string"
+              
                     d.logo,
                 ];
             }
         );
     }
 
-    /**
-     * Obtiene la URL de datos para el logo desde el campo Binary del record.
-     * En Odoo 19 el campo Binary puede venir como:
-     *   - false / null / undefined → sin logo
-     *   - string base64 directa
-     *   - objeto { data: "base64...", ... }
-     */
+  
     _getLogoSrc() {
         const d = this.props.record.data;
         const logo = d.logo;
         if (!logo) return null;
 
-        // Si es objeto con propiedad data (Odoo 17+)
+    
         if (typeof logo === "object" && logo.data) {
             return `data:image/png;base64,${logo.data}`;
         }
-        // Si ya es string base64
+     
         if (typeof logo === "string" && logo.length > 50) {
             return `data:image/png;base64,${logo}`;
         }
-        // Si es un número (id de attachment), usar la URL del field
+       
         const recId = this.props.record.resId;
         if (recId) {
             return `/web/image/wigo.recibo.config/${recId}/logo`;
@@ -128,7 +118,7 @@ export class ReciboConfigPreview extends Component {
             headerTxtColor = colorTxtP;
         }
 
-        // Logo
+      
         const logoSrc = this._getLogoSrc();
         const la = d.logo_ancho || 90;
         const logoHtml = logoSrc
@@ -229,7 +219,7 @@ export class ReciboConfigPreview extends Component {
   </div>
 
   <div style="text-align:center;margin-top:3px;font-size:9px;color:#999;">
-    ✅ Vista previa en tiempo real
+    Vista previa en tiempo real
   </div>
 </div>`;
 

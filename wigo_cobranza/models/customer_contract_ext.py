@@ -39,8 +39,8 @@ class CustomerContractCobranza(models.Model):
 
         related_contracts = self._get_cobranza_version_contracts()
 
-        list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
-        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        list_view = self.env.ref('wigo_cobranza.view_payment_state_list', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
         views = []
         if list_view:
             views.append((list_view.id, 'list'))
@@ -128,7 +128,7 @@ class CustomerContractCobranza(models.Model):
     def action_crear_pago_mes_contrato(self):
         self.ensure_one()
         today = date.today()
-        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
         return {
             'type': 'ir.actions.act_window',
             'name': f'Nuevo registro mensual - {self.name}',

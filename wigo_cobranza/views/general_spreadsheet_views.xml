@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════
-         PLANILLA GENERAL — list con semáforo por mes (pivot)
-    ══════════════════════════════════════════════════════════ -->
-
-    <!-- Pivot interactivo (permite ver totales por mes/estado) -->
-    <record id="view_planilla_general_pivot" model="ir.ui.view">
+    <record id="view_general_spreadsheet_pivot" model="ir.ui.view">
         <field name="name">wigo.pago.estado.pivot.planilla</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
@@ -20,11 +15,10 @@
         </field>
     </record>
 
-    <!-- Form variant used by Planilla General: disable create from this form -->
-    <record id="view_pago_estado_form_no_create" model="ir.ui.view">
+    <record id="view_payment_state_form_no_create" model="ir.ui.view">
         <field name="name">wigo.pago.estado.form.no.create.for.planilla</field>
         <field name="model">wigo.pago.estado</field>
-        <field name="inherit_id" ref="wigo_cobranza.view_pago_estado_contract_form_new"/>
+        <field name="inherit_id" ref="wigo_cobranza.view_payment_state_form"/>
         <field name="arch" type="xml">
             <xpath expr="/form" position="attributes">
                 <attribute name="create">false</attribute>
@@ -32,8 +26,7 @@
         </field>
     </record>
 
-    <!-- Lista semaforizadas por estado — replica el Excel de Dania -->
-    <record id="view_planilla_general_list" model="ir.ui.view">
+    <record id="view_general_spreadsheet_list" model="ir.ui.view">
         <field name="name">wigo.pago.estado.list.planilla</field>
         <field name="model">wigo.pago.estado</field>
         <field name="priority" eval="1"/>
@@ -55,8 +48,7 @@
         </field>
     </record>
 
-    <!-- Search view para la planilla general -->
-    <record id="view_planilla_general_search" model="ir.ui.view">
+    <record id="view_general_spreadsheet_search" model="ir.ui.view">
         <field name="name">wigo.pago.estado.search.planilla</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
@@ -69,34 +61,34 @@
                 <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
                 <field name="payment_mode" string="Modalidad de pago"/>
                 <separator/>
-                <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
-                <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
-                <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
-                <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
-                <filter name="baja" string="Bajas" domain="[('estado_pago','=','baja_definitiva')]"/>
+                <filter name="paid" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
+                <filter name="pending" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
+                <filter name="overdue" string="En mora" domain="[('estado_pago','=','mora')]"/>
+                <filter name="partial_debt" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
+                <filter name="written_off" string="Bajas" domain="[('estado_pago','=','baja_definitiva')]"/>
                 <separator/>
-                <filter name="tipo_ajuste_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
-                <filter name="tipo_ajuste_prorrateo" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
-                <filter name="tipo_ajuste_motivo" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
+                <filter name="adjust_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
+                <filter name="adjust_proration" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
+                <filter name="adjust_reason" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
                 <separator/>
-                <filter name="payment_mode_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
-                <filter name="payment_mode_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
+                <filter name="payment_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
+                <filter name="payment_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
                 <separator/>
-                <filter name="enero" string="Enero" domain="[('mes','=','1')]"/>
-                <filter name="febrero" string="Febrero" domain="[('mes','=','2')]"/>
-                <filter name="marzo" string="Marzo" domain="[('mes','=','3')]"/>
-                <filter name="abril" string="Abril" domain="[('mes','=','4')]"/>
-                <filter name="mayo" string="Mayo" domain="[('mes','=','5')]"/>
-                <filter name="junio" string="Junio" domain="[('mes','=','6')]"/>
-                <filter name="julio" string="Julio" domain="[('mes','=','7')]"/>
-                <filter name="agosto" string="Agosto" domain="[('mes','=','8')]"/>
-                <filter name="septiembre" string="Septiembre" domain="[('mes','=','9')]"/>
-                <filter name="octubre" string="Octubre" domain="[('mes','=','10')]"/>
-                <filter name="noviembre" string="Noviembre" domain="[('mes','=','11')]"/>
-                <filter name="diciembre" string="Diciembre" domain="[('mes','=','12')]"/>
+                <filter name="january" string="Enero" domain="[('mes','=','1')]"/>
+                <filter name="february" string="Febrero" domain="[('mes','=','2')]"/>
+                <filter name="march" string="Marzo" domain="[('mes','=','3')]"/>
+                <filter name="april" string="Abril" domain="[('mes','=','4')]"/>
+                <filter name="may" string="Mayo" domain="[('mes','=','5')]"/>
+                <filter name="june" string="Junio" domain="[('mes','=','6')]"/>
+                <filter name="july" string="Julio" domain="[('mes','=','7')]"/>
+                <filter name="august" string="Agosto" domain="[('mes','=','8')]"/>
+                <filter name="september" string="Septiembre" domain="[('mes','=','9')]"/>
+                <filter name="october" string="Octubre" domain="[('mes','=','10')]"/>
+                <filter name="november" string="Noviembre" domain="[('mes','=','11')]"/>
+                <filter name="december" string="Diciembre" domain="[('mes','=','12')]"/>
                 <separator/>
-                <filter name="anio_actual" string="Año actual" domain="[('anio','=', context_today().year)]"/>
-                <filter name="mes_actual" string="Mes actual" domain="[
+                <filter name="current_year" string="Año actual" domain="[('anio','=', context_today().year)]"/>
+                <filter name="current_month" string="Mes actual" domain="[
                             ('mes', '=',
                                 '1' if context_today().month == 1 else
                                 '2' if context_today().month == 2 else
@@ -115,12 +107,11 @@
                         ]"/>
                 <separator/>
                 <filter name="group_partner" string="Agrupar por Cliente" context="{'group_by': 'partner_id'}"/>
-                <filter name="group_mes" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
+                <filter name="group_month" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
-                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by': 'estado_pago'}"/>
-                <filter name="group_tipo_ajuste" string="Agrupar por Tipo de ajuste" context="{'group_by': 'tipo_ajuste_id'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'estado_pago'}"/>
+                <filter name="group_adjustment" string="Agrupar por Tipo de ajuste" context="{'group_by': 'tipo_ajuste_id'}"/>
                 <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by': 'payment_mode'}"/>
-
                 <searchpanel>
                     <field name="payment_mode" string="Modalidad de pago"/>
                     <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
@@ -129,20 +120,19 @@
         </field>
     </record>
 
-    <!-- Acción: Planilla General -->
-    <record id="action_planilla_general" model="ir.actions.act_window">
+    <record id="action_general_spreadsheet" model="ir.actions.act_window">
         <field name="name">Planilla General de Cobros</field>
         <field name="res_model">wigo.pago.estado</field>
         <field name="view_mode">list,form,pivot,graph</field>
-        <field name="view_id" ref="view_planilla_general_list"/>
+        <field name="view_id" ref="view_general_spreadsheet_list"/>
         <field name="views" eval="[
-            (ref('wigo_cobranza.view_planilla_general_list'), 'list'),
-            (ref('wigo_cobranza.view_pago_estado_form_no_create'), 'form'),
-            (ref('wigo_cobranza.view_planilla_general_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+            (ref('wigo_cobranza.view_payment_state_form_no_create'), 'form'),
+            (ref('wigo_cobranza.view_general_spreadsheet_pivot'), 'pivot'),
             (False, 'graph'),
         ]"/>
-        <field name="search_view_id" ref="view_planilla_general_search"/>
-        <field name="context">{'search_default_anio_actual': 1, 'create': False, 'show_create': False}</field>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1, 'create': False, 'show_create': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay registros en la planilla para el período seleccionado.

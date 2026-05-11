@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_cobranza_tipo_ajuste_list" model="ir.ui.view">
+    <record id="view_adjustment_type_list" model="ir.ui.view">
         <field name="name">wigo.cobranza.tipo_ajuste.list</field>
         <field name="model">wigo.cobranza.tipo_ajuste</field>
         <field name="arch" type="xml">
@@ -16,14 +16,14 @@
         </field>
     </record>
 
-    <record id="view_cobranza_tipo_ajuste_form" model="ir.ui.view">
+    <record id="view_adjustment_type_form" model="ir.ui.view">
         <field name="name">wigo.cobranza.tipo_ajuste.form</field>
         <field name="model">wigo.cobranza.tipo_ajuste</field>
         <field name="arch" type="xml">
             <form string="Tipo de ajuste">
                 <sheet>
                     <group>
-                        <field name="name" />
+                        <field name="name"/>
                         <field name="active" widget="boolean_toggle"/>
                         <field name="is_default" widget="boolean_toggle"/>
                         <field name="color" widget="color_picker"/>
@@ -35,7 +35,7 @@
         </field>
     </record>
 
-    <record id="view_cobranza_tipo_ajuste_search" model="ir.ui.view">
+    <record id="view_adjustment_type_search" model="ir.ui.view">
         <field name="name">wigo.cobranza.tipo_ajuste.search</field>
         <field name="model">wigo.cobranza.tipo_ajuste</field>
         <field name="arch" type="xml">
@@ -51,11 +51,11 @@
         </field>
     </record>
 
-    <record id="action_cobranza_tipo_ajuste" model="ir.actions.act_window">
+    <record id="action_adjustment_type" model="ir.actions.act_window">
         <field name="name">Tipos de ajuste</field>
         <field name="res_model">wigo.cobranza.tipo_ajuste</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_cobranza_tipo_ajuste_search"/>
+        <field name="search_view_id" ref="view_adjustment_type_search"/>
         <field name="context">{'search_default_active': 1}</field>
     </record>
 

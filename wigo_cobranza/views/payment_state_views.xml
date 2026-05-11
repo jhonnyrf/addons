@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_pago_estado_contract_list_new" model="ir.ui.view">
-        <field name="name">wigo.pago.estado.contract.workspace.list</field>
+    <record id="view_payment_state_list" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.workspace.list</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
             <list string="Pagos mensuales por contrato" create="true" default_order="anio desc, mes desc" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'">
@@ -11,8 +11,8 @@
                 <field name="tipo_ajuste_color" column_invisible="1"/>
                 <field name="payment_mode" string="Modalidad" optional="show"/>
                 <field name="tipo_ajuste_id" optional="show" widget="tipo_ajuste_badge"/>
-                <field name="monto_a_cobrar" />
-                <field name="monto_pagado" />
+                <field name="monto_a_cobrar"/>
+                <field name="monto_pagado"/>
                 <field name="fecha_pago"/>
                 <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago == 'pendiente'" decoration-danger="estado_pago == 'mora'"/>
                 <field name="canal_pago" optional="show"/>
@@ -21,8 +21,8 @@
         </field>
     </record>
 
-    <record id="view_pago_estado_contract_form_new" model="ir.ui.view">
-        <field name="name">wigo.pago.estado.contract.workspace.form</field>
+    <record id="view_payment_state_form" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.workspace.form</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
             <form string="Registro mensual de pago">
@@ -30,19 +30,11 @@
                     <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
                     <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['pagado', 'al_dia', 'mora']"/>
                     <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
-
-                    <!-- Ver Recibo: solo visible cuando ya se generó el recibo -->
                     <button name="action_abrir_recibo" string="Ver Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
-
-                    <!-- Generar Recibo: solo visible cuando NO existe aún -->
                     <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>
-
-                    <!-- Imprimir Recibo: solo visible cuando ya se generó -->
                     <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
-
                     <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
-                    <!-- Campos necesarios para condiciones invisible -->
                     <field name="recibo_generado" invisible="1"/>
                     <field name="recibo_id" invisible="1"/>
                 </header>
@@ -50,7 +42,6 @@
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
                     <widget name="web_ribbon" title="Pagado" bg_color="text-bg-success" invisible="estado_pago != 'pagado'"/>
                     <widget name="web_ribbon" title="Edición contable" bg_color="text-bg-warning" invisible="not contabilidad_editable"/>
-
                     <group string="Contrato y periodo" col="2">
                         <group>
                             <field name="partner_id" readonly="1"/>
@@ -73,7 +64,6 @@
                             <field name="motivo" invisible="not tipo_ajuste_requires_reason" required="tipo_ajuste_requires_reason" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                         </group>
                     </group>
-
                     <notebook>
                         <page string="Pago y Control">
                             <group string="Contabilidad" col="2">
@@ -91,12 +81,10 @@
                                 </group>
                             </group>
                         </page>
-
                         <page string="Comprobante" name="comprobante">
                             <field name="comprobante_adjunto_is_image" invisible="1"/>
                             <field name="comprobante_adjunto_is_pdf" invisible="1"/>
                             <field name="has_comprobante" invisible="1"/>
-
                             <group string="Adjunto de respaldo" col="2">
                                 <group>
                                     <field name="comprobante_adjunto" invisible="1"/>
@@ -114,11 +102,9 @@
                                     Formatos aceptados: <strong>JPG, PNG, PDF</strong>.
                                 </div>
                             </group>
-
                             <group string="Vista previa" invisible="not comprobante_adjunto_is_image">
                                 <field name="comprobante_adjunto" widget="image" nolabel="1" readonly="1" options="{'size': [900, 600]}" class="o_field_image_full"/>
                             </group>
-
                             <group string="Documento PDF" invisible="not comprobante_adjunto_is_pdf">
                                 <div role="status" class="alert alert-success" style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
                                     <i class="fa fa-file-pdf-o fa-2x text-danger" title="Archivo PDF"/>
@@ -131,17 +117,14 @@
                             </group>
                         </page>
                     </notebook>
-
                     <field name="notas" placeholder="Observaciones de cobranza para este mes..."/>
                 </sheet>
                 <chatter/>
             </form>
         </field>
     </record>
-    <!-- ══════════════════════════════════════════════════════════
-         SEARCH VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_pago_estado_search" model="ir.ui.view">
+
+    <record id="view_payment_state_search" model="ir.ui.view">
         <field name="name">wigo.pago.estado.search</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
@@ -154,19 +137,19 @@
                 <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
                 <field name="payment_mode" string="Modalidad de pago"/>
                 <separator/>
-                <filter name="pendiente" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
-                <filter name="mora" string="En mora" domain="[('estado_pago','=','mora')]"/>
-                <filter name="al_dia" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
-                <filter name="deuda_parcial" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
+                <filter name="pending" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
+                <filter name="overdue" string="En mora" domain="[('estado_pago','=','mora')]"/>
+                <filter name="paid" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
+                <filter name="partial_debt" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
                 <separator/>
-                <filter name="tipo_ajuste_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
-                <filter name="tipo_ajuste_prorrateo" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
-                <filter name="tipo_ajuste_motivo" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
+                <filter name="adjust_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
+                <filter name="adjust_proration" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
+                <filter name="adjust_reason" string="Requiere motivo" domain="[('tipo_ajuste_id.requires_reason','=',True)]"/>
                 <separator/>
-                <filter name="payment_mode_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
-                <filter name="payment_mode_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
+                <filter name="payment_prepaid" string="Prepago" domain="[('payment_mode','=','prepaid')]"/>
+                <filter name="payment_postpaid" string="Postpago" domain="[('payment_mode','=','postpaid')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual" domain="[
+                <filter name="current_month" string="Mes actual" domain="[
                             ('mes', '=',
                                 '1' if context_today().month == 1 else
                                 '2' if context_today().month == 2 else
@@ -183,10 +166,10 @@
                             ),
                             ('anio', '=', context_today().year)
                         ]"/>
-                <filter name="anio_actual" string="Año actual" domain="[('anio','=', context_today().year)]"/>
-                <filter name="suspender_hoy" string="Suspender hoy (mora mes anterior)" domain="[
-                            ('estado_pago','in',['pendiente','mora']), 
-                            ('anio', '=', context_today().year if context_today().month > 1 else context_today().year - 1), 
+                <filter name="current_year" string="Año actual" domain="[('anio','=', context_today().year)]"/>
+                <filter name="suspend_today" string="Suspender hoy (mora mes anterior)" domain="[
+                            ('estado_pago','in',['pendiente','mora']),
+                            ('anio', '=', context_today().year if context_today().month > 1 else context_today().year - 1),
                             ('mes', '=',
                                 '1' if context_today().month == 2 else
                                 '2' if context_today().month == 3 else
@@ -203,13 +186,12 @@
                             )
                         ]"/>
                 <separator/>
-                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by':'estado_pago'}"/>
-                <filter name="group_mes" string="Agrupar por Mes" context="{'group_by':'mes'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by':'estado_pago'}"/>
+                <filter name="group_month" string="Agrupar por Mes" context="{'group_by':'mes'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by':'plan_id'}"/>
-                <filter name="group_canal" string="Agrupar por Canal de pago" context="{'group_by':'canal_pago'}"/>
-                <filter name="group_tipo_ajuste" string="Agrupar por Tipo de ajuste" context="{'group_by':'tipo_ajuste_id'}"/>
+                <filter name="group_channel" string="Agrupar por Canal de pago" context="{'group_by':'canal_pago'}"/>
+                <filter name="group_adjustment" string="Agrupar por Tipo de ajuste" context="{'group_by':'tipo_ajuste_id'}"/>
                 <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by':'payment_mode'}"/>
-
                 <searchpanel>
                     <field name="payment_mode" string="Modalidad de pago"/>
                     <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
@@ -218,15 +200,12 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         ACTIONS
-    ══════════════════════════════════════════════════════════ -->
-    <record id="action_pago_estado" model="ir.actions.act_window">
+    <record id="action_payment_state" model="ir.actions.act_window">
         <field name="name">Registro de Cobros</field>
         <field name="res_model">wigo.pago.estado</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_pago_estado_search"/>
-        <field name="context">{'search_default_mes_actual': 1}</field>
+        <field name="search_view_id" ref="view_payment_state_search"/>
+        <field name="context">{'search_default_current_month': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay registros de cobro para este período.
@@ -234,10 +213,8 @@
             <p>Crea el primer registro de pago para un cliente.</p>
         </field>
     </record>
-    <!-- ══════════════════════════════════════════════════════════
-         ATTACHMENT VIEWER WIZARD VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_wigo_pago_estado_attachment_viewer_wizard_form" model="ir.ui.view">
+
+    <record id="view_payment_state_attachment_wizard_form" model="ir.ui.view">
         <field name="name">wigo.pago.estado.attachment.viewer.wizard.form</field>
         <field name="model">wigo.pago.estado.attachment.viewer.wizard</field>
         <field name="arch" type="xml">
@@ -256,4 +233,5 @@
             </form>
         </field>
     </record>
+
 </odoo>

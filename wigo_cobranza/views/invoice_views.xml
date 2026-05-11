@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════
-         LIST VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_factura_cobranza_list" model="ir.ui.view">
+    <record id="view_invoice_list" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.list</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
@@ -25,10 +22,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_factura_cobranza_form" model="ir.ui.view">
+    <record id="view_invoice_form" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.form</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
@@ -42,7 +36,6 @@
                 <sheet>
                     <widget name="web_ribbon" title="Emitida" bg_color="text-bg-success" invisible="state != 'emitido'"/>
                     <widget name="web_ribbon" title="Anulada" bg_color="text-bg-danger" invisible="state != 'anulada'"/>
-
                     <div class="oe_title">
                         <label for="numero_factura" string="Nº Factura"/>
                         <h1>
@@ -52,13 +45,12 @@
                             <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
                         </h3>
                     </div>
-
                     <group col="2">
                         <group string="Cliente / Pago origen">
                             <field name="pago_id" options="{'no_create': True}"/>
                             <field name="partner_id"/>
                             <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
-                            <field name="codigo_cliente" />
+                            <field name="codigo_cliente"/>
                         </group>
                         <group string="Datos de factura">
                             <field name="razon_social"/>
@@ -67,7 +59,6 @@
                             <field name="periodo_facturado"/>
                         </group>
                     </group>
-
                     <group col="2">
                         <group string="Montos">
                             <field name="monto_total" widget="monetary" options="{'currency_field': False}"/>
@@ -75,7 +66,6 @@
                             <field name="monto_neto" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                     </group>
-
                     <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
                 </sheet>
                 <chatter/>
@@ -83,10 +73,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW PARA EMITIR DESDE PAGO
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_factura_cobranza_form_emit" model="ir.ui.view">
+    <record id="view_invoice_form_emit" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.form.emit</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
@@ -99,7 +86,6 @@
                 <sheet>
                     <widget name="web_ribbon" title="Emitida" bg_color="text-bg-success" invisible="state != 'emitido'"/>
                     <widget name="web_ribbon" title="Anulada" bg_color="text-bg-danger" invisible="state != 'anulada'"/>
-
                     <div class="oe_title">
                         <label for="numero_factura" string="Nº Factura"/>
                         <h2>
@@ -109,13 +95,12 @@
                             <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
                         </h3>
                     </div>
-
                     <group col="2">
                         <group string="Cliente / Pago origen">
                             <field name="pago_id" options="{'no_create': True}"/>
                             <field name="partner_id"/>
                             <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
-                            <field name="codigo_cliente" />
+                            <field name="codigo_cliente"/>
                         </group>
                         <group string="Datos de factura">
                             <field name="razon_social"/>
@@ -124,7 +109,6 @@
                             <field name="periodo_facturado"/>
                         </group>
                     </group>
-
                     <group col="2">
                         <group string="Montos">
                             <field name="monto_total" widget="monetary" options="{'currency_field': False}"/>
@@ -132,7 +116,6 @@
                             <field name="monto_neto" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                         </group>
                     </group>
-
                     <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
                 </sheet>
                 <chatter/>
@@ -140,10 +123,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         SEARCH VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_factura_cobranza_search" model="ir.ui.view">
+    <record id="view_invoice_search" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.search</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
@@ -153,22 +133,19 @@
                 <field name="codigo_cliente"/>
                 <field name="periodo_facturado"/>
                 <separator/>
-                <filter name="pendientes" string="Pendientes" domain="[('state','=','pendiente')]"/>
-                <filter name="emitidas" string="Emitidas" domain="[('state','=','emitido')]"/>
-                <filter name="anuladas" string="Anuladas" domain="[('state','=','anulada')]"/>
+                <filter name="pending" string="Pendientes" domain="[('state','=','pendiente')]"/>
+                <filter name="issued" string="Emitidas" domain="[('state','=','emitido')]"/>
+                <filter name="cancelled" string="Anuladas" domain="[('state','=','anulada')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual" domain="[('fecha_emision','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="current_month" string="Mes actual" domain="[('fecha_emision','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
                 <separator/>
-                <filter name="group_estado" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
-                <filter name="group_periodo" string="Agrupar por Período" context="{'group_by': 'periodo_facturado'}"/>
+                <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
+                <filter name="group_period" string="Agrupar por Período" context="{'group_by': 'periodo_facturado'}"/>
             </search>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         PIVOT
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_factura_cobranza_pivot" model="ir.ui.view">
+    <record id="view_invoice_pivot" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.pivot</field>
         <field name="model">wigo.factura.cobranza</field>
         <field name="arch" type="xml">
@@ -180,15 +157,12 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         ACTIONS
-    ══════════════════════════════════════════════════════════ -->
-    <record id="action_factura_cobranza" model="ir.actions.act_window">
+    <record id="action_invoice" model="ir.actions.act_window">
         <field name="name">Facturación</field>
         <field name="res_model">wigo.factura.cobranza</field>
         <field name="view_mode">list,form,pivot</field>
-        <field name="search_view_id" ref="view_factura_cobranza_search"/>
-        <field name="context">{'search_default_pendientes': 1}</field>
+        <field name="search_view_id" ref="view_invoice_search"/>
+        <field name="context">{'search_default_pending': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No hay facturas registradas aún.

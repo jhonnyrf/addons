@@ -2072,7 +2072,7 @@ class WigoPagoEstado(models.Model):
             'name': f'Factura — {self.display_name}',
             'res_model': 'wigo.factura.cobranza',
             'view_mode': 'form',
-            'views': [(self.env.ref('wigo_cobranza.view_factura_cobranza_form_emit').id, 'form')],
+            'views': [(self.env.ref('wigo_cobranza.view_invoice_form_emit').id, 'form')],
             'res_id': factura.id if factura else False,
             'target': 'new',
             'context': ctx,
@@ -2103,7 +2103,7 @@ class WigoPagoEstado(models.Model):
     @api.model
     def action_open_registros_cobro(self):
         self._ensure_current_month_records()
-        return self.env.ref('wigo_cobranza.action_pago_estado').read()[0]
+        return self.env.ref('wigo_cobranza.action_payment_state').read()[0]
 
     @api.model
     def _ensure_current_month_records(self):

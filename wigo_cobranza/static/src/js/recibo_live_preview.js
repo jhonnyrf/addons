@@ -1,16 +1,9 @@
-/** @odoo-module **/
+
 
 import { Component, useState, useEffect, useRef } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
-/**
- * ReciboLivePreview — Widget para <widget name="recibo_live_preview"/>
- *
- * Renderiza un HTML del recibo en tiempo real usando innerHTML (no t-out)
- * para que el HTML no sea escapado por OWL. Se actualiza al cambiar
- * cualquier campo relevante del form.
- */
 export class ReciboLivePreview extends Component {
     static template = "wigo_cobranza.ReciboLivePreview";
 
@@ -34,7 +27,7 @@ export class ReciboLivePreview extends Component {
             cfg: null,
         });
 
-        // Cargar config una vez al montar
+
         useEffect(
             () => {
                 this._loadConfig();
@@ -42,7 +35,7 @@ export class ReciboLivePreview extends Component {
             () => []
         );
 
-        // Redibujar cuando cambien campos relevantes del record
+    
         useEffect(
             () => {
                 if (this.state.cfgLoaded) {
@@ -87,10 +80,10 @@ export class ReciboLivePreview extends Component {
         const cfg = this.state.cfg || {};
         const d = this.props.record.data;
 
-        // --- Datos del recibo ---
+        
         const partnerName = d.partner_id && d.partner_id[1] ? d.partner_id[1] : "—";
         const numero = d.numero || "NUEVO";
-        // fecha_pago en Odoo 19 puede ser string "YYYY-MM-DD", objeto Date, o false
+ 
         let fecha = "—";
         if (d.fecha_pago) {
             try {
@@ -98,7 +91,7 @@ export class ReciboLivePreview extends Component {
                 if (d.fecha_pago instanceof Date) {
                     dt = d.fecha_pago;
                 } else if (typeof d.fecha_pago === "string" && d.fecha_pago.includes("-")) {
-                    // "YYYY-MM-DD" → forzar interpretación local sin timezone
+              
                     const [y, m, day] = d.fecha_pago.split("-").map(Number);
                     dt = new Date(y, m - 1, day);
                 } else {
@@ -116,7 +109,7 @@ export class ReciboLivePreview extends Component {
         const montoLetras = d.monto_en_letras || "";
         const descripcion = d.descripcion || "Servicio Internet";
         const codigoCli = d.codigo_cliente || "—";
-        // canal_pago es un campo Selection — mapear valor técnico a label
+       
         const canalMap = {
             "efectivo": "Efectivo", "transferencia": "Transferencia",
             "qr": "QR", "deposito": "Depósito", "tarjeta": "Tarjeta",
@@ -129,7 +122,7 @@ export class ReciboLivePreview extends Component {
         const firmaCargo = d.firma_cargo_override || cfg.firma_cargo || "";
         const firmaCel = d.firma_celular_override || cfg.firma_celular || "";
 
-        // --- Estilos desde config ---
+ 
         const colorP   = cfg.color_primario || "#cc0000";
         const colorS   = cfg.color_secundario || "#990000";
         const colorHdr = cfg.color_texto_header || "#ffffff";
@@ -158,7 +151,7 @@ export class ReciboLivePreview extends Component {
         const empresaNit     = cfg.empresa_nit || "";
         const empresaSlogan  = cfg.empresa_slogan || "";
 
-        // Header background
+       
         const estilo = cfg.estilo_header || "gradiente";
         let headerBg = "";
         let headerTxtColor = colorHdr;
@@ -174,7 +167,7 @@ export class ReciboLivePreview extends Component {
             headerTxtColor = colorTxtP;
         }
 
-        // Logo
+    
         const logoSrc = cfg.logo_base64 && cfg.logo_base64.length > 50
             ? `data:image/png;base64,${cfg.logo_base64}`
             : null;
@@ -183,7 +176,7 @@ export class ReciboLivePreview extends Component {
             ? `<img src="${logoSrc}" style="max-height:${la}px;max-width:${la * 2}px;display:block;margin-left:auto;" onerror="this.style.display='none'"/>`
             : "";
 
-        // Estado badge
+      
         const state = d.state || "borrador";
         const stateColors = { borrador: "#f59e0b", emitido: "#22c55e", anulado: "#ef4444" };
         const stateLabels = { borrador: "BORRADOR", emitido: "EMITIDO", anulado: "ANULADO" };
@@ -306,7 +299,7 @@ export class ReciboLivePreview extends Component {
 
     _renderHTML() {
         const html = this._buildHTML();
-        // Usar innerHTML directamente para evitar el escape de OWL
+   
         if (this.htmlContainer.el) {
             this.htmlContainer.el.innerHTML = html;
         }

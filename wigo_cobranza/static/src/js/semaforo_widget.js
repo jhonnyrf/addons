@@ -1,13 +1,10 @@
-/** @odoo-module **/
+
 
 import { registry } from "@web/core/registry";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import { Component } from "@odoo/owl";
 
-/**
- * SemaforoWidget — círculo de color + texto descriptivo
- * para el campo estado_pago en wigo.pago.estado y modelos relacionados.
- */
+
 export class SemaforoWidget extends Component {
     static template = "wigo_cobranza.SemaforoWidget";
     static props = {

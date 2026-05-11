@@ -1,39 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-     <!-- ══════════════════════════════════════════════════════════
-         Menú principal: Cobranza
-    ══════════════════════════════════════════════════════════ -->
-     <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.png" groups="base.group_user"/>
+    <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.svg" groups="base.group_user"/>
 
-     <!-- ─── Gestión ──────────────────────────────────────────── -->
-     <menuitem id="menu_cobranza_gestion" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>
+    <menuitem id="menu_cobranza_management" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>
 
-     <menuitem id="menu_cobranza_clientes" name="Clientes con Contrato" parent="menu_cobranza_gestion" action="wigo_cobranza.action_cobranza_clientes_contrato" sequence="10"/>
+    <menuitem id="menu_cobranza_customers" name="Clientes con Contrato" parent="menu_cobranza_management" action="wigo_cobranza.action_cobranza_contract_customers" sequence="10"/>
 
-     <!-- ─── Planilla General ─────────────────────────────── -->
-     <menuitem id="menu_planilla_general" name="Planilla General" parent="menu_cobranza_gestion" action="wigo_cobranza.action_planilla_general" sequence="15"/>
+    <menuitem id="menu_general_spreadsheet" name="Planilla General" parent="menu_cobranza_management" action="wigo_cobranza.action_general_spreadsheet" sequence="15"/>
 
-     <!-- ─── Recibos ─────────────────────────────────────── -->
-     <menuitem id="menu_recibos" name="Recibos de Cobro" parent="menu_cobranza_gestion" action="wigo_cobranza.action_recibo_cobro" sequence="35"/>
+    <menuitem id="menu_receipts" name="Recibos de Cobro" parent="menu_cobranza_management" action="wigo_cobranza.action_receipt" sequence="35"/>
 
-     <!-- ─── Facturación ─────────────────────────────────── -->
-     <menuitem id="menu_facturacion" name="Facturación" parent="menu_cobranza_gestion" action="wigo_cobranza.action_factura_cobranza" sequence="45"/>
+    <menuitem id="menu_invoicing" name="Facturación" parent="menu_cobranza_management" action="wigo_cobranza.action_invoice" sequence="45"/>
 
-     <!-- ─── Incobrables ─────────────────────────────────── -->
-     <menuitem id="menu_incobrables_gestion" name="Incobrables" parent="menu_cobranza_gestion" action="wigo_cobranza.action_incobrable" sequence="55"/>
+    <menuitem id="menu_uncollectibles" name="Incobrables" parent="menu_cobranza_management" action="wigo_cobranza.action_uncollectible" sequence="55"/>
 
-     <!-- ─── Configuración ─────────────────────────────────── -->
-     <menuitem id="menu_cobranza_config_root" name="⚙️ Configuración" parent="menu_cobranza_root" sequence="90"/>
-     <menuitem id="menu_recibo_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_recibo_config" sequence="10"/>
-     <menuitem id="menu_cobranza_tipo_ajuste" name="Tipos de ajustes" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_tipo_ajuste" sequence="20" />
-     <menuitem id="menu_cobranza_reglas" name="Reglas de Cobranza" parent="menu_cobranza_config_root" action="wigo_cobranza.action_cobranza_regla" sequence="30"/>
-
-     <!-- ══════════════════════════════════════════════════════════
-         Acceso de solo lectura para Comercial y Técnica:
-         Estado de pago visible desde sus propios menús vía la
-         ficha del cliente (wigo_ftth). No se añade menú separado.
-         Ver: view_ftth_cs_form_cobranza_inherit (pestaña Cobranza)
-    ══════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_cobranza_config_root" name="Configuración" parent="menu_cobranza_root" sequence="90"/>
+    <menuitem id="menu_receipt_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_receipt_config" sequence="10"/>
+    <menuitem id="menu_adjustment_type" name="Tipos de ajustes" parent="menu_cobranza_config_root" action="wigo_cobranza.action_adjustment_type" sequence="20"/>
+    <menuitem id="menu_collection_rules" name="Reglas de Cobranza" parent="menu_cobranza_config_root" action="wigo_cobranza.action_collection_rule" sequence="30"/>
 
 </odoo>

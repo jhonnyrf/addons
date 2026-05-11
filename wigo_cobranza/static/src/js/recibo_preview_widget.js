@@ -1,15 +1,5 @@
-/** @odoo-module **/
-
-import { Component, useState, useEffect, useRef, onMounted, onWillUnmount } from "@odoo/owl";
+import { Component, useState, useEffect, useRef } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-import { useRecordObserver } from "@web/model/relational_model/utils";
-
-/**
- * ReciboPreviewWidget — Widget OWL que renderiza una previsualización
- * en tiempo real del recibo, leyendo los campos del form sin guardar.
- *
- * Se registra como field widget y como view widget para el formulario.
- */
 export class ReciboPreviewWidget extends Component {
     static template = "wigo_cobranza.ReciboPreviewWidget";
     static props = {
@@ -25,14 +15,14 @@ export class ReciboPreviewWidget extends Component {
             error: null,
         });
 
-        // Cuando los datos del record cambien, regenerar el HTML
+      
         if (this.props.record) {
             useEffect(
                 () => {
                     this._buildPreview();
                 },
                 () => [
-                    // Campos que disparan la actualización del preview
+                
                     this.props.record.data.partner_id,
                     this.props.record.data.codigo_cliente,
                     this.props.record.data.periodo,
@@ -59,7 +49,7 @@ export class ReciboPreviewWidget extends Component {
         this.state.error = null;
 
         try {
-            // Leer configuración del servidor (colores, fuentes, etc.)
+          
             const result = await rec.model.orm.call(
                 "wigo.recibo.config",
                 "get_config_dict",
@@ -88,7 +78,7 @@ export class ReciboPreviewWidget extends Component {
             const firmaCargo = d.firma_cargo_override || cfg.firma_cargo || "";
             const firmaCel = d.firma_celular_override || cfg.firma_celular || "";
 
-            // Colores y estilos desde config
+     
             const colorP = cfg.color_primario || "#cc0000";
             const colorS = cfg.color_secundario || "#990000";
             const colorHeaderTxt = cfg.color_texto_header || "#ffffff";
@@ -108,7 +98,7 @@ export class ReciboPreviewWidget extends Component {
             const mostrarPie = cfg.mostrar_pie !== false;
             const textoPie = cfg.texto_pie || "";
 
-            // Header style
+            
             let headerBg = "";
             const estiloHeader = cfg.estilo_header || "gradiente";
             if (estiloHeader === "gradiente") {
@@ -123,7 +113,7 @@ export class ReciboPreviewWidget extends Component {
             const headerTxtColor = estiloHeader === "linea" || estiloHeader === "sin_fondo"
                 ? colorTxtP : colorHeaderTxt;
 
-            // Logo
+           
             const logoHtml = cfg.logo_base64
                 ? `<img src="data:image/png;base64,${cfg.logo_base64}" style="max-height:${cfg.logo_ancho || 70}px; max-width:${cfg.logo_ancho || 90}px;"/>`
                 : `<div style="font-size:10px;color:${colorTxtS};">[Logo]</div>`;
@@ -139,12 +129,12 @@ export class ReciboPreviewWidget extends Component {
             const tablaMontoTxt = cfg.tabla_monto_texto || "MONTO (Bs.)";
             const mostrarCodigo = cfg.mostrar_columna_codigo !== false;
 
-            // Número grande
+          
             const numHtml = cfg.mostrar_numero_grande !== false
                 ? `<div style="font-size:18px;font-weight:bold;color:${colorP};margin-top:4px;">Nº ${numero}</div>`
                 : `<div style="font-size:12px;">Nº ${numero}</div>`;
 
-            // Estado badge
+      
             const state = d.state || "borrador";
             const stateColors = { borrador: "#f59e0b", emitido: "#22c55e", anulado: "#ef4444" };
             const stateLabels = { borrador: "BORRADOR", emitido: "EMITIDO", anulado: "ANULADO" };
@@ -256,7 +246,7 @@ export class ReciboPreviewWidget extends Component {
     }
 }
 
-// Template OWL (declarado en XML, referenciado aquí)
+
 registry.category("fields").add("recibo_preview", {
     component: ReciboPreviewWidget,
     supportedTypes: ["char"],

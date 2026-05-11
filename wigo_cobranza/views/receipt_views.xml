@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════
-         KANBAN VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_recibo_cobro_kanban" model="ir.ui.view">
+    <record id="view_receipt_kanban" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.kanban</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
@@ -60,10 +57,7 @@ Código: <field name="codigo_cliente"/>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         LIST VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_recibo_cobro_list" model="ir.ui.view">
+    <record id="view_receipt_list" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.list</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
@@ -82,53 +76,31 @@ Código: <field name="codigo_cliente"/>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW
-         NOTA Odoo 19: el form NO tiene campos readonly globales por estado.
-         En su lugar usamos grupos condicionales para mostrar/ocultar secciones.
-         Los botones de acción en el header siempre son clickeables.
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_recibo_cobro_form" model="ir.ui.view">
+    <record id="view_receipt_form" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.form</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
             <form string="Recibo de Cobro">
                 <header>
-                    <!-- BORRADOR: emitir -->
                     <button name="action_emitir" string="Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
-
-                    <!-- EMITIDO: imprimir -->
                     <button name="action_imprimir" string="Imprimir" type="object" class="btn-primary" invisible="state != 'emitido'"/>
-
-                    <!-- EMITIDO: editar -->
                     <button name="action_volver_borrador" string="Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/>
-
-                    <!-- Anular -->
                     <button name="action_anular" string="Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
-
                     <field name="state" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
                 </header>
-
                 <sheet>
                     <div class="row g-0">
-
-                        <!-- ─── IZQUIERDA: datos del recibo ─── -->
                         <div class="col-lg-6 pe-3">
-
                             <div class="oe_title mb-3">
                                 <h1 class="d-flex align-items-center gap-2">
                                     <span class="text-muted" style="font-size:16px;">Recibo Nº</span>
                                     <field name="numero" readonly="1"/>
                                 </h1>
                             </div>
-
-                            <!-- Alerta anulado -->
                             <div class="alert alert-danger" style="font-size:12px;" invisible="state != 'anulado'">
                                 <i class="fa fa-ban me-2"/>
                                 Este recibo está <strong>ANULADO</strong> y no puede modificarse.
                             </div>
-
-                            <!-- DATOS DEL PAGO -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-file-text-o me-2 text-primary"/>
@@ -149,12 +121,10 @@ Datos del Pago
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- MONTO -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-money me-2 text-success"/>
-    Monto
+Monto
                                 </div>
                                 <div class="card-body p-2">
                                     <group>
@@ -163,8 +133,6 @@ Datos del Pago
                                     </group>
                                 </div>
                             </div>
-
-                            <!-- DESCRIPCIÓN DEL SERVICIO -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-pencil me-2 text-warning"/>
@@ -180,8 +148,6 @@ Descripción del servicio
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- FIRMANTE -->
                             <div class="card mb-3">
                                 <div class="card-header fw-bold bg-light py-2">
                                     <i class="fa fa-pencil-square-o me-2"/>
@@ -200,11 +166,8 @@ Firmante
                                     </group>
                                 </div>
                             </div>
-
                             <field name="registrado_por" readonly="1" invisible="1"/>
                         </div>
-
-                        <!-- ─── DERECHA: vista previa en tiempo real ─── -->
                         <div class="col-lg-6 ps-2">
                             <div style="position: sticky; top: 64px;">
                                 <div style="background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
@@ -228,19 +191,13 @@ Diseño y colores:
                                 </div>
                             </div>
                         </div>
-
-                    </div>                    <!-- /row -->
+                    </div>
                 </sheet>
-
-                <!-- <chatter/> -->
             </form>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         SEARCH VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_recibo_cobro_search" model="ir.ui.view">
+    <record id="view_receipt_search" model="ir.ui.view">
         <field name="name">wigo.recibo.cobro.search</field>
         <field name="model">wigo.recibo.cobro</field>
         <field name="arch" type="xml">
@@ -250,27 +207,24 @@ Diseño y colores:
                 <field name="codigo_cliente"/>
                 <field name="periodo"/>
                 <separator/>
-                <filter name="emitidos" string="Emitidos" domain="[('state','=','emitido')]"/>
-                <filter name="borradores" string="Borradores" domain="[('state','=','borrador')]"/>
-                <filter name="anulados" string="Anulados" domain="[('state','=','anulado')]"/>
+                <filter name="issued" string="Emitidos" domain="[('state','=','emitido')]"/>
+                <filter name="drafts" string="Borradores" domain="[('state','=','borrador')]"/>
+                <filter name="cancelled" string="Anulados" domain="[('state','=','anulado')]"/>
                 <separator/>
-                <filter name="mes_actual" string="Mes actual" domain="[('fecha_pago','&gt;=',(context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                <filter name="current_month" string="Mes actual" domain="[('fecha_pago','&gt;=',(context_today().replace(day=1)).strftime('%Y-%m-%d'))]"/>
                 <separator/>
                 <filter name="group_partner" string="Por Cliente" context="{'group_by':'partner_id'}"/>
-                <filter name="group_periodo" string="Por Período" context="{'group_by':'periodo'}"/>
+                <filter name="group_period" string="Por Período" context="{'group_by':'periodo'}"/>
                 <filter name="group_state" string="Por Estado" context="{'group_by':'state'}"/>
             </search>
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         ACTION
-    ══════════════════════════════════════════════════════════ -->
-    <record id="action_recibo_cobro" model="ir.actions.act_window">
+    <record id="action_receipt" model="ir.actions.act_window">
         <field name="name">Recibos de Cobro</field>
         <field name="res_model">wigo.recibo.cobro</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="search_view_id" ref="view_recibo_cobro_search"/>
+        <field name="search_view_id" ref="view_receipt_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No hay recibos generados aún.</p>
             <p>Los recibos se generan desde el formulario de pago del cliente.</p>

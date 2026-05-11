@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ══════════════════════════════════════════════════════════
-         LIST VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_incobrable_list" model="ir.ui.view">
+    <record id="view_uncollectible_list" model="ir.ui.view">
         <field name="name">wigo.incobrable.list</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
@@ -21,10 +18,7 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         FORM VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_incobrable_form" model="ir.ui.view">
+    <record id="view_uncollectible_form" model="ir.ui.view">
         <field name="name">wigo.incobrable.form</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
@@ -39,7 +33,6 @@
                     <widget name="web_ribbon" title="BAJA INCOBRABLE" bg_color="text-bg-danger" invisible="state != 'baja_incobrable'"/>
                     <widget name="web_ribbon" title="Recuperado" bg_color="text-bg-success" invisible="state != 'recuperado'"/>
                     <widget name="web_ribbon" title="En corte" bg_color="text-bg-info" invisible="state != 'in_cut'"/>
-
                     <div class="d-flex justify-content-between align-items-center mb-4" style="gap:1rem;">
                         <div class="d-flex align-items-center gap-3">
                             <div>
@@ -48,9 +41,7 @@
                                 </h1>
                             </div>
                         </div>
-
                     </div>
-
                     <group col="2">
                         <group string="Datos del cliente">
                             <field name="partner_id" readonly="1"/>
@@ -69,34 +60,24 @@
                             <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
                             <button name="action_open_pagos_contrato" string="Ver pagos" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
                             <button name="action_view_suspension" string="Ver suspensión" type="object" icon="fa-ban" class="btn-secondary" invisible="not suspension_id"/>
-
                         </group>
                     </group>
-
                     <group col="1">
                         <group string="Fechas">
                             <field name="fecha_declaracion"/>
                             <field name="fecha_baja_servicio"/>
                         </group>
-
                     </group>
                     <group>
                         <field name="observaciones" string="Observaciones" placeholder="Detalle de gestiones, condonaciones, acuerdos..."/>
                     </group>
-
-
                 </sheet>
                 <chatter/>
             </form>
         </field>
     </record>
 
-
-
-    <!-- ══════════════════════════════════════════════════════════
-         SEARCH VIEW
-    ══════════════════════════════════════════════════════════ -->
-    <record id="view_incobrable_search" model="ir.ui.view">
+    <record id="view_uncollectible_search" model="ir.ui.view">
         <field name="name">wigo.incobrable.search</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
@@ -105,11 +86,10 @@
                 <field name="codigo_cliente"/>
                 <field name="meses_adeudados"/>
                 <separator/>
-                <filter name="activos" string="En gestión" domain="[('state','=','activo')]"/>
+                <filter name="active" string="En gestión" domain="[('state','=','activo')]"/>
                 <filter name="in_cut" string="En corte" domain="[('state','=','in_cut')]"/>
-
-                <filter name="baja_incobrable" string="Baja Incobrable" domain="[('state','=','baja_incobrable')]"/>
-                <filter name="recuperados" string="Recuperados" domain="[('state','=','recuperado')]"/>
+                <filter name="write_off" string="Baja Incobrable" domain="[('state','=','baja_incobrable')]"/>
+                <filter name="recovered" string="Recuperados" domain="[('state','=','recuperado')]"/>
                 <separator/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
@@ -117,8 +97,7 @@
         </field>
     </record>
 
-    <!-- Pivot para reportes -->
-    <record id="view_incobrable_pivot" model="ir.ui.view">
+    <record id="view_uncollectible_pivot" model="ir.ui.view">
         <field name="name">wigo.incobrable.pivot</field>
         <field name="model">wigo.incobrable</field>
         <field name="arch" type="xml">
@@ -131,15 +110,12 @@
         </field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         ACTION
-    ══════════════════════════════════════════════════════════ -->
-    <record id="action_incobrable" model="ir.actions.act_window">
+    <record id="action_uncollectible" model="ir.actions.act_window">
         <field name="name">Incobrables</field>
         <field name="res_model">wigo.incobrable</field>
         <field name="view_mode">list,form,pivot</field>
-        <field name="view_id" ref="view_incobrable_list"/>
-        <field name="search_view_id" ref="view_incobrable_search"/>
+        <field name="view_id" ref="view_uncollectible_list"/>
+        <field name="search_view_id" ref="view_uncollectible_search"/>
         <field name="domain">[]</field>
         <field name="context">{'active_test': False, 'create': False, 'show_create': False}</field>
         <field name="help" type="html">
@@ -149,11 +125,10 @@
         </field>
     </record>
 
-    <!-- Variante del formulario sin opción de crear, usada por la Planilla/acciones donde no se debe permitir crear -->
-    <record id="view_incobrable_form_no_create" model="ir.ui.view">
+    <record id="view_uncollectible_form_no_create" model="ir.ui.view">
         <field name="name">wigo.incobrable.form.no.create</field>
         <field name="model">wigo.incobrable</field>
-        <field name="inherit_id" ref="wigo_cobranza.view_incobrable_form"/>
+        <field name="inherit_id" ref="wigo_cobranza.view_uncollectible_form"/>
         <field name="arch" type="xml">
             <xpath expr="/form" position="attributes">
                 <attribute name="create">false</attribute>
@@ -161,11 +136,11 @@
         </field>
     </record>
 
-    <record id="action_incobrable_baja" model="ir.actions.act_window">
+    <record id="action_uncollectible_write_off" model="ir.actions.act_window">
         <field name="name">Baja - Incobrables</field>
         <field name="res_model">wigo.incobrable</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_incobrable_search"/>
+        <field name="search_view_id" ref="view_uncollectible_search"/>
         <field name="domain">[('state','=','baja_incobrable')]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No hay bajas por deuda incobrable.</p>

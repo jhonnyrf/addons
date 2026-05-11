@@ -183,8 +183,8 @@ class ServiceCancellation(models.Model):
         if not domain:
             raise UserError('No hay referencia de cliente/contrato/servicio para abrir pagos de cobranza.')
 
-        list_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_list_new', raise_if_not_found=False)
-        form_view = self.env.ref('wigo_cobranza.view_pago_estado_contract_form_new', raise_if_not_found=False)
+        list_view = self.env.ref('wigo_cobranza.view_payment_state_list', raise_if_not_found=False)
+        form_view = self.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
         views = []
         if list_view:
             views.append((list_view.id, 'list'))
