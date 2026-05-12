@@ -8,7 +8,7 @@
     </record>
 
     <!-- Menú raíz -->
-    <menuitem id="menu_helpdesk_root" name="Helpdesk WigoFast" sequence="50" groups="base.group_user" web_icon="wigo_helpdesk,static/description/icon1.png"/>
+    <menuitem id="menu_helpdesk_root" name="Helpdesk" sequence="50" groups="base.group_user" web_icon="wigo_helpdesk,static/description/icon1.png"/>
 
     <!-- ── TICKETS ── -->
     <menuitem id="menu_helpdesk_tickets" name="Tickets" parent="menu_helpdesk_root" groups="base.group_user" sequence="10"/>
