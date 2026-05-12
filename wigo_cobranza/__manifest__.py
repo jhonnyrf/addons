@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Wigo Cobranza',
+    'name': 'Cobranza',
     'version': '19.0.1.0.7',
     'summary': 'Gestión de cobranza, estado de pago y flujo de mora/suspensión — Área Contabilidad',
     'description': """
@@ -16,6 +16,7 @@
     'author': 'Wigo / Asiscore',
     'category': 'Accounting',
     'license': 'LGPL-3',
+    'icon': '/wigo_cobranza/static/description/icon.png',
     'depends': ['base', 'mail', 'wigo_ftth', 'wigo_planes', 'customer_contract', 'wigo_crm'],
     'application': True,
     'installable': True,

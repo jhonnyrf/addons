@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
         <!-- Singleton de configuración SLA -->
         <record id="helpdesk_sla_config_default" model="helpdesk.sla.config">
-            <field name="name">Configuración SLA WigoFast</field>
+            <field name="name">Configuración SLA</field>
             <field name="ok_label">En tiempo</field>
             <field name="ok_icon">fa-check-circle</field>
             <field name="ok_color">#28a745</field>

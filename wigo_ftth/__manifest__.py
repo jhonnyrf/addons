@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Wigo FTTH',
+    'name': 'FTTH',
     'version': '19.0.2.0.0',
     'summary': 'Gestion de red GPON/FTTH — Topologia, ONUs, Ordenes de Trabajo, Ficha Tecnica y Reportes',
     'description': """
@@ -17,6 +17,7 @@
     'author': 'Wigo',
     'category': 'Technical',
     'license': 'LGPL-3',
+    'icon': '/wigo_ftth/static/description/icon.png',
     'depends': ['base', 'mail', 'contacts', 'crm', 'wigo_planes','hr'],
     'application': True,
     'installable': True,

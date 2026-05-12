@@ -69,51 +69,34 @@ def post_init_hook(env_or_cr, registry=None):
     try:
         # ── Seed de prioridades SLA ───────────────────────────────────────────────
         config = env['helpdesk.sla.config'].sudo().get_config()
-        priority_count = env['helpdesk.priority.sla'].search_count([
-            ('config_id', '=', config.id)
-        ])
+        PrioritySla = env['helpdesk.priority.sla'].sudo()
         
-        if priority_count == 0:
-            _logger.info("Creando prioridades SLA por defecto...")
+        # Buscar si ya existen las 5 prioridades necesarias
+        existing_names = set(PrioritySla.search([('config_id', '=', config.id)]).mapped('name'))
+        required_names = {'Muy Alta', 'Alta', 'Media', 'Baja', 'Crítica'}
+        
+        # Solo crear las que falten
+        missing_names = required_names - existing_names
+        
+        if missing_names:
+            _logger.info(f"Creando prioridades SLA faltantes: {missing_names}")
             for seq, nombre, color, horas, atencion in PRIORIDADES_DEFAULT:
-                try:
-                    env['helpdesk.priority.sla'].sudo().create({
-                        'config_id': config.id,
-                        'sequence': seq,
-                        'name': nombre,
-                        'color': color,
-                        'hours_limit': horas,
-                        'attention_time': atencion,
-                    })
-                    _logger.info(f"  ✓ Prioridad '{nombre}' creada")
-                except Exception as e:
-                    _logger.error(f"  ✗ Error al crear prioridad '{nombre}': {str(e)}")
-            
-            _logger.info("✓ Prioridades SLA creadas")
-        elif priority_count == 5:
-            _logger.info(f"✓ Ya existen {priority_count} prioridades SLA (correcto)")
+                if nombre in missing_names:
+                    try:
+                        PrioritySla.create({
+                            'config_id': config.id,
+                            'sequence': seq,
+                            'name': nombre,
+                            'color': color,
+                            'hours_limit': horas,
+                            'attention_time': atencion,
+                        })
+                        _logger.info(f"  ✓ Prioridad '{nombre}' creada")
+                    except Exception as e:
+                        _logger.error(f"  ✗ Error al crear prioridad '{nombre}': {str(e)}")
+            _logger.info("✓ Prioridades SLA completadas")
         else:
-            _logger.warning(f"⚠ Config tiene {priority_count} prioridades (esperaba 5). Recreando...")
-            try:
-                old = env['helpdesk.priority.sla'].sudo().search([
-                    ('config_id', '=', config.id)
-                ])
-                if old:
-                    old.unlink()
-                
-                for seq, nombre, color, horas, atencion in PRIORIDADES_DEFAULT:
-                    env['helpdesk.priority.sla'].sudo().create({
-                        'config_id': config.id,
-                        'sequence': seq,
-                        'name': nombre,
-                        'color': color,
-                        'hours_limit': horas,
-                        'attention_time': atencion,
-                    })
-                
-                _logger.info(f"✓ Prioridades SLA recreadas correctamente")
-            except Exception as e:
-                _logger.error(f"✗ Error recreando prioridades: {str(e)}")
+            _logger.info(f"✓ Ya existen las 5 prioridades SLA requeridas")
     
     except Exception as e:
         _logger.error(f"✗ Error en seed de prioridades SLA: {str(e)}")

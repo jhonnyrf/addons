@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <menuitem id="menu_wigo_ftth_root" name="Wigo FTTH" sequence="60" groups="base.group_user" web_icon="wigo_ftth,static/description/icon.png"/>
+    <menuitem id="menu_wigo_ftth_root" name="FTTH" sequence="60" groups="base.group_user" web_icon="wigo_ftth,static/description/icon.png"/>
 
     <!-- 1. ORDENES DE TRABAJO -->
     <menuitem id="menu_ftth_wo_root" name="Ordenes de Trabajo" parent="menu_wigo_ftth_root" sequence="10"/>

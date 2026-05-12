@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Wigo Planes',
+    'name': 'Planes',
     'version': '19.0.1.0.1',
     'summary': 'Gestión de Planes de Internet y Promociones Wigo',
     'description': """
@@ -13,6 +13,7 @@
     'author': 'Wigo',
     'category': 'Sales/CRM',
     'license': 'LGPL-3',
+    'icon': '/wigo_planes/static/description/icon.png',
     'depends': ['base', 'mail', 'contacts'],
     'application': True,
     'installable': True,

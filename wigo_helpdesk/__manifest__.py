@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Helpdesk WigoFast',
+    'name': 'Help Desk',
     'version': '19.0.5.6.0',
     'category': 'Services/Helpdesk',
-    'summary': 'Gestión de tickets de soporte para ISP WigoFast',
+    'summary': 'Gestión de tickets de soporte',
     'description': """
-        Módulo Helpdesk WigoFast (Odoo 19) — v5
+        Módulo HelpDesk (Odoo 19) — v5
         =========================================
         - Kanban simplificado: Nuevo / En Proceso / En Espera / Resuelto / Concluido
         - Tipo de Ticket: Reclamo/Incidente vs Solicitud (reemplaza Categoría)
@@ -25,9 +25,9 @@
         - Reportes PDF
         - Base de conocimiento
     """,
-    'author': 'WigoFast',
+    'author': 'HelpDesk',
     'license': 'LGPL-3',
-    'icon': '/wigo_helpdesk/static/description/icon.png',
+    'icon': '/wigo_helpdesk/static/description/icon1.png',
     'depends': ['base', 'mail', 'web', 'hr', 'customer_contract', 'wigo_ftth'],
     'post_init_hook': 'post_init_hook',
     'data': [
@@ -59,7 +59,6 @@
         'report/helpdesk_ticket_report_template.xml',
         'views/helpdesk_assign_wizard_views.xml',
         'views/helpdesk_close_wizard_views.xml',
-        'views/helpdesk_sla_advanced_wizard_views.xml',
         'views/ftth_client_service_inherit_views.xml',
     ],
     'assets': {

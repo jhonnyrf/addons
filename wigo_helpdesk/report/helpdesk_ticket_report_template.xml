@@ -323,7 +323,7 @@
                         <div class="row">
                             <div class="col-6 text-muted small">Generado por: <t t-esc="user.name"/>
                             </div>
-                            <div class="col-6 text-end text-muted small">WigoFast Helpdesk - <t t-esc="o.name"/>
+                            <div class="col-6 text-end text-muted small">HelpDesk - <t t-esc="o.name"/>
                             </div>
                         </div>
 

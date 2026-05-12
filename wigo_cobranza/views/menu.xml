@@ -4,7 +4,7 @@
      <!-- ══════════════════════════════════════════════════════════
          Menú principal: Cobranza
     ══════════════════════════════════════════════════════════ -->
-     <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.svg" groups="base.group_user"/>
+     <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.png" groups="base.group_user"/>
 
      <!-- ─── Gestión ──────────────────────────────────────────── -->
      <menuitem id="menu_cobranza_gestion" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>

@@ -1677,18 +1677,7 @@ class HelpdeskTicket(models.Model):
             'context': {'default_res_model_id': model_id, 'default_res_id': self.id},
         }
 
-    def action_open_sla_advanced_wizard(self):
-        self.ensure_one()
-        return {
-            'name': _('Configurar SLA del Ticket'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'helpdesk.sla.advanced.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_ticket_id': self.id,
-            },
-        }
+    # SLA es automático — no se permite edición manual por usuarios normales
 
     # =========================================================================
     # KANBAN GROUP EXPAND

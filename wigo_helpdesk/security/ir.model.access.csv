@@ -8,7 +8,6 @@ access_helpdesk_ticket_all,helpdesk.ticket all,model_helpdesk_ticket,,1,1,1,1
 access_helpdesk_knowledge_all,helpdesk.knowledge all,model_helpdesk_knowledge,,1,1,1,1
 access_helpdesk_assign_wizard_all,helpdesk.assign.wizard all,model_helpdesk_assign_wizard,,1,1,1,1
 access_helpdesk_close_wizard_all,helpdesk.close.wizard all,model_helpdesk_close_wizard,,1,1,1,1
-access_helpdesk_sla_advanced_wizard_all,helpdesk.sla.advanced.wizard all,model_helpdesk_sla_advanced_wizard,,1,1,1,1
 access_helpdesk_incident_type_user,helpdesk.incident.type user,model_helpdesk_incident_type,base.group_user,1,1,1,1
 access_helpdesk_sla_config_all,helpdesk.sla.config all,model_helpdesk_sla_config,,1,1,1,1
 access_helpdesk_visit_diagnosis_type_user,helpdesk.visit.diagnosis.type user,model_helpdesk_visit_diagnosis_type,base.group_user,1,1,1,1

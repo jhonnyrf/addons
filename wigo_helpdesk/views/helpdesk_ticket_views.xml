@@ -101,7 +101,9 @@
                     </group>
 
                     <div class="card p-3 mb-3 border shadow-sm">
-                        <h4 class="text-primary mb-3" style="font-weight: 700; font-size: 1.25rem;"><i class="fa fa-file-text-o me-2"/> CONTRATO DEL CLIENTE</h4>
+                        <h4 class="text-primary mb-3" style="font-weight: 700; font-size: 1.25rem;">
+                            <i class="fa fa-file-text-o me-2"/>
+ CONTRATO DEL CLIENTE</h4>
                         <div style="font-size: 1.15rem; font-weight: 600;">
                             <group>
                                 <field name="contract_id" string="Selecciona cliente" options="{'no_create': True}" help="Selecciona contrato + cliente (solo firmados o activos)."/>
@@ -113,7 +115,9 @@
                     <div class="wigo_sla_section card-body p-3">
                         <!-- Título con Estado a la derecha -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0"><i class="fa fa-clock-o me-1"/> Fechas y SLA</h6>
+                            <h6 class="mb-0">
+                                <i class="fa fa-clock-o me-1"/>
+ Fechas y SLA</h6>
                             <field name="sla_status" widget="badge" nolabel="1" decoration-success="sla_status == 'ok'" decoration-warning="sla_status == 'warning'" decoration-danger="sla_status == 'danger'" decoration-muted="sla_status == 'closed'"/>
                         </div>
 
@@ -164,11 +168,7 @@
                             </div>
                         </div>
 
-                        <!-- Botón Configurar SLA -->
-                        <div class="mb-2">
-                            <button name="action_open_sla_advanced_wizard" type="object" string="Configurar SLA" icon="fa-cog" class="btn btn-sm btn-secondary" invisible="sla_start_datetime or sla_deadline"/>
-                            <button name="action_open_sla_advanced_wizard" type="object" string="Editar SLA" icon="fa-pencil" class="btn btn-sm btn-secondary" invisible="not sla_start_datetime and not sla_deadline"/>
-                        </div>
+                        <!-- Botones de SLA removidos - SLA es automático solo -->
                     </div>
 
                     <notebook>
@@ -226,11 +226,13 @@
                                     <field name="requires_visit" string="Requiere visita técnica" widget="boolean_toggle"/>
                                 </group>
                             </div>
-                            
+
                             <div invisible="not requires_visit" class="row px-2">
                                 <div class="col-12">
                                     <div class="p-4 border rounded shadow-sm">
-                                        <h5 class="text-info mb-4" style="font-weight: 600;"><i class="fa fa-calendar-check-o me-2"/> Detalles de la Visita Técnica</h5>
+                                        <h5 class="text-info mb-4" style="font-weight: 600;">
+                                            <i class="fa fa-calendar-check-o me-2"/>
+ Detalles de la Visita Técnica</h5>
                                         <group>
                                             <group>
                                                 <field name="technician_id" string="Técnico asignado" widget="many2one_avatar_employee" required="requires_visit"/>
@@ -254,7 +256,9 @@
                             <div class="row mt-3 px-2">
                                 <div class="col-md-6 pe-md-3">
                                     <div class="p-3 border rounded shadow-sm h-100">
-                                        <h5 class="text-primary mb-3" style="font-weight: 600;"><i class="fa fa-search me-2"/> Diagnóstico Técnico</h5>
+                                        <h5 class="text-primary mb-3" style="font-weight: 600;">
+                                            <i class="fa fa-search me-2"/>
+ Diagnóstico Técnico</h5>
                                         <group>
                                             <field name="resolution_diagnosis_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_diagnosis_type_form'}"/>
                                             <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Describe aquí los hallazgos y el diagnóstico extenso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
@@ -263,7 +267,9 @@
                                 </div>
                                 <div class="col-md-6 ps-md-3 mt-3 mt-md-0">
                                     <div class="p-3 border rounded shadow-sm h-100">
-                                        <h5 class="text-success mb-3" style="font-weight: 600;"><i class="fa fa-wrench me-2"/> Solución Aplicada</h5>
+                                        <h5 class="text-success mb-3" style="font-weight: 600;">
+                                            <i class="fa fa-wrench me-2"/>
+ Solución Aplicada</h5>
                                         <group>
                                             <field name="resolution_solution_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_solution_type_form'}"/>
                                             <field name="resolution_solution_detail" nolabel="1" placeholder="Describe aquí la solución que aplicaste paso a paso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
@@ -271,11 +277,13 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="row mt-4 px-2">
                                 <div class="col-12">
                                     <div class="p-3 border rounded shadow-sm" style="border-left: 4px solid #ffc107 !important;">
-                                        <h5 class="text-warning mb-2" style="font-weight: 600;"><i class="fa fa-book me-2"/> Base de Conocimiento</h5>
+                                        <h5 class="text-warning mb-2" style="font-weight: 600;">
+                                            <i class="fa fa-book me-2"/>
+ Base de Conocimiento</h5>
                                         <p class="text-muted small mb-3">Vincula un artículo de la Wiki/Base de Conocimientos si te sirvió de guía o si tu solución puede documentarse para el futuro.</p>
                                         <group>
                                             <field name="knowledge_id" string="Artículo relacionado"/>
@@ -332,7 +340,7 @@
                 <field name="sla_status" optional="show" string="SLA" decoration-danger="sla_status == 'danger'" decoration-warning="sla_status == 'warning'" decoration-success="sla_status == 'ok'" decoration-muted="sla_status == 'closed'"/>
                 <field name="requires_visit" optional="hide"/>
                 <field name="postventa_done" optional="hide"/>
-                                        <field name="satisfaction" string="Satisfacción" readonly="1"/>
+                <field name="satisfaction" string="Satisfacción" readonly="1"/>
                 <field name="is_escalated" optional="hide"/>
                 <field name="create_date" optional="hide"/>
                 <field name="is_closed" column_invisible="True"/>
@@ -399,7 +407,7 @@
                                 <t t-esc="record.contract_id.value"/>
                             </t>
                         </div>
-                        
+
                         <t t-if="!record.contract_id.value and record.customer_name.value">
                             <div class="small mt-1 fw-semibold text-truncate">
                                 <i class="fa fa-user-circle-o text-muted"/>
