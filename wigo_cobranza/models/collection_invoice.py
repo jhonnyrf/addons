@@ -1,21 +1,13 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
-from odoo.exceptions import UserError, ValidationError
 
 
 class WigoFacturaCobranza(models.Model):
-    """
-    Registro de factura vinculada a un pago de cobranza.
-    Complementa el registro de pago con datos de facturación
-    sin tocar el sistema SIN/SIAT.
-    """
     _name = 'wigo.factura.cobranza'
-    _description = 'Factura de Cobranza'
+    _description = 'Collection Invoice'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'fecha_emision desc'
     _rec_name = 'numero_factura'
 
-    # ── Identificación ───────────────────────────────────────────
     numero_factura = fields.Char(
         string='Nº Factura', required=True, tracking=True, index=True,
     )
@@ -31,15 +23,11 @@ class WigoFacturaCobranza(models.Model):
         required=True, ondelete='restrict', tracking=True,
     )
     contract_id = fields.Many2one(
-        'customer.contract', string='Contrato',
-        tracking=True,
+        'customer.contract', string='Contrato', tracking=True,
     )
     codigo_cliente = fields.Char(
-        string='Código CF',
-        compute='_compute_codigo', store=True,
+        string='Código CF', compute='_compute_codigo', store=True,
     )
-
-    # ── Datos del cliente (para factura) ────────────────────────
     razon_social = fields.Char(
         string='Razón social / Nombre', required=True,
         compute='_compute_datos_factura', store=True, readonly=False,
@@ -48,8 +36,6 @@ class WigoFacturaCobranza(models.Model):
         string='NIT / CI',
         compute='_compute_datos_factura', store=True, readonly=False,
     )
-
-    # ── Montos ──────────────────────────────────────────────────
     fecha_emision = fields.Date(
         string='Fecha de emisión', required=True,
         default=lambda self: fields.Date.context_today(self), tracking=True,
@@ -67,24 +53,18 @@ class WigoFacturaCobranza(models.Model):
         string='Monto neto (Bs)',
         compute='_compute_monto_neto', store=True,
     )
-
-    # ── Estado ──────────────────────────────────────────────────
     state = fields.Selection([
         ('pendiente', 'Pendiente'),
         ('emitido', 'Emitido'),
         ('anulada', 'Anulada'),
     ], string='Estado', default='pendiente', required=True, tracking=True, index=True)
-
-    # ── Observaciones ────────────────────────────────────────────
     notas = fields.Text(string='Notas')
 
     @api.depends('contract_id', 'pago_id')
     def _compute_codigo(self):
         for rec in self:
             rec.codigo_cliente = (
-                rec.pago_id.codigo_cliente or
-                rec.contract_id.name or
-                False
+                rec.pago_id.codigo_cliente or rec.contract_id.name or False
             )
 
     @api.depends('partner_id')
@@ -94,8 +74,7 @@ class WigoFacturaCobranza(models.Model):
                 rec.razon_social = rec.partner_id.name or ''
                 rec.nit_ci = (
                     getattr(rec.partner_id, 'ci', False) or
-                    getattr(rec.partner_id, 'vat', False) or
-                    ''
+                    getattr(rec.partner_id, 'vat', False) or ''
                 )
             else:
                 rec.razon_social = ''
@@ -109,25 +88,23 @@ class WigoFacturaCobranza(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        # Al guardar la factura pasa a estado emitido y envía notificación.
         for rec in records.filtered(lambda r: r.state != 'anulada'):
             rec.write({'state': 'emitido'})
             self.env['bus.bus']._sendone(
                 self.env.user.partner_id,
                 'simple_notification',
                 {
-                    'title': '✓ Factura Emitida',
+                    'title': 'Factura Emitida',
                     'message': f'Factura {rec.numero_factura} emitida correctamente',
                     'sticky': False,
                 }
             )
-        
         for rec in records.filtered(lambda r: r.state == 'anulada'):
             self.env['bus.bus']._sendone(
                 self.env.user.partner_id,
                 'simple_notification',
                 {
-                    'title': '✗ Factura Anulada',
+                    'title': 'Factura Anulada',
                     'message': f'Factura {rec.numero_factura} ha sido anulada',
                     'sticky': False,
                 }
@@ -149,7 +126,6 @@ class WigoFacturaCobranza(models.Model):
             rec.state = 'emitido'
 
     def action_emitir(self):
-        """Transiciona la factura a emitido y cierra el diálogo."""
         self.ensure_one()
         self.state = 'emitido'
         return {'type': 'ir.actions.act_window_close'}

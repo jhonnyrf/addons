@@ -2,9 +2,9 @@
 <odoo>
 
     <!--
-        Sub-template: UNA COPIA del recibo.
-        Se llama dos veces desde el template principal (original + duplicado).
-        Todas las variables (cp, cs, cfg, o, firma_*, etc.) vienen del caller.
+    Sub-template: A COPY of the receipt.
+    It is called twice from the main template (original + duplicate).
+    All variables (cp, cs, cfg, o, firma_*, etc.) come from the caller.
     -->
     <template id="report_recibo_una_copia">
         <div t-attf-style="
@@ -17,7 +17,7 @@
             background:#{cfr};
         ">
 
-            <!-- ══ ENCABEZADO ══ -->
+
             <div t-attf-style="#{hdr_bg} color:#{hdr_txt}; padding:8px 14px;">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
@@ -36,10 +36,12 @@
                             <div style="font-size:9px; margin-top:2px; opacity:0.9; line-height:1.4;">
                                 <t t-out="cfg.empresa_direccion"/>
                                 <t t-if="cfg.empresa_ciudad">
-                                    <br/><t t-out="cfg.empresa_ciudad"/>
+                                    <br/>
+                                    <t t-out="cfg.empresa_ciudad"/>
                                 </t>
                                 <t t-if="cfg.empresa_celular">
-                                    <br/>CEL: <t t-out="cfg.empresa_celular"/>
+                                    <br/>
+CEL: <t t-out="cfg.empresa_celular"/>
                                 </t>
                                 <t t-if="cfg.empresa_nit">
                                     &#160;|&#160; NIT: <t t-out="cfg.empresa_nit"/>
@@ -47,14 +49,11 @@
                             </div>
                         </td>
                         <td valign="top" width="40%" align="right">
-                            <!-- Logo: prioridad al logo del config, luego el de la empresa -->
                             <t t-if="cfg.logo">
-                                <img t-att-src="image_data_uri(cfg.logo)"
-                                     t-attf-style="max-height:#{la}px; max-width:#{int(la)*2}px; display:block; margin-left:auto;"/>
+                                <img t-att-src="image_data_uri(cfg.logo)" t-attf-style="max-height:#{la}px; max-width:#{int(la)*2}px; display:block; margin-left:auto;"/>
                             </t>
                             <t t-elif="company.logo">
-                                <img t-att-src="image_data_uri(company.logo)"
-                                     t-attf-style="max-height:#{la}px; max-width:#{int(la)*2}px; display:block; margin-left:auto;"/>
+                                <img t-att-src="image_data_uri(company.logo)" t-attf-style="max-height:#{la}px; max-width:#{int(la)*2}px; display:block; margin-left:auto;"/>
                             </t>
                             <div t-attf-style="font-size:16px; font-weight:bold; margin-top:4px; text-align:right;">
                                 N&#176; <t t-out="o.numero"/>
@@ -64,12 +63,9 @@
                 </table>
             </div>
 
-            <!-- ══ CUERPO ══ -->
             <div style="padding:8px 14px;">
 
-                <!-- Datos cliente + fecha -->
-                <table width="100%" cellpadding="0" cellspacing="0"
-                       t-attf-style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #{cb};">
+                <table width="100%" cellpadding="0" cellspacing="0" t-attf-style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #{cb};">
                     <tr>
                         <td width="60%" valign="top">
                             <div t-attf-style="font-size:9px; text-transform:uppercase; color:#{cts}; letter-spacing:0.8px; margin-bottom:1px;">
@@ -98,9 +94,7 @@
                     </tr>
                 </table>
 
-                <!-- Tabla de detalle -->
-                <table width="100%" cellpadding="0" cellspacing="0"
-                       t-attf-style="border-collapse:collapse; font-size:#{fb}px; margin-bottom:6px;">
+                <table width="100%" cellpadding="0" cellspacing="0" t-attf-style="border-collapse:collapse; font-size:#{fb}px; margin-bottom:6px;">
                     <thead>
                         <tr t-attf-style="background:#{cp}; color:#fff;">
                             <th style="padding:5px 8px; text-align:left;">
@@ -112,7 +106,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Fila: descripción del servicio -->
                         <tr>
                             <td t-attf-style="padding:6px 8px; border-bottom:1px solid #{cb};">
                                 <t t-out="o.descripcion"/>
@@ -121,7 +114,6 @@
                                 <t t-out="o.monto" t-options="{'widget':'float','precision':2}"/>
                             </td>
                         </tr>
-                        <!-- Fila: código de cliente -->
                         <t t-if="cfg.mostrar_columna_codigo">
                             <tr>
                                 <td t-attf-style="padding:4px 10px; font-size:10px; color:#{cts}; border-bottom:1px solid #{cb};">
@@ -130,7 +122,6 @@
                                 <td t-attf-style="border-bottom:1px solid #{cb};"></td>
                             </tr>
                         </t>
-                        <!-- Fila: SON (monto en letras) + TOTAL en la misma fila -->
                         <tr t-attf-style="background:#{cfm};">
                             <td t-attf-style="padding:5px 8px; font-size:10px; color:#{ctp};">
                                 <span t-attf-style="font-weight:bold; text-transform:uppercase;">SON: </span>
@@ -143,7 +134,6 @@
                     </tbody>
                 </table>
 
-                <!-- Banda decorativa -->
                 <t t-if="cfg.mostrar_banda_decorativa">
                     <div t-attf-style="background:#{cp}; height:#{cfg.ancho_banda or 8}px; border-radius:2px; margin:6px 0 8px 0;"/>
                 </t>
@@ -151,12 +141,9 @@
                     <div style="margin-bottom:10px;"/>
                 </t>
 
-                <!-- ══ SECCIÓN DE FIRMAS ══ -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
                     <tr>
-                        <!-- Firma empresa -->
                         <td width="44%" valign="bottom">
-                            <!-- Espacio para firma manuscrita -->
                             <div style="height:22px;"></div>
                             <div t-attf-style="border-top:1px solid #{cb}; padding-top:6px; text-align:center;">
                                 <div style="font-weight:bold; font-size:11px;">
@@ -175,9 +162,7 @@
 
                         <td width="12%"/>
 
-                        <!-- Entregue conforme -->
                         <td width="44%" valign="bottom">
-                            <!-- Espacio para firma manuscrita -->
                             <div style="height:22px;"></div>
                             <div t-attf-style="border-top:1px solid #{cb}; padding-top:6px; text-align:center;">
                                 <div style="font-weight:bold; font-size:11px;">ENTREGUE CONFORME</div>
@@ -192,7 +177,6 @@
                     </tr>
                 </table>
 
-                <!-- Pie de página -->
                 <t t-if="cfg.mostrar_pie and cfg.texto_pie">
                     <div t-attf-style="text-align:center; margin-top:14px; font-size:10px;
                                            color:#{cts}; border-top:1px dashed #{cb}; padding-top:8px;">
@@ -200,13 +184,13 @@
                     </div>
                 </t>
 
-            </div><!-- /cuerpo -->
+            </div>
         </div>
     </template>
 
 
     <!-- ════════════════════════════════════════════════════════════
-         TEMPLATE PRINCIPAL: Original + Copia (idénticos)
+         MAIN TEMPLATE: Original + Copy (identical)
     ════════════════════════════════════════════════════════════ -->
     <template id="report_recibo_cobro_document">
         <t t-call="web.html_container">
@@ -222,143 +206,150 @@
 
             <t t-foreach="docs" t-as="o">
 
-                <!-- Variables comunes -->
-                <t t-set="cfg"         t-value="o.env['wigo.recibo.config'].get_config()"/>
-                <t t-set="company"     t-value="o.env.company"/>
-                <t t-set="firma_nombre"  t-value="o.firma_nombre_override or cfg.firma_nombre"/>
-                <t t-set="firma_cargo"   t-value="o.firma_cargo_override  or cfg.firma_cargo"/>
+                <t t-set="cfg" t-value="o.env['wigo.recibo.config'].get_config()"/>
+                <t t-set="company" t-value="o.env.company"/>
+                <t t-set="firma_nombre" t-value="o.firma_nombre_override or cfg.firma_nombre"/>
+                <t t-set="firma_cargo" t-value="o.firma_cargo_override  or cfg.firma_cargo"/>
                 <t t-set="firma_celular" t-value="o.firma_celular_override or cfg.firma_celular"/>
 
-                <!-- Colores -->
-                <t t-set="cp"  t-value="cfg.color_primario          or '#cc0000'"/>
-                <t t-set="cs"  t-value="cfg.color_secundario        or '#990000'"/>
+                <t t-set="cp" t-value="cfg.color_primario          or '#cc0000'"/>
+                <t t-set="cs" t-value="cfg.color_secundario        or '#990000'"/>
                 <t t-set="cht" t-value="cfg.color_texto_header      or '#ffffff'"/>
                 <t t-set="cfr" t-value="cfg.color_fondo_recibo      or '#ffffff'"/>
                 <t t-set="ctp" t-value="cfg.color_texto_principal   or '#222222'"/>
                 <t t-set="cts" t-value="cfg.color_texto_secundario  or '#666666'"/>
-                <t t-set="cb"  t-value="cfg.color_borde             or '#cccccc'"/>
+                <t t-set="cb" t-value="cfg.color_borde             or '#cccccc'"/>
                 <t t-set="cfm" t-value="cfg.color_fondo_monto       or '#f5f5f5'"/>
 
-                <!-- Tipografía y layout -->
-                <t t-set="ff"  t-value="cfg.fuente_familia          or 'Arial, sans-serif'"/>
-                <t t-set="fb"  t-value="cfg.tamano_fuente_base      or 12"/>
-                <t t-set="ft"  t-value="cfg.tamano_titulo           or 22"/>
-                <t t-set="fe"  t-value="cfg.tamano_empresa          or 14"/>
+                <t t-set="ff" t-value="cfg.fuente_familia          or 'Arial, sans-serif'"/>
+                <t t-set="fb" t-value="cfg.tamano_fuente_base      or 12"/>
+                <t t-set="ft" t-value="cfg.tamano_titulo           or 22"/>
+                <t t-set="fe" t-value="cfg.tamano_empresa          or 14"/>
                 <t t-set="fnb" t-value="'bold' if cfg.fuente_titulo_negrita else 'normal'"/>
-                <t t-set="rr"  t-value="cfg.border_radius           or 0"/>
-                <t t-set="la"  t-value="cfg.logo_ancho              or 90"/>
-                <t t-set="eh"  t-value="cfg.estilo_header           or 'gradiente'"/>
+                <t t-set="rr" t-value="cfg.border_radius           or 0"/>
+                <t t-set="la" t-value="cfg.logo_ancho              or 90"/>
+                <t t-set="eh" t-value="cfg.estilo_header           or 'gradiente'"/>
 
-                <!-- Header background -->
                 <t t-set="hdr_bg">
-                    <t t-if="eh == 'gradiente'">background:linear-gradient(135deg,<t t-out="cp"/>,<t t-out="cs"/>);</t>
-                    <t t-elif="eh == 'solido'">background:<t t-out="cp"/>;</t>
-                    <t t-elif="eh == 'linea'">background:transparent;border-bottom:3px solid <t t-out="cp"/>;</t>
-                    <t t-else="">background:transparent;</t>
+                    <t t-if="eh == 'gradiente'">background:linear-gradient(135deg,<t t-out="cp"/>
+,                    <t t-out="cs"/>
+);</t>
+                <t t-elif="eh == 'solido'">background:<t t-out="cp"/>
+;</t>
+                <t t-elif="eh == 'linea'">background:transparent;border-bottom:3px solid <t t-out="cp"/>
+;</t>
+                <t t-else="">background:transparent;</t>
+            </t>
+            <t t-set="hdr_txt">
+                <t t-if="eh == 'linea' or eh == 'sin_fondo'">
+                    <t t-out="ctp"/>
                 </t>
-                <t t-set="hdr_txt">
-                    <t t-if="eh == 'linea' or eh == 'sin_fondo'"><t t-out="ctp"/></t>
-                    <t t-else=""><t t-out="cht"/></t>
+                <t t-else="">
+                    <t t-out="cht"/>
                 </t>
+            </t>
 
-                <!-- Wrapper de página -->
-                <div t-attf-style="font-family:#{ff}; font-size:#{fb}px; color:#{ctp}; max-width:780px; margin:auto; padding:2px 4px;">
+            <div t-attf-style="font-family:#{ff}; font-size:#{fb}px; color:#{ctp}; max-width:780px; margin:auto; padding:2px 4px;">
 
-                    <!-- ═══ COPIA 1: ORIGINAL ═══ -->
-                    <t t-call="wigo_cobranza.report_recibo_una_copia"/>
+                <t t-call="wigo_cobranza.report_recibo_una_copia"/>
 
-                    <!-- ═══ LÍNEA DE CORTE ═══ -->
-                    <div t-attf-style="text-align:center; font-size:9px; margin:4px 0;
+                <div t-attf-style="text-align:center; font-size:9px; margin:4px 0;
                                            color:#{cts}; border-top:1px dashed #{cb};
                                            border-bottom:1px dashed #{cb}; padding:2px 0;">
                         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                    </div>
-
-                    <!-- ═══ COPIA 2: DUPLICADO (idéntico) ═══ -->
-                    <t t-call="wigo_cobranza.report_recibo_una_copia"/>
-
                 </div>
+
+                <t t-call="wigo_cobranza.report_recibo_una_copia"/>
+
+            </div>
+        </t>
+    </t>
+</template>
+
+
+<!-- ════════════════════════════════════════════════════════════
+      TEMPLATE: Only one copy (for individual printing)
+    ════════════════════════════════════════════════════════════ -->
+<template id="report_recibo_only_original">
+    <t t-call="web.html_container">
+        <meta charset="utf-8"/>
+        <t t-foreach="docs" t-as="o">
+            <t t-set="cfg" t-value="o.env['wigo.recibo.config'].get_config()"/>
+            <t t-set="company" t-value="o.env.company"/>
+            <t t-set="firma_nombre" t-value="o.firma_nombre_override or cfg.firma_nombre"/>
+            <t t-set="firma_cargo" t-value="o.firma_cargo_override  or cfg.firma_cargo"/>
+            <t t-set="firma_celular" t-value="o.firma_celular_override or cfg.firma_celular"/>
+            <t t-set="cp" t-value="cfg.color_primario          or '#cc0000'"/>
+            <t t-set="cs" t-value="cfg.color_secundario        or '#990000'"/>
+            <t t-set="cht" t-value="cfg.color_texto_header      or '#ffffff'"/>
+            <t t-set="cfr" t-value="cfg.color_fondo_recibo      or '#ffffff'"/>
+            <t t-set="ctp" t-value="cfg.color_texto_principal   or '#222222'"/>
+            <t t-set="cts" t-value="cfg.color_texto_secundario  or '#666666'"/>
+            <t t-set="cb" t-value="cfg.color_borde             or '#cccccc'"/>
+            <t t-set="cfm" t-value="cfg.color_fondo_monto       or '#f5f5f5'"/>
+            <t t-set="ff" t-value="cfg.fuente_familia          or 'Arial, sans-serif'"/>
+            <t t-set="fb" t-value="cfg.tamano_fuente_base      or 12"/>
+            <t t-set="ft" t-value="cfg.tamano_titulo           or 22"/>
+            <t t-set="fe" t-value="cfg.tamano_empresa          or 14"/>
+            <t t-set="fnb" t-value="'bold' if cfg.fuente_titulo_negrita else 'normal'"/>
+            <t t-set="rr" t-value="cfg.border_radius           or 0"/>
+            <t t-set="la" t-value="cfg.logo_ancho              or 90"/>
+            <t t-set="eh" t-value="cfg.estilo_header           or 'gradiente'"/>
+            <t t-set="hdr_bg">
+                <t t-if="eh == 'gradiente'">background:linear-gradient(135deg,<t t-out="cp"/>
+,                <t t-out="cs"/>
+);</t>
+            <t t-elif="eh == 'solido'">background:<t t-out="cp"/>
+;</t>
+            <t t-elif="eh == 'linea'">background:transparent;border-bottom:3px solid <t t-out="cp"/>
+;</t>
+            <t t-else="">background:transparent;</t>
+        </t>
+        <t t-set="hdr_txt">
+            <t t-if="eh == 'linea' or eh == 'sin_fondo'">
+                <t t-out="ctp"/>
+            </t>
+            <t t-else="">
+                <t t-out="cht"/>
             </t>
         </t>
-    </template>
+        <div t-attf-style="font-family:#{ff}; font-size:#{fb}px; color:#{ctp}; max-width:780px; margin:auto; padding:6px;">
+            <t t-call="wigo_cobranza.report_recibo_una_copia"/>
+        </div>
+    </t>
+</t>
+</template>
 
 
-    <!-- ════════════════════════════════════════════════════════════
-         TEMPLATE: Solo una copia (para imprimir individual)
+<!-- ════════════════════════════════════════════════════════════
+         REPORT RECORDS
     ════════════════════════════════════════════════════════════ -->
-    <template id="report_recibo_only_original">
-        <t t-call="web.html_container">
-            <meta charset="utf-8"/>
-            <t t-foreach="docs" t-as="o">
-                <t t-set="cfg"         t-value="o.env['wigo.recibo.config'].get_config()"/>
-                <t t-set="company"     t-value="o.env.company"/>
-                <t t-set="firma_nombre"  t-value="o.firma_nombre_override or cfg.firma_nombre"/>
-                <t t-set="firma_cargo"   t-value="o.firma_cargo_override  or cfg.firma_cargo"/>
-                <t t-set="firma_celular" t-value="o.firma_celular_override or cfg.firma_celular"/>
-                <t t-set="cp"  t-value="cfg.color_primario          or '#cc0000'"/>
-                <t t-set="cs"  t-value="cfg.color_secundario        or '#990000'"/>
-                <t t-set="cht" t-value="cfg.color_texto_header      or '#ffffff'"/>
-                <t t-set="cfr" t-value="cfg.color_fondo_recibo      or '#ffffff'"/>
-                <t t-set="ctp" t-value="cfg.color_texto_principal   or '#222222'"/>
-                <t t-set="cts" t-value="cfg.color_texto_secundario  or '#666666'"/>
-                <t t-set="cb"  t-value="cfg.color_borde             or '#cccccc'"/>
-                <t t-set="cfm" t-value="cfg.color_fondo_monto       or '#f5f5f5'"/>
-                <t t-set="ff"  t-value="cfg.fuente_familia          or 'Arial, sans-serif'"/>
-                <t t-set="fb"  t-value="cfg.tamano_fuente_base      or 12"/>
-                <t t-set="ft"  t-value="cfg.tamano_titulo           or 22"/>
-                <t t-set="fe"  t-value="cfg.tamano_empresa          or 14"/>
-                <t t-set="fnb" t-value="'bold' if cfg.fuente_titulo_negrita else 'normal'"/>
-                <t t-set="rr"  t-value="cfg.border_radius           or 0"/>
-                <t t-set="la"  t-value="cfg.logo_ancho              or 90"/>
-                <t t-set="eh"  t-value="cfg.estilo_header           or 'gradiente'"/>
-                <t t-set="hdr_bg">
-                    <t t-if="eh == 'gradiente'">background:linear-gradient(135deg,<t t-out="cp"/>,<t t-out="cs"/>);</t>
-                    <t t-elif="eh == 'solido'">background:<t t-out="cp"/>;</t>
-                    <t t-elif="eh == 'linea'">background:transparent;border-bottom:3px solid <t t-out="cp"/>;</t>
-                    <t t-else="">background:transparent;</t>
-                </t>
-                <t t-set="hdr_txt">
-                    <t t-if="eh == 'linea' or eh == 'sin_fondo'"><t t-out="ctp"/></t>
-                    <t t-else=""><t t-out="cht"/></t>
-                </t>
-                <div t-attf-style="font-family:#{ff}; font-size:#{fb}px; color:#{ctp}; max-width:780px; margin:auto; padding:6px;">
-                    <t t-call="wigo_cobranza.report_recibo_una_copia"/>
-                </div>
-            </t>
-        </t>
-    </template>
+<record id="action_report_recibo_cobro" model="ir.actions.report">
+<field name="name">Recibo de Cobro</field>
+<field name="model">wigo.recibo.cobro</field>
+<field name="report_type">qweb-pdf</field>
+<field name="report_name">wigo_cobranza.report_recibo_cobro_document</field>
+<field name="report_file">wigo_cobranza.report_recibo_cobro_document</field>
+<field name="paperformat_id" ref="wigo_cobranza.paperformat_recibo_cobro"/>
+<field name="binding_model_id" ref="model_wigo_recibo_cobro"/>
+<field name="binding_type">report</field>
+</record>
 
+<record id="action_report_recibo_cobro_original" model="ir.actions.report">
+<field name="name">Recibo de Cobro — Solo Original</field>
+<field name="model">wigo.recibo.cobro</field>
+<field name="report_type">qweb-pdf</field>
+<field name="report_name">wigo_cobranza.report_recibo_only_original</field>
+<field name="report_file">wigo_cobranza.report_recibo_only_original</field>
+<field name="paperformat_id" ref="wigo_cobranza.paperformat_recibo_cobro"/>
+</record>
 
-    <!-- ════════════════════════════════════════════════════════════
-         REGISTROS DE REPORTE
-    ════════════════════════════════════════════════════════════ -->
-    <record id="action_report_recibo_cobro" model="ir.actions.report">
-        <field name="name">Recibo de Cobro</field>
-        <field name="model">wigo.recibo.cobro</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">wigo_cobranza.report_recibo_cobro_document</field>
-        <field name="report_file">wigo_cobranza.report_recibo_cobro_document</field>
-        <field name="paperformat_id" ref="wigo_cobranza.paperformat_recibo_cobro"/>
-        <field name="binding_model_id" ref="model_wigo_recibo_cobro"/>
-        <field name="binding_type">report</field>
-    </record>
-
-    <record id="action_report_recibo_cobro_original" model="ir.actions.report">
-        <field name="name">Recibo de Cobro — Solo Original</field>
-        <field name="model">wigo.recibo.cobro</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">wigo_cobranza.report_recibo_only_original</field>
-        <field name="report_file">wigo_cobranza.report_recibo_only_original</field>
-        <field name="paperformat_id" ref="wigo_cobranza.paperformat_recibo_cobro"/>
-    </record>
-
-    <!-- El reporte "copia cliente" ahora usa el mismo template que original -->
-    <record id="action_report_recibo_cobro_copia" model="ir.actions.report">
-        <field name="name">Recibo de Cobro — Copia</field>
-        <field name="model">wigo.recibo.cobro</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">wigo_cobranza.report_recibo_only_original</field>
-        <field name="report_file">wigo_cobranza.report_recibo_only_original</field>
-    </record>
+<record id="action_report_recibo_cobro_copia" model="ir.actions.report">
+<field name="name">Recibo de Cobro — Copia</field>
+<field name="model">wigo.recibo.cobro</field>
+<field name="report_type">qweb-pdf</field>
+<field name="report_name">wigo_cobranza.report_recibo_only_original</field>
+<field name="report_file">wigo_cobranza.report_recibo_only_original</field>
+</record>
 
 </odoo>

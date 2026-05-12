@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ── Grupo: Cobranza — escritura completa ───────────────── -->
+    <!-- Group: Collections — full write access -->
     <record id="group_cobranza" model="res.groups">
         <field name="name">Cobranza</field>
-        <field name="comment">Área de cobranza (Dania). Puede registrar y modificar pagos, estados y gestiones de mora.</field>
+        <field name="comment">Collections area (Dania). Can record and modify payments, payment states, and collection actions.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-    <!-- ── Grupo: Contabilidad — escritura completa ───────────── -->
+    <!-- Group: Accounting — full write access -->
     <record id="group_contabilidad" model="res.groups">
         <field name="name">Contabilidad</field>
-        <field name="comment">Responsable de contabilidad. Acceso completo a cobranza, mora, bajas y reportes.</field>
+        <field name="comment">Accounting responsible. Full access to collections, delinquencies, deactivations, and reports.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-    <!-- ── Grupo: Solo lectura cobranza (Comercial / Técnica) ─── -->
+    <!-- Group: Collections Read-Only (Commercial / Technical) -->
     <record id="group_cobranza_readonly" model="res.groups">
         <field name="name">Cobranza Solo lectura</field>
-        <field name="comment">Acceso de solo lectura al estado de pago del cliente. Para Comercial y Técnica.</field>
+        <field name="comment">Read-only access to customer payment status. For Commercial and Technical teams.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 

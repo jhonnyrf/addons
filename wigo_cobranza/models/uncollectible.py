@@ -1,28 +1,21 @@
-# -*- coding: utf-8 -*-
 from datetime import date
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
 class WigoIncobrable(models.Model):
-    """
-    Registro de deudas declaradas incobrables por Contabilidad.
-    Un cliente puede tener varios registros (uno por período adeudado).
-    """
     _name = 'wigo.incobrable'
-    _description = 'Deuda Incobrable'
+    _description = 'Uncollectible Debt'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'fecha_declaracion desc'
     _rec_name = 'display_name'
 
-    # ── Identificación ───────────────────────────────────────────
     partner_id = fields.Many2one(
         'res.partner', string='Cliente', required=True,
         ondelete='restrict', tracking=True, index=True,
     )
     contract_id = fields.Many2one(
-        'customer.contract', string='Contrato',
-        tracking=True,
+        'customer.contract', string='Contrato', tracking=True,
     )
     contract_phone = fields.Char(
         string='Teléfono del contrato',
@@ -30,30 +23,25 @@ class WigoIncobrable(models.Model):
     )
     contract_mobile = fields.Char(
         string='Móvil del contrato',
-        related='contract_id.mobile', store=True, readonly=True,    
+        related='contract_id.mobile', store=True, readonly=True,
     )
     contract_date = fields.Date(
         string='Fecha del contrato',
         related='contract_id.contract_date', store=True, readonly=True,
     )
-    
     client_service_id = fields.Many2one(
         'wigo.ftth.client.service', string='Servicio (CF)',
         ondelete='restrict', tracking=True,
     )
     suspension_id = fields.Many2one(
-        'wigo.ftth.service.suspension',
-        string='Suspensión FTTH',
-        ondelete='set null',
-        tracking=True,
+        'wigo.ftth.service.suspension', string='Suspensión FTTH',
+        ondelete='set null', tracking=True,
     )
     codigo_cliente = fields.Char(
-        string='Código CF',
-        compute='_compute_datos_cliente', store=True,
+        string='Código CF', compute='_compute_client_data', store=True,
     )
     plan_id = fields.Many2one(
-        'internet.plan', string='Plan',
-        compute='_compute_datos_cliente', store=True,
+        'internet.plan', string='Plan', compute='_compute_client_data', store=True,
     )
     monto_plan = fields.Float(
         string='Monto del plan (Bs)',
@@ -63,27 +51,20 @@ class WigoIncobrable(models.Model):
         string='Identificador del plan',
         related='plan_id.plan_identifier', store=True, readonly=True,
     )
-
-    # ── Deuda ────────────────────────────────────────────────────
     meses_adeudados = fields.Char(
         string='Meses adeudados',
-        help='Ej: Enero, Febrero/2026',
-        tracking=True,
+        help='Ej: Enero, Febrero/2026', tracking=True,
     )
     monto_total_adeudado = fields.Float(
-        string='Monto total adeudado (Bs)',
-        tracking=True,
-    )    
+        string='Monto total adeudado (Bs)', tracking=True,
+    )
     monto_cobrado = fields.Float(
-        string='Monto cobrado efectivamente (Bs)',
-        tracking=True,
+        string='Monto cobrado efectivamente (Bs)', tracking=True,
     )
     diferencia_incobrable = fields.Float(
         string='Monto incobrable definitivo (Bs)',
         compute='_compute_diferencia_incobrable', store=True,
     )
-
-    # ── Estado y fechas ──────────────────────────────────────────
     fecha_declaracion = fields.Date(
         string='Fecha de declaración',
         default=lambda self: fields.Date.context_today(self),
@@ -92,59 +73,35 @@ class WigoIncobrable(models.Model):
     fecha_baja_servicio = fields.Date(
         string='Fecha baja de servicio', tracking=True,
     )
-      
     state = fields.Selection([
-        ('activo', 'En gestión'),   
+        ('activo', 'En gestión'),
         ('in_cut', 'En corte'),
         ('baja_incobrable', 'Baja - Incobrable'),
-        ('recuperado', 'Recuperado')        
+        ('recuperado', 'Recuperado'),
     ], string='Estado', default='activo', required=True, tracking=True, index=True)
-
-    # ── Observaciones ────────────────────────────────────────────
     observaciones = fields.Text(string='Observaciones')
-
-    # ── Display ──────────────────────────────────────────────────
     display_name = fields.Char(compute='_compute_display_name', store=True)
 
     @api.depends('partner_id', 'contract_id', 'client_service_id')
-    def _compute_datos_cliente(self):
+    def _compute_client_data(self):
         for rec in self:
             rec.codigo_cliente = (
-                rec.contract_id.name or
-                rec.client_service_id.codigo_cliente or
-                False
+                rec.contract_id.name or rec.client_service_id.codigo_cliente or False
             )
             rec.plan_id = (
-                rec.contract_id.plan_id or
-                rec.client_service_id.plan_id or
-                False
+                rec.contract_id.plan_id or rec.client_service_id.plan_id or False
             )
 
     @api.depends('monto_total_adeudado', 'monto_cobrado')
     def _compute_diferencia_incobrable(self):
         for rec in self:
-            rec.diferencia_incobrable = (
-                rec.monto_total_adeudado -                
-                rec.monto_cobrado
-            )
+            rec.diferencia_incobrable = rec.monto_total_adeudado - rec.monto_cobrado
 
     @api.depends('partner_id', 'meses_adeudados')
     def _compute_display_name(self):
         for rec in self:
             nombre = rec.partner_id.name or ''
-            rec.display_name = f"{nombre} — {rec.meses_adeudados}" if rec.meses_adeudados else nombre
-
-    def action_marcar_baja_incobrable(self):
-        for rec in self:
-            rec.state = 'baja_incobrable'
-            if not rec.fecha_baja_servicio:
-                rec.fecha_baja_servicio = date.today()
-            # Marcar el servicio como baja si existe
-            if rec.client_service_id:
-                rec.client_service_id.estado_pago = 'baja_definitiva'
-                if rec.client_service_id.estado_servicio != 'baja':
-                    rec.client_service_id.estado_servicio = 'baja'
-                    rec.client_service_id.fecha_baja = date.today()
+            rec.display_name = f"{nombre} -- {rec.meses_adeudados}" if rec.meses_adeudados else nombre
 
     def _get_periodos_adeudados_list(self):
         self.ensure_one()
@@ -172,8 +129,7 @@ class WigoIncobrable(models.Model):
 
         suspension = Suspension.search(
             domain + [('state', 'in', ('pendiente', 'in_cut'))],
-            order='fecha_registro desc, id desc',
-            limit=1,
+            order='fecha_registro desc, id desc', limit=1,
         )
         if suspension:
             if suspension.state == 'pendiente':
@@ -190,6 +146,40 @@ class WigoIncobrable(models.Model):
         }
         return Suspension.create(vals)
 
+    def action_marcar_baja_incobrable(self):
+        for rec in self:
+            rec.state = 'baja_incobrable'
+            if not rec.fecha_baja_servicio:
+                rec.fecha_baja_servicio = date.today()
+            if rec.client_service_id:
+                rec.client_service_id.estado_pago = 'baja_definitiva'
+                if rec.client_service_id.estado_servicio != 'baja':
+                    rec.client_service_id.estado_servicio = 'baja'
+                    rec.client_service_id.fecha_baja = date.today()
+
+    def action_marcar_recuperado(self):
+        for rec in self:
+            if not rec.contract_id:
+                raise ValidationError(
+                    'No se puede validar recuperación sin contrato asociado.'
+                )
+            periodos_adeudados = rec._get_periodos_adeudados_list()
+            if not periodos_adeudados:
+                raise ValidationError(
+                    'No se pudieron identificar los meses adeudados para validar recuperación.'
+                )
+            pago_pagado = self.env['wigo.pago.estado'].sudo().search([
+                ('contract_id', '=', rec.contract_id.id),
+                ('estado_pago', '=', 'pagado'),
+                ('periodo', 'in', periodos_adeudados),
+            ], limit=1)
+            if not pago_pagado:
+                raise ValidationError(
+                    'Para marcar como recuperado debe existir al menos 1 mes pagado '
+                    f'de los adeudados: {", ".join(periodos_adeudados)}.'
+                )
+            rec.state = 'recuperado'
+
     def action_view_suspension(self):
         self.ensure_one()
         if not self.suspension_id:
@@ -203,50 +193,14 @@ class WigoIncobrable(models.Model):
             'target': 'current',
         }
 
-    def action_marcar_recuperado(self):
-        for rec in self:
-            """if rec.state == 'baja_incobrable':
-                raise ValidationError(
-                    'No se puede marcar como recuperado un registro con estado "Baja - Incobrable".'
-            ) """
-
-            if not rec.contract_id:
-                raise ValidationError(
-                    'No se puede validar recuperación sin contrato asociado.'
-                )
-
-            periodos_adeudados = rec._get_periodos_adeudados_list()
-            if not periodos_adeudados:
-                raise ValidationError(
-                    'No se pudieron identificar los meses adeudados para validar recuperación.'
-                )
-
-            pago_pagado = self.env['wigo.pago.estado'].sudo().search([
-                ('contract_id', '=', rec.contract_id.id),
-                ('estado_pago', '=', 'pagado'),
-                ('periodo', 'in', periodos_adeudados),
-            ], limit=1)
-
-            if not pago_pagado:
-                raise ValidationError(
-                    'Para marcar como recuperado debe existir al menos 1 mes pagado '
-                    f'de los adeudados: {", ".join(periodos_adeudados)}.'
-                )
-
-            rec.state = 'recuperado'
-
     def action_open_pagos_contrato(self):
-        """Abre la lista de `wigo.pago.estado` filtrada por el contrato asociado.
-
-        Visible en formulario de incobrable cuando existe `contract_id`.
-        """
         self.ensure_one()
         if not self.contract_id:
             raise ValidationError('No hay contrato asociado a este registro incobrable.')
 
         action = {
             'type': 'ir.actions.act_window',
-            'name': f'Pagos — {self.contract_id.name or self.partner_id.name}',
+            'name': f'Pagos -- {self.contract_id.name or self.partner_id.name}',
             'res_model': 'wigo.pago.estado',
             'view_mode': 'list,form',
             'domain': [('contract_id', '=', self.contract_id.id)],
@@ -254,23 +208,18 @@ class WigoIncobrable(models.Model):
             'target': 'current',
         }
 
-        # Priorizar las vistas específicas del workspace de contrato si existen
         list_view = self.env.ref('wigo_cobranza.view_payment_state_list', raise_if_not_found=False)
         form_view = self.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
         views = []
         if list_view:
-            # en algunos módulos se declara como tipo 'list' (workspace), respetarlo
             views.append((list_view.id, list_view.type or 'list'))
         if form_view:
             views.append((form_view.id, form_view.type or 'form'))
-
         if views:
             action['views'] = views
-            # forzar view_mode coherente
             action['view_mode'] = ','.join([t for _, t in views])
             return action
 
-        # Fallback: buscar vistas tree/form registradas para el modelo
         View = self.env['ir.ui.view'].sudo()
         found_views = View.search([
             ('model', '=', 'wigo.pago.estado'),
@@ -282,22 +231,16 @@ class WigoIncobrable(models.Model):
         for v in tree_views + form_views:
             ordered.append((v.id, v.type))
         if ordered:
-            # preferir la vista tree (lista)
             for vid, vtype in ordered:
                 if vtype == 'tree':
                     action['views'] = [(vid, 'tree')]
                     action['view_mode'] = 'tree'
                     return action
             action['views'] = ordered
-
         return action
 
     @api.model
-    def crear_desde_pago_mora(self, pago_estado):
-        """
-        Crea un registro incobrable a partir de un pago en mora.
-        Llamado desde la acción de baja definitiva del pago.
-        """
+    def create_from_overdue_payment(self, pago_estado):
         existing = self.search([
             ('partner_id', '=', pago_estado.partner_id.id),
             ('contract_id', '=', pago_estado.contract_id.id),

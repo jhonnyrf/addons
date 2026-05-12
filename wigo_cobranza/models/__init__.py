@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
-from . import cobranza_regla
-from . import tipo_ajuste
-from . import pago_estado
+from . import collection_rule
+from . import adjustment_type
+from . import payment_state
+from . import payment_state_cron
+from . import payment_state_attachment
 from . import ftth_client_service_ext
 from . import res_partner_ext
 from . import customer_contract_ext
-from . import recibo_cobro
-from . import recibo_config
-from . import incobrable
-from . import factura_cobranza
-
+from . import payment_receipt
+from . import receipt_config
+from . import uncollectible
+from . import collection_invoice

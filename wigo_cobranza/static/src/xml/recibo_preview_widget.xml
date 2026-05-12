@@ -16,7 +16,6 @@
                 </div>
             </t>
             <t t-else="">
-                <!-- Preview HTML renderizado -->
                 <div t-ref="previewContainer" t-out="state.html"/>
             </t>
         </div>

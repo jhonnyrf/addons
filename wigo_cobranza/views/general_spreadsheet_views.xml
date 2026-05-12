@@ -6,12 +6,29 @@
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
             <pivot string="Planilla General de Cobros" disable_linking="False">
-                <field name="partner_id" type="row"/>
-                <field name="mes" type="col"/>
-                <field name="monto_pagado" type="measure" string="Pagado (Bs)"/>
-                <field name="monto_a_cobrar" type="measure" string="A cobrar (Bs)"/>
-                <field name="diferencia" type="measure" string="Diferencia (Bs)"/>
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="estado_pago" type="row"/>
+                <field name="payment_mode" type="row"/>
+                <field name="plan_id" type="row"/>
+                <field name="monto_pagado" type="measure" string="Cobrado (Bs)"/>
+                <field name="monto_a_cobrar" type="measure" string="Esperado (Bs)"/>
+                <field name="diferencia" type="measure" string="Brecha (Bs)"/>
             </pivot>
+        </field>
+    </record>
+
+    <record id="view_general_spreadsheet_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.planilla</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Cobranza mensual ejecutiva" type="bar" stacked="True">
+                <field name="fecha_vencimiento" type="row" interval="month" string="Período"/>
+                <field name="estado_pago" type="col" string="Estado"/>
+                <field name="monto_pagado" type="measure" string="Cobrado (Bs)"/>
+                <field name="monto_a_cobrar" type="measure" string="Esperado (Bs)"/>
+                <field name="diferencia" type="measure" string="Brecha (Bs)"/>
+            </graph>
         </field>
     </record>
 
@@ -61,11 +78,10 @@
                 <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
                 <field name="payment_mode" string="Modalidad de pago"/>
                 <separator/>
-                <filter name="paid" string="Al día" domain="[('estado_pago','=','al_dia')]"/>
+                <filter name="paid" string="Pagados" domain="[('estado_pago','=','pagado')]"/>
                 <filter name="pending" string="Pendientes" domain="[('estado_pago','=','pendiente')]"/>
                 <filter name="overdue" string="En mora" domain="[('estado_pago','=','mora')]"/>
-                <filter name="partial_debt" string="Deuda parcial" domain="[('estado_pago','=','deuda_parcial')]"/>
-                <filter name="written_off" string="Bajas" domain="[('estado_pago','=','baja_definitiva')]"/>
+                <filter name="partial_debt" string="Deuda parcial" domain="[('estado_pago','=','pendiente'), ('monto_pagado', '&gt;', 0)]"/>
                 <separator/>
                 <filter name="adjust_default" string="Tipo por defecto" domain="[('tipo_ajuste_id.is_default','=',True)]"/>
                 <filter name="adjust_proration" string="Con prorrateo" domain="[('tipo_ajuste_id.enable_proration','=',True)]"/>
@@ -106,12 +122,13 @@
                             ('anio', '=', context_today().year)
                         ]"/>
                 <separator/>
-                <filter name="group_partner" string="Agrupar por Cliente" context="{'group_by': 'partner_id'}"/>
+                <filter name="group_year" string="Agrupar por Año" context="{'group_by': 'anio'}"/>
                 <filter name="group_month" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
-                <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
+                <filter name="group_period" string="Agrupar por Período" context="{'group_by': 'fecha_vencimiento:month'}"/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'estado_pago'}"/>
-                <filter name="group_adjustment" string="Agrupar por Tipo de ajuste" context="{'group_by': 'tipo_ajuste_id'}"/>
+                <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
                 <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by': 'payment_mode'}"/>
+                <filter name="group_adjustment" string="Agrupar por Tipo de ajuste" context="{'group_by': 'tipo_ajuste_id'}"/>
                 <searchpanel>
                     <field name="payment_mode" string="Modalidad de pago"/>
                     <field name="tipo_ajuste_id" string="Tipo de ajuste"/>
@@ -129,7 +146,7 @@
             (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
             (ref('wigo_cobranza.view_payment_state_form_no_create'), 'form'),
             (ref('wigo_cobranza.view_general_spreadsheet_pivot'), 'pivot'),
-            (False, 'graph'),
+            (ref('wigo_cobranza.view_general_spreadsheet_graph'), 'graph'),
         ]"/>
         <field name="search_view_id" ref="view_general_spreadsheet_search"/>
         <field name="context">{'search_default_current_year': 1, 'create': False, 'show_create': False}</field>

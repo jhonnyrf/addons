@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 import num2words
 
 
 class WigoReciboCobro(models.Model):
-    """
-    Recibo oficial de pago generado desde un registro wigo.pago.estado.
-    Se puede imprimir en PDF con logo de empresa.
-    Genera dos copias: ORIGINAL (empresa) y COPIA CLIENTE.
-    """
     _name = 'wigo.recibo.cobro'
-    _description = 'Recibo de Cobro'
+    _description = 'Payment Receipt'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'numero desc'
     _rec_name = 'numero'
@@ -58,18 +52,14 @@ class WigoReciboCobro(models.Model):
         string='Descripción del servicio',
         compute='_compute_descripcion', store=True, readonly=False,
     )
-    # Campos editables para personalizar el recibo
     firma_nombre_override = fields.Char(
         string='Nombre del firmante (override)',
-        help='Dejar vacío para usar el del config. Editable antes de emitir.'
     )
     firma_cargo_override = fields.Char(
         string='Cargo (override)',
-        help='Dejar vacío para usar el del config. Editable antes de emitir.'
     )
     firma_celular_override = fields.Char(
         string='CEL firmante (override)',
-        help='Dejar vacío para usar el del config. Editable antes de emitir.'
     )
     state = fields.Selection([
         ('borrador', 'Borrador'),
@@ -104,7 +94,6 @@ class WigoReciboCobro(models.Model):
         return super().create(vals_list)
 
     def action_emitir(self):
-        """Emite el recibo (cambia a estado 'emitido') y vuelve al pago con referencia actualizada."""
         for rec in self:
             if rec.state != 'borrador':
                 raise UserError('Solo se pueden emitir recibos en borrador.')
@@ -113,11 +102,8 @@ class WigoReciboCobro(models.Model):
                 body="Recibo emitido exitosamente.",
                 message_type='notification',
             )
-        # Invalida el cache del pago para que recalcule recibo_id y recibo_generado
         self.ensure_one()
         self.pago_id.invalidate_recordset(['recibo_id', 'recibo_generado'])
-        
-        # Retorna acción que fuerza reload del form del pago
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'wigo.pago.estado',
@@ -128,7 +114,6 @@ class WigoReciboCobro(models.Model):
         }
 
     def action_volver_borrador(self):
-        """Permite regresar a borrador para editar, solo si no está anulado."""
         for rec in self:
             if rec.state == 'anulado':
                 raise UserError('No se puede editar un recibo anulado.')
@@ -139,18 +124,14 @@ class WigoReciboCobro(models.Model):
             )
 
     def action_anular(self):
-        """Anula el recibo y vuelve al pago."""
         for rec in self:
             rec.state = 'anulado'
             rec.message_post(
                 body="Recibo anulado.",
                 message_type='notification',
             )
-        # Invalida el cache del pago para que recalcule recibo_id y recibo_generado
         self.ensure_one()
         self.pago_id.invalidate_recordset(['recibo_id', 'recibo_generado'])
-        
-        # Retorna acción que fuerza reload del form del pago
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'wigo.pago.estado',
@@ -161,27 +142,23 @@ class WigoReciboCobro(models.Model):
         }
 
     def action_imprimir(self):
-        """Imprime ambas copias (original + copia cliente) en un solo PDF."""
         self.ensure_one()
         if self.state == 'borrador':
             self.state = 'emitido'
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_imprimir_solo_original(self):
-        """Imprime solo la copia ORIGINAL (para empresa)."""
         self.ensure_one()
         if self.state == 'borrador':
             self.state = 'emitido'
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_imprimir_copia_cliente(self):
-        """Imprime solo la COPIA CLIENTE."""
         self.ensure_one()
         if self.state == 'borrador':
             self.state = 'emitido'
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)
 
     def action_preview(self):
-        """Abre previsualización del PDF en nueva pestaña"""
         self.ensure_one()
         return self.env.ref('wigo_cobranza.action_report_recibo_cobro').report_action(self)

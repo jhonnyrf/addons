@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from datetime import date
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -8,15 +7,12 @@ class CustomerContractCobranza(models.Model):
     _inherit = 'customer.contract'
 
     pago_estado_ids = fields.One2many(
-        'wigo.pago.estado',
-        'contract_id',
+        'wigo.pago.estado', 'contract_id',
         string='Cobros mensuales',
     )
     incobrable_ids = fields.One2many(
-        'wigo.incobrable',
-        'contract_id',
-        string='Incobrables',
-        readonly=True,
+        'wigo.incobrable', 'contract_id',
+        string='Incobrables', readonly=True,
     )
     unpaid_month_count = fields.Integer(
         string='Meses sin pagar',
@@ -34,7 +30,6 @@ class CustomerContractCobranza(models.Model):
 
     def action_view_cobranza_mensual(self):
         self.ensure_one()
-        # Generar registro del mes actual según reglas configuradas
         self._ensure_pago_mes_actual()
 
         related_contracts = self._get_cobranza_version_contracts()
@@ -65,9 +60,7 @@ class CustomerContractCobranza(models.Model):
         }
 
     def _get_cobranza_version_contracts(self):
-        """Retorna el contrato actual y toda su cadena de versiones."""
         self.ensure_one()
-
         root = self
         while root.previous_contract_id:
             root = root.previous_contract_id
@@ -81,10 +74,6 @@ class CustomerContractCobranza(models.Model):
         return contracts
 
     def _ensure_pago_mes_actual(self):
-        """
-        Asegura que exista el registro del mes actual para este contrato,
-        respetando las reglas configuradas (día de generación, modalidad).
-        """
         self.ensure_one()
         if self.state != 'active':
             return
@@ -94,12 +83,10 @@ class CustomerContractCobranza(models.Model):
         mes_actual = str(hoy.month)
         anio_actual = hoy.year
 
-        # Buscar regla aplicable (usar un registro vacío como self)
         regla = PagoEstado.browse()._get_regla_for_contract(self)
         if not regla or not regla.generacion_automatica:
             return
 
-        # Verificar si ya existe registro para este mes
         existente = PagoEstado.search([
             ('contract_id', '=', self.id),
             ('mes', '=', mes_actual),
@@ -108,11 +95,9 @@ class CustomerContractCobranza(models.Model):
         if existente:
             return
 
-        # Solo generar si hoy es el día configurado
         if int(regla.dia_generacion) != hoy.day:
             return
 
-        # Crear registro
         vals = {
             'partner_id': self.partner_id.id,
             'contract_id': self.id,
@@ -150,7 +135,6 @@ class CustomerContractCobranza(models.Model):
         lead = self._get_won_crm_lead()
         if not lead:
             raise UserError('No se encontro un ticket CRM en estado ganado para este contrato.')
-
         return {
             'type': 'ir.actions.act_window',
             'name': f'Ticket CRM - {self.name}',

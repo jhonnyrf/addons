@@ -28,7 +28,7 @@
             <form string="Registro mensual de pago">
                 <header>
                     <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
-                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="estado_pago in ['pagado', 'al_dia', 'mora']"/>
+                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="not puede_marcar_mora_manual"/>
                     <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
                     <button name="action_abrir_recibo" string="Ver Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
                     <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>
@@ -37,6 +37,7 @@
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
                     <field name="recibo_generado" invisible="1"/>
                     <field name="recibo_id" invisible="1"/>
+                    <field name="puede_marcar_mora_manual" invisible="1"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>

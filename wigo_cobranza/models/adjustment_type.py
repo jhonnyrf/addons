@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
 
 class WigoCobranzaTipoAjuste(models.Model):
     _name = 'wigo.cobranza.tipo_ajuste'
-    _description = 'Tipo de ajuste de cobranza'
+    _description = 'Adjustment Type'
     _order = 'is_default desc, name asc, id asc'
 
     name = fields.Char(required=True, tracking=True)
@@ -15,11 +14,6 @@ class WigoCobranzaTipoAjuste(models.Model):
     enable_proration = fields.Boolean(string='Habilita prorrateo', default=False, tracking=True)
 
     def _normalize_legacy_color_values(self):
-        """
-        En bases heredadas, `color` pudo quedar como texto. Antes de que Odoo
-        intente convertir la columna a Integer, forzamos valores no numéricos a
-        '0' para evitar fallos como: invalid input syntax for type integer.
-        """
         self.env.cr.execute("""
             SELECT data_type
             FROM information_schema.columns
@@ -41,7 +35,6 @@ class WigoCobranzaTipoAjuste(models.Model):
         return super()._auto_init()
 
     def init(self):
-        # Fallback para garantizar columna íntegra en instalaciones ya cargadas.
         self._normalize_legacy_color_values()
         self.env.cr.execute("""
             SELECT data_type
@@ -66,8 +59,7 @@ class WigoCobranzaTipoAjuste(models.Model):
             others = self.search([('is_default', '=', True)])
             if others:
                 others.write({'is_default': False})
-        records = super().create(vals_list)
-        return records
+        return super().create(vals_list)
 
     def write(self, vals):
         if vals.get('is_default'):
@@ -77,5 +69,4 @@ class WigoCobranzaTipoAjuste(models.Model):
             ])
             if others:
                 others.write({'is_default': False})
-        res = super().write(vals)
-        return res
+        return super().write(vals)

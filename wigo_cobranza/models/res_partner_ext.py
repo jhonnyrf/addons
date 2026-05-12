@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from odoo import models, fields, api
 
 
@@ -14,28 +13,22 @@ class ResPartnerCobranza(models.Model):
         compute='_compute_contract_counters',
     )
     cobranza_ci = fields.Char(
-        string='CI',
-        compute='_compute_contact_snapshot',
+        string='CI', compute='_compute_contact_snapshot',
     )
     cobranza_celular = fields.Char(
-        string='Celular',
-        compute='_compute_contact_snapshot',
+        string='Celular', compute='_compute_contact_snapshot',
     )
     cobranza_zona = fields.Char(
-        string='Zona',
-        compute='_compute_contact_snapshot',
+        string='Zona', compute='_compute_contact_snapshot',
     )
     cobranza_direccion = fields.Char(
-        string='Direccion',
-        compute='_compute_contact_snapshot',
+        string='Direccion', compute='_compute_contact_snapshot',
     )
     cobranza_contact_url = fields.Char(
-        string='Ficha contacto',
-        compute='_compute_contact_snapshot',
+        string='Ficha contacto', compute='_compute_contact_snapshot',
     )
     cobranza_pago_ids = fields.One2many(
-        'wigo.pago.estado',
-        'partner_id',
+        'wigo.pago.estado', 'partner_id',
         string='Historial mensual de cobros',
     )
     cobranza_pago_count = fields.Integer(
@@ -105,7 +98,6 @@ class ResPartnerCobranza(models.Model):
         }
 
     def action_registrar_factura_desde_cliente(self):
-        """Abrir formulario de nueva factura pre-cargada con datos del cliente."""
         self.ensure_one()
         contract = self.contract_ids.filtered(
             lambda c: c.state == 'active' and not c.is_superseded
@@ -119,7 +111,7 @@ class ResPartnerCobranza(models.Model):
             ctx['default_contract_id'] = contract.id
         return {
             'type': 'ir.actions.act_window',
-            'name': f'Nueva Factura — {self.name}',
+            'name': f'Nueva Factura -- {self.name}',
             'res_model': 'wigo.factura.cobranza',
             'view_mode': 'form',
             'target': 'new',
@@ -127,7 +119,6 @@ class ResPartnerCobranza(models.Model):
         }
 
     def action_registrar_incobrable_desde_cliente(self):
-        """Abrir formulario de incobrable pre-cargado con datos del cliente."""
         self.ensure_one()
         contract = self.contract_ids.filtered(
             lambda c: not c.is_superseded
@@ -135,16 +126,14 @@ class ResPartnerCobranza(models.Model):
         svc = self.env['wigo.ftth.client.service'].search(
             [('partner_id', '=', self.id)], limit=1
         )
-        ctx = {
-            'default_partner_id': self.id,
-        }
+        ctx = {'default_partner_id': self.id}
         if contract:
             ctx['default_contract_id'] = contract.id
         if svc:
             ctx['default_client_service_id'] = svc.id
         return {
             'type': 'ir.actions.act_window',
-            'name': f'Declarar Incobrable — {self.name}',
+            'name': f'Declarar Incobrable -- {self.name}',
             'res_model': 'wigo.incobrable',
             'view_mode': 'form',
             'target': 'new',
