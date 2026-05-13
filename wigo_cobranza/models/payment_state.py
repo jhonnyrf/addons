@@ -198,9 +198,9 @@ class WigoPagoEstado(models.Model):
 
     # ── Payment State ─────────────────────────────────────────
     estado_pago = fields.Selection([
-        ('pendiente', 'Pendiente'),
-        ('pagado', 'Pagado'),
-        ('mora', 'Mora'),
+    ('pagado', 'Pagado'),
+    ('mora', 'Mora'),
+    ('pendiente', 'Pendiente'),
     ], string='Estado de pago', default='pendiente',
        required=True, tracking=True, index=True,
     )
@@ -309,15 +309,25 @@ class WigoPagoEstado(models.Model):
         'monto_a_cobrar_manual_aplicado', 'es_primer_mes',
     )
     def _compute_monto_a_cobrar(self):
+        """
+        Compute the amount to charge (invoice amount) independently from payment status.
+        This represents the billable amount for the billing period.
+        Logic:
+        1. If manual override is applied, use manual amount
+        2. If adjustment type is set, use prorated amount if enabled, else use plan amount
+        3. If first month, use prorated amount
+        4. Otherwise, use plan amount
+        
+        IMPORTANT: This method should NEVER assign monto_pagado.
+        Those are independent concepts:
+        - monto_a_cobrar: What we bill to the customer
+        - monto_pagado: What the customer actually paid (user input)
+        """
         for rec in self:
             if rec.monto_a_cobrar_manual_aplicado:
                 rec.monto_a_cobrar = rec.monto_a_cobrar_manual
             elif rec.tipo_ajuste_id:
                 rec.monto_a_cobrar = (
-                    rec.monto_prorrateo if rec.tipo_ajuste_id.enable_proration
-                    else rec.monto_plan
-                )
-                rec.monto_pagado = (
                     rec.monto_prorrateo if rec.tipo_ajuste_id.enable_proration
                     else rec.monto_plan
                 )

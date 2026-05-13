@@ -333,6 +333,7 @@
                             <group>
                                 <field name="brand"/>
                                 <field name="model"/>
+                                <field name="serial_number"/>
                                 <field name="active"/>
                             </group>
 

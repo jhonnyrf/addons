@@ -1,37 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_general_spreadsheet_pivot" model="ir.ui.view">
-        <field name="name">wigo.pago.estado.pivot.planilla</field>
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 1: RECAUDACIÓN MENSUAL (INGRESOS REALES)
+         Muestra montos recaudados mes a mes con desagregación por plan.
+         Métrica: Suma de monto_pagado por período.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_monthly_collection_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.recaudacion_mensual</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <pivot string="Planilla General de Cobros" disable_linking="False">
+            <pivot string="Recaudación Mensual por Plan" disable_linking="False">
                 <field name="anio" type="row"/>
                 <field name="mes" type="row"/>
-                <field name="estado_pago" type="row"/>
-                <field name="payment_mode" type="row"/>
                 <field name="plan_id" type="row"/>
-                <field name="monto_pagado" type="measure" string="Cobrado (Bs)"/>
-                <field name="monto_a_cobrar" type="measure" string="Esperado (Bs)"/>
-                <field name="diferencia" type="measure" string="Brecha (Bs)"/>
+                <field name="monto_pagado" type="measure" string="Recaudado (Bs)"/>
             </pivot>
         </field>
     </record>
 
-    <record id="view_general_spreadsheet_graph" model="ir.ui.view">
-        <field name="name">wigo.pago.estado.graph.planilla</field>
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 2: DEUDA PENDIENTE (NO VENCIDA)
+         Muestra deuda pendiente mensual por plan.
+         Métrica: Suma de monto_a_cobrar para estado pendiente.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_expected_revenue_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.ingresos_esperados</field>
         <field name="model">wigo.pago.estado</field>
         <field name="arch" type="xml">
-            <graph string="Cobranza mensual ejecutiva" type="bar" stacked="True">
-                <field name="fecha_vencimiento" type="row" interval="month" string="Período"/>
-                <field name="estado_pago" type="col" string="Estado"/>
-                <field name="monto_pagado" type="measure" string="Cobrado (Bs)"/>
-                <field name="monto_a_cobrar" type="measure" string="Esperado (Bs)"/>
-                <field name="diferencia" type="measure" string="Brecha (Bs)"/>
+            <pivot string="Deuda Pendiente Mensual por Plan" disable_linking="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="plan_id" type="row"/>
+                <field name="monto_a_cobrar" type="measure" string="Deuda pendiente (Bs)"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 3: RECAUDACIÓN CONFIRMADA
+         Gráfico de barras para pagos confirmados (estado pagado).
+         Métrica: Suma de monto_pagado.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_collection_efficiency_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.eficiencia_cobranza</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Recaudación Mensual Confirmada" type="bar" stacked="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="monto_pagado" type="measure" string="Recaudado (Bs)"/>
             </graph>
         </field>
     </record>
 
+    <record id="view_pending_debt_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.deuda_pendiente</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Deuda Pendiente Mensual" type="bar" stacked="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="monto_a_cobrar" type="measure" string="Pendiente (Bs)"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_overdue_debt_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.deuda_mora</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Deuda en Mora por Plan" disable_linking="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="plan_id" type="row"/>
+                <field name="monto_a_cobrar" type="measure" string="Mora (Bs)"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 4: ESTADO DE PAGO (CONTEO Y DISTRIBUCIÓN)
+         Análisis de cantidad de registros por estado: Pagado, Pendiente, Mora.
+         Métrica: Cantidad de registros (count).
+         NO se mezclan montos con estados para evitar agregaciones incoherentes.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_payment_state_distribution_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.distribucion_estado</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Distribución de Estado de Cobranza" disable_linking="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="estado_pago" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 5: ESTADO DE PAGO CON RECAUDACIÓN
+         Gráfico donut: Proporción de registros pagados vs pendientes/mora.
+         Muestra porcentaje de cobranza.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_payment_state_donut_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.estado_pago_donut</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Distribución de Estado de Cobranza" type="pie">
+                <field name="estado_pago" type="row"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 6: ANÁLISIS POR PLAN (INGRESOS)
+         Pivot: Recaudación desagregada por plan y estado.
+         Métrica: monto_pagado (solo registros pagados).
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_revenue_by_plan_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.ingresos_por_plan</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Ingresos Cobrados por Plan" disable_linking="False">
+                <field name="plan_id" type="row"/>
+                <field name="monto_pagado" type="measure" string="Recaudado (Bs)"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 7: EVOLUCIÓN DE MORA
+         Gráfico de líneas: evolución mensual de deuda vencida.
+         Métrica: Suma de monto_a_cobrar para estado mora.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_overdue_vs_collection_line_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.mora_vs_recaudacion</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Evolución Mensual de Mora" type="bar" stacked="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="monto_a_cobrar" type="measure" string="Mora (Bs)"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 8: LISTA PRINCIPAL DE PLANILLA
+         Vista tabular: Registro detallado de todos los pagos.
+         NO se crean nuevos registros desde esta vista (create=false).
+         ═══════════════════════════════════════════════════════════ -->
     <record id="view_payment_state_form_no_create" model="ir.ui.view">
         <field name="name">wigo.pago.estado.form.no.create.for.planilla</field>
         <field name="model">wigo.pago.estado</field>
@@ -56,8 +174,8 @@
                 <field name="plan_id"/>
                 <field name="tipo_ajuste_color" column_invisible="1"/>
                 <field name="tipo_ajuste_id" optional="show" widget="tipo_ajuste_badge"/>
-                <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary" options="{'currency_field': False}"/>
-                <field name="monto_pagado" string="Pagado (Bs)" widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_a_cobrar" string="A cobrar (Bs)" widget="monetary"/>
+                <field name="monto_pagado" string="Pagado (Bs)" widget="monetary"/>
                 <field name="fecha_pago"/>
                 <field name="estado_pago" widget="badge" decoration-success="estado_pago == 'pagado'" decoration-warning="estado_pago in ['pendiente','deuda_parcial']" decoration-danger="estado_pago == 'mora'" decoration-muted="estado_pago == 'baja_definitiva'"/>
                 <field name="registrado_por" optional="hide"/>
@@ -65,6 +183,11 @@
         </field>
     </record>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA 9: FILTROS Y BÚSQUEDA
+         Campos de búsqueda, filtros rápidos, y opciones de agrupación.
+         Crítico para análisis multidimensional coherente.
+         ═══════════════════════════════════════════════════════════ -->
     <record id="view_general_spreadsheet_search" model="ir.ui.view">
         <field name="name">wigo.pago.estado.search.planilla</field>
         <field name="model">wigo.pago.estado</field>
@@ -103,7 +226,7 @@
                 <filter name="november" string="Noviembre" domain="[('mes','=','11')]"/>
                 <filter name="december" string="Diciembre" domain="[('mes','=','12')]"/>
                 <separator/>
-                <filter name="current_year" string="Año actual" domain="[('anio','=', context_today().year)]"/>
+                <filter name="current_year" string="Año actual" domain="[('anio','=', context_today().strftime('%Y'))]"/>
                 <filter name="current_month" string="Mes actual" domain="[
                             ('mes', '=',
                                 '1' if context_today().month == 1 else
@@ -119,12 +242,12 @@
                                 '11' if context_today().month == 11 else
                                 '12'
                             ),
-                            ('anio', '=', context_today().year)
+                            ('anio', '=', context_today().strftime('%Y'))
                         ]"/>
                 <separator/>
                 <filter name="group_year" string="Agrupar por Año" context="{'group_by': 'anio'}"/>
                 <filter name="group_month" string="Agrupar por Mes" context="{'group_by': 'mes'}"/>
-                <filter name="group_period" string="Agrupar por Período" context="{'group_by': 'fecha_vencimiento:month'}"/>
+                <filter name="group_period" string="Agrupar por Período" context="{'group_by': 'periodo'}"/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'estado_pago'}"/>
                 <filter name="group_plan" string="Agrupar por Plan" context="{'group_by': 'plan_id'}"/>
                 <filter name="group_payment_mode" string="Agrupar por Modalidad" context="{'group_by': 'payment_mode'}"/>
@@ -137,16 +260,20 @@
         </field>
     </record>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: PLANILLA GENERAL DE COBROS (VISTA PRINCIPAL)
+         Acceso a todas las vistas: list, form, pivot, graph.
+         Punto de entrada para analistas de cobranza.
+         ═══════════════════════════════════════════════════════════ -->
     <record id="action_general_spreadsheet" model="ir.actions.act_window">
         <field name="name">Planilla General de Cobros</field>
         <field name="res_model">wigo.pago.estado</field>
-        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="domain">[('estado_pago', 'in', ['pagado', 'pendiente', 'mora'])]</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_general_spreadsheet_list"/>
         <field name="views" eval="[
             (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
             (ref('wigo_cobranza.view_payment_state_form_no_create'), 'form'),
-            (ref('wigo_cobranza.view_general_spreadsheet_pivot'), 'pivot'),
-            (ref('wigo_cobranza.view_general_spreadsheet_graph'), 'graph'),
         ]"/>
         <field name="search_view_id" ref="view_general_spreadsheet_search"/>
         <field name="context">{'search_default_current_year': 1, 'create': False, 'show_create': False}</field>
@@ -157,5 +284,191 @@
             <p>La planilla se genera automáticamente el día 1 de cada mes para todos los contratos activos.</p>
         </field>
     </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: RECAUDACIÓN MENSUAL
+         Análisis de ingresos reales (montos pagados) por período.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="action_monthly_collection_analysis" model="ir.actions.act_window">
+        <field name="name">Recaudación Mensual</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', '=', 'pagado')]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_collection_efficiency_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_collection_efficiency_graph'), 'graph'),
+            (ref('wigo_cobranza.view_monthly_collection_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1, 'pivot_measures': ['monto_pagado']}</field>
+        <field name="help" type="html">
+            <p>Análisis de ingresos reales recaudados mes a mes (solo estado pagado).</p>
+        </field>
+    </record>
+    <record id="test_pivot" model="ir.ui.view">
+        <field name="name">test.pivot</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Test Pivot">
+                <field name="estado_pago" type="row"/>
+                <field name="monto_pagado" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: DEUDA PENDIENTE
+         Análisis de deuda pendiente (estado pendiente).
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="action_expected_revenue_analysis" model="ir.actions.act_window">
+        <field name="name">Deuda Pendiente</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', '=', 'pendiente')]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_pending_debt_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_pending_debt_graph'), 'graph'),
+            (ref('wigo_cobranza.view_expected_revenue_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1, 'pivot_measures': ['monto_a_cobrar']}</field>
+        <field name="help" type="html">
+            <p>Análisis de deuda pendiente (solo registros en estado pendiente).</p>
+        </field>
+    </record>
+
+    <record id="action_overdue_debt_analysis" model="ir.actions.act_window">
+        <field name="name">Deuda en Mora</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', '=', 'mora')]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_overdue_vs_collection_line_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_overdue_vs_collection_line_graph'), 'graph'),
+            (ref('wigo_cobranza.view_overdue_debt_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1, 'pivot_measures': ['monto_a_cobrar']}</field>
+        <field name="help" type="html">
+            <p>Análisis de deuda vencida (solo registros en estado mora).</p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: ESTADO DE PAGO (DISTRIBUCIÓN)
+         Análisis de cantidad de registros por estado: Pagado, Pendiente, Mora.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="action_payment_state_distribution_analysis" model="ir.actions.act_window">
+        <field name="name">Análisis de Estado de Pago</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', 'in', ['pagado', 'pendiente', 'mora'])]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_payment_state_donut_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_payment_state_donut_graph'), 'graph'),
+            (ref('wigo_cobranza.view_payment_state_distribution_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p>Análisis de la distribución de estados de pago: Cuántos registros están pagados, pendientes o en mora.</p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: INGRESOS POR PLAN
+         Análisis desagregado de recaudación por tipo de plan.
+         ═══════════════════════════════════════════════════════════ -->
+    <!-- Graph for ingresos por plan (moved above the action so ref exists) -->
+    <record id="view_revenue_by_plan_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.ingresos_por_plan</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Ingresos por Plan" type="bar" stacked="False">
+                <field name="plan_id" type="row"/>
+                <field name="monto_pagado" type="measure" string="Recaudado (Bs)"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_revenue_by_plan_analysis" model="ir.actions.act_window">
+        <field name="name">Ingresos por Plan</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', '=', 'pagado')]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_revenue_by_plan_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_revenue_by_plan_graph'), 'graph'),
+            (ref('wigo_cobranza.view_revenue_by_plan_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1, 'pivot_measures': ['monto_pagado']}</field>
+        <field name="help" type="html">
+            <p>Análisis de recaudación separado por tipo de plan (Fibra, Inalámbrico, Cable, etc.).</p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         VISTA: TIPO DE AJUSTE POR PERÍODO
+         Pivot: Cantidad de registros por tipo de ajuste y período.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_adjustment_type_pivot" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.pivot.tipo_ajuste</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis por Tipo de Ajuste" disable_linking="False">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="tipo_ajuste_id" type="row"/>
+                <field name="id" type="measure" string="Registros"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GRÁFICO: TIPO DE AJUSTE
+         Bar chart: Distribución de tipos de ajuste por período.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="view_adjustment_type_graph" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.graph.tipo_ajuste</field>
+        <field name="model">wigo.pago.estado</field>
+        <field name="arch" type="xml">
+            <graph string="Tipos de Ajuste por Período" type="bar" stacked="True">
+                <field name="anio" type="row"/>
+                <field name="mes" type="row"/>
+                <field name="tipo_ajuste_id" type="col"/>
+                <field name="id" type="measure" string="Registros"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ACCIÓN: ANÁLISIS POR TIPO DE AJUSTE
+         Análisis de registros agrupados por tipo de ajuste.
+         ═══════════════════════════════════════════════════════════ -->
+    <record id="action_adjustment_type_analysis" model="ir.actions.act_window">
+        <field name="name">Análisis por Tipo de Ajuste</field>
+        <field name="res_model">wigo.pago.estado</field>
+        <field name="domain">[('estado_pago', 'in', ['pagado', 'pendiente', 'mora'])]</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_id" ref="view_adjustment_type_graph"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_adjustment_type_graph'), 'graph'),
+            (ref('wigo_cobranza.view_adjustment_type_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_general_spreadsheet_list'), 'list'),
+        ]"/>
+        <field name="search_view_id" ref="view_general_spreadsheet_search"/>
+        <field name="context">{'search_default_current_year': 1}</field>
+        <field name="help" type="html">
+            <p>Análisis de registros de cobranza agrupados por tipo de ajuste aplicado.</p>
+        </field>
+    </record>
+
+
 
 </odoo>

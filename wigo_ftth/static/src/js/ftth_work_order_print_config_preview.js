@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useEffect, useRef, useState } from "@odoo/owl";
+import { Component, useEffect, useRef, useState, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 
 export class FtthWorkOrderPrintConfigPreview extends Component {
@@ -18,6 +18,10 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
     setup() {
         this.htmlContainer = useRef("configHtmlContainer");
         this.state = useState({ loading: true });
+
+      onMounted(() => {
+        this._render();
+      });
 
         useEffect(
           () => {

@@ -162,9 +162,8 @@ class FtthClientService(models.Model):
 
     work_order_accessory_ids = fields.One2many(
         'ftth.work.order.accessory',
-        compute='_compute_work_order_accessory_ids',
+        'client_service_id',
         string='Accesorios utilizados',
-        readonly=True,
     )
 
     # ── Suspensiones ─────────────────────────────────────────────
@@ -278,10 +277,6 @@ class FtthClientService(models.Model):
             self.sudo().write(cleaned_vals)
         return True
 
-    def _compute_work_order_accessory_ids(self):
-        for record in self:
-            record.work_order_accessory_ids = record.work_order_id.work_order_accessories if record.work_order_id else False
-
     @api.depends('suspension_ids')
     def _compute_suspension_data(self):
         for record in self:
@@ -300,9 +295,6 @@ class FtthClientService(models.Model):
     def action_register_incident(self):
         """Open a new Helpdesk ticket form prefilled with this ficha técnica data."""
         self.ensure_one()
-        Ticket = self._get_helpdesk_ticket_model()
-        if not Ticket:
-            raise ValidationError('No se puede registrar una incidencia porque el módulo de Helpdesk no está instalado.')
         action = {
             'type': 'ir.actions.act_window',
             'name': 'Registrar Incidencia',
@@ -314,7 +306,10 @@ class FtthClientService(models.Model):
                 'default_partner_id': self.partner_id.id if self.partner_id else False,
                 'default_customer_code': self.codigo_cliente or False,
                 'default_customer_name': self.partner_id.name if self.partner_id else False,
-                'default_customer_phone': self.partner_id.mobile if self.partner_id else False,
+                'default_customer_phone': (
+                    getattr(self.partner_id, 'mobile', False)
+                    or getattr(self.partner_id, 'phone', False)
+                ) if self.partner_id else False,
                 'default_customer_address': self.link_ubicacion or False,
             },
         }
@@ -322,9 +317,6 @@ class FtthClientService(models.Model):
 
     def action_view_incidents(self):
         self.ensure_one()
-        Ticket = self._get_helpdesk_ticket_model()
-        if not Ticket:
-            raise ValidationError('No se pueden visualizar incidencias porque el módulo de Helpdesk no está instalado.')
         return {
             'type': 'ir.actions.act_window',
             'name': 'Incidencias relacionadas',

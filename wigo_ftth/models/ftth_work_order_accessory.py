@@ -7,7 +7,12 @@ _logger = logging.getLogger(__name__)
 
 
 class FtthWorkOrderAccessory(models.Model):
-    """Accesorios utilizados en una orden de trabajo."""
+    """Accesorios utilizados en una orden de trabajo.
+    
+    Este modelo registra los accesorios/materiales utilizados en cada
+    instalación, incluyendo la cantidad y unidad utilizada.
+    No gestiona inventario ni stock.
+    """
     _name = 'ftth.work.order.accessory'
     _description = 'Accesorio de Orden de Trabajo'
     _rec_name = 'accesorio_id'
@@ -18,7 +23,13 @@ class FtthWorkOrderAccessory(models.Model):
     work_order_id = fields.Many2one(
         'wigo.ftth.work.order',
         string='Orden de Trabajo',
-        required=True,
+        ondelete='cascade',
+        index=True,
+    )
+
+    client_service_id = fields.Many2one(
+        'wigo.ftth.client.service',
+        string='Ficha Técnica',
         ondelete='cascade',
         index=True,
     )
@@ -27,8 +38,8 @@ class FtthWorkOrderAccessory(models.Model):
         'ftth.accesorio',
         string='Accesorio',
         required=True,
-        domain="[('active', '=', True), ('cantidad_disponible', '>', 0)]",
-        help='Solo se pueden seleccionar accesorios con stock disponible.',
+        domain="[('active', '=', True)]",
+        help='Selecciona un accesorio del catálogo.',
     )
 
     cantidad = fields.Float(
@@ -41,7 +52,7 @@ class FtthWorkOrderAccessory(models.Model):
     unidad = fields.Selection(
         [
             ('m', 'Metros'),
-            ('unidad', 'Unidad'),
+            ('unidad', 'Unidades'),
         ],
         string='Unidad',
         related='accesorio_id.tipo_unidad',
@@ -59,16 +70,12 @@ class FtthWorkOrderAccessory(models.Model):
             if record.cantidad <= 0:
                 raise ValidationError('La cantidad debe ser mayor a 0.')
 
-    @api.constrains('cantidad', 'accesorio_id')
-    def _check_cantidad_vs_stock(self):
-        """Valida que la cantidad no supere el stock disponible."""
+    @api.constrains('work_order_id', 'client_service_id')
+    def _check_relationship(self):
+        """Valida que tenga al menos un vínculo: work_order_id o client_service_id."""
         for record in self:
-            if record.accesorio_id and record.accesorio_id.cantidad_disponible < record.cantidad:
-                raise ValidationError(
-                    f"Stock insuficiente de '{record.accesorio_id.name}'. "
-                    f"Disponible: {record.accesorio_id.cantidad_disponible}, "
-                    f"Requerido: {record.cantidad}"
-                )
+            if not record.work_order_id and not record.client_service_id:
+                raise ValidationError('El accesorio debe estar vinculado a una Orden de Trabajo o a una Ficha Técnica.')
 
     # ==========================================================================
     # Display

@@ -343,28 +343,6 @@ class FtthWorkOrder(models.Model):
             record.write({'state': 'active'})
             record._create_or_update_client_service()
             record._sync_resources_on_activation()
-            record._deduct_accessories_stock()
-
-    def _deduct_accessories_stock(self):
-        """Descuenta del stock los accesorios utilizados cuando se activa la OT."""
-        self.ensure_one()
-        for accessory_line in self.work_order_accessories:
-            try:
-                stock = accessory_line.accesorio_id.stock_id[:1]
-                if stock:
-                    stock.disminuir_stock(
-                        accessory_line.cantidad,
-                        referencia=f'OT: {self.name}'
-                    )
-                else:
-                    _logger.warning(
-                        'No se encontró stock para accesorio %s en OT %s',
-                        accessory_line.accesorio_id.name,
-                        self.name
-                    )
-            except ValidationError as e:
-                _logger.error('Error al descontar stock: %s', str(e))
-                raise
 
     def _sync_resources_on_activation(self):
         self.ensure_one()
@@ -421,6 +399,11 @@ class FtthWorkOrder(models.Model):
         existir si la OT no llegó a activarse).
         """
         self.ensure_one()
+
+        # En OT de baja no se deben modificar estados de recursos al cancelar.
+        # Solo las OT de instalación liberan recursos en cancelación.
+        if self.work_type == 'deactivation':
+            return
 
         if self.subinterface_id:
             self.subinterface_id.sudo().write({
@@ -497,6 +480,19 @@ class FtthWorkOrder(models.Model):
 
         self.client_service_id = service.id
         self._link_resources_to_service(service)
+        self._sync_accessories_to_service(service)
+
+    def _get_effective_contract(self):
+        """Return the latest contract for the work order.
+
+        If the current contract was replaced by a plan change, use the next
+        contract so synchronization pulls the updated plan and related data.
+        """
+        self.ensure_one()
+        contract = self.contract_id.sudo()
+        if contract and contract.next_contract_id:
+            return contract.next_contract_id.sudo()
+        return contract
 
     def _prepare_client_service_vals(self):
         # Importante: algunos campos de la ONU (p.ej. wifi_password) están restringidos por grupos.
@@ -504,12 +500,13 @@ class FtthWorkOrder(models.Model):
         onu = self.onu_id.sudo() if self.onu_id else False
         lead = self.lead_id.sudo() if self.lead_id else False
         sub = self.subinterface_id.sudo() if self.subinterface_id else False
+        contract = self._get_effective_contract()
         _logger.info(f"Preparando vals para ficha técnica desde OT {self.name} (ONU: {onu}, Subinterface: {sub.vlan_id})")
         return {
-            'partner_id': self.partner_id.id,
-            'codigo_cliente': self.customer_code,
-            'plan_id': self.plan_id.id if self.plan_id else False,
-            'servicio': self.plan_id.display_name if self.plan_id else False,
+            'partner_id': contract.partner_id.id if contract and contract.partner_id else self.partner_id.id,
+            'codigo_cliente': contract.name if contract else self.customer_code,
+            'plan_id': contract.plan_id.id if contract and contract.plan_id else (self.plan_id.id if self.plan_id else False),
+            'servicio': contract.plan_id.display_name if contract and contract.plan_id else (self.plan_id.display_name if self.plan_id else False),
             'fecha_instalacion': fields.Date.today(),
             'estado_servicio': 'active',
 
@@ -562,6 +559,22 @@ class FtthWorkOrder(models.Model):
                 'client_service_id': service.id,
                 'subinterface_id': self.subinterface_id.id if self.subinterface_id else False,
             })
+
+    def _sync_accessories_to_service(self, service):
+        """Sincronizar accesorios de la OT a la ficha técnica.
+        
+        Copia todos los accesorios registrados en la OT al campo client_service_id
+        para que aparezcan en la ficha técnica.
+        """
+        self.ensure_one()
+        if not self.work_order_accessories:
+            return
+        
+        AccessoryModel = self.env['ftth.work.order.accessory'].sudo()
+        
+        for accessory in self.work_order_accessories:
+            # Actualizar el accesorio para vincular a la ficha técnica
+            accessory.sudo().write({'client_service_id': service.id})
 
     def action_view_client_service(self):
         self.ensure_one()

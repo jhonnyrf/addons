@@ -9,7 +9,6 @@
                 <field name="codigo_cliente"/>
                 <field name="partner_id"/>
                 <field name="plan_id"/>
-                <field name="servicio"/>
                 <field name="gestor_comercial"/>
                 <field name="installer_id"/>
                 <field name="fecha_instalacion"/>
@@ -48,19 +47,6 @@
 
                         <button name="action_create_deactivation_work_order" type="object" class="oe_stat_button" icon="fa-trash" invisible="estado_servicio != 'active'">
                             <span class="o_stat_text">Dar de baja</span>
-                        </button>
-
-                        <!--  <button name="action_register_incident" type="object" class="oe_stat_button" icon="fa-exclamation-triangle">
-                            <span class="o_stat_text">Registrar incidencia</span>
-                        </button> -->
-
-                        <button name="action_view_incidents" type="object" class="oe_stat_button" icon="fa-ticket">
-                            <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_value">
-                                    <field name="incident_count"/>
-                                </span>
-                                <span class="o_stat_text">Incidencias</span>
-                            </div>
                         </button>
 
                         <button name="action_view_suspensions" type="object" class="oe_stat_button" icon="fa-ban">
@@ -159,7 +145,7 @@
 
                         <page string="Accesorios" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_readonly,base.group_erp_manager">
                             <field name="work_order_accessory_ids">
-                                <list>
+                                <list editable="bottom">
                                     <field name="accesorio_id"/>
                                     <field name="cantidad"/>
                                     <field name="unidad" readonly="1"/>

@@ -2,10 +2,11 @@
 <templates xml:space="preserve">
 
     <t t-name="wigo_cobranza.ReciboLivePreview">
-        <div class="o_recibo_live_preview" style="min-height: 300px;">
+        <div class="o_recibo_live_preview" style="min-height: 300px; position: relative;">
+            <div t-ref="htmlContainer"/>
             <t t-if="state.loading">
-                <div style="display:flex;align-items:center;justify-content:center;
-                            padding:60px 20px;color:#6b7280;gap:10px;flex-direction:column;">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                            padding:60px 20px;color:#6b7280;gap:10px;flex-direction:column;background:rgba(255,255,255,0.55);backdrop-filter:blur(1px);">
                     <i class="fa fa-spinner fa-spin fa-2x"/>
                     <span style="font-size:13px;">Cargando vista previa...</span>
                 </div>
@@ -15,9 +16,6 @@
                     <i class="fa fa-exclamation-triangle me-2"/>
                     <t t-esc="state.error"/>
                 </div>
-            </t>
-            <t t-else="">
-                <div t-ref="htmlContainer"/>
             </t>
         </div>
     </t>

@@ -22,14 +22,11 @@
 
     <!-- Equipos ONU -->
     <menuitem id="menu_ftth_onu" name="Equipos ONU" parent="menu_ftth_onu_equipment" action="action_ftth_onu" sequence="10" groups="base.group_user,base.group_system"/>
-    <menuitem id="menu_ftth_onu_batch" name="Lotes de Entrega" parent="menu_ftth_onu_equipment" action="action_ftth_onu_batch" sequence="20" groups="base.group_user,base.group_system"/>
     <menuitem id="menu_ftth_config_brand" name="Marcas" parent="menu_ftth_onu_equipment" action="action_ftth_brand" sequence="30"/>
     <menuitem id="menu_ftth_config_model" name="Modelos" parent="menu_ftth_onu_equipment" action="action_ftth_model" sequence="40"/>
 
     <!-- Accesorios -->
     <menuitem id="menu_ftth_accesorio" name="Catálogo" parent="menu_ftth_accessories" action="action_ftth_accesorio" sequence="10" groups="base.group_user"/>
-    <menuitem id="menu_ftth_stock_accesorio" name="Stock" parent="menu_ftth_accessories" action="action_ftth_stock_accesorio" sequence="20" groups="base.group_user"/>
-    <menuitem id="menu_ftth_movimiento_accesorio" name="Movimientos" parent="menu_ftth_accessories" action="action_ftth_movimiento_accesorio" sequence="30" groups="base.group_user"/>
 
     <!-- 4. REPORTES Y GRAFICAS -->
     <menuitem id="menu_ftth_reports_root" name="Reportes" parent="menu_wigo_ftth_root" sequence="40"/>
@@ -41,12 +38,12 @@
     <menuitem id="menu_ftth_capacity" name="Ocupacion de Puertos" parent="menu_ftth_reports_root" action="action_ftth_capacity" sequence="60"/>
 
     <!-- 5. CONFIGURACION -->
-    <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
+    <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="base.group_user"/>
 
     <!-- Submenús para ordenar la configuración -->
-    <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10"/>
-    <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20"/>
-    <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30"/>
+    <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10" groups="base.group_user"/>
+    <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20" groups="base.group_user"/>
+    <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30" groups="base.group_user"/>
 
     <!-- Ubicación y segmentación -->
     <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_location" action="action_ftth_regional" sequence="10"/>
@@ -66,6 +63,6 @@
     <!-- Operación -->
     <menuitem id="menu_ftth_config_installer" name="Instaladores / Técnicos" parent="menu_ftth_config_operations" action="action_ftth_installer" sequence="10"/>
     <menuitem id="menu_ftth_config_additional_equipment" name="Equipos Adicionales" parent="menu_ftth_config_operations" action="action_ftth_additional_equipment" sequence="20"/>
-    <menuitem id="menu_ftth_config_work_order_print" name="Planilla OT PDF" parent="menu_ftth_config_operations" action="action_ftth_work_order_print_config" sequence="30"/>
+    <menuitem id="menu_ftth_config_work_order_print" name="Planilla OT PDF" parent="menu_ftth_config_operations" action="action_ftth_work_order_print_config" sequence="30" groups="base.group_system"/>
 
 </odoo>

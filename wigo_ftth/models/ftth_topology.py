@@ -288,6 +288,7 @@ class FtthOlt(models.Model):
     name = fields.Char(string='Nombre descriptivo')
     brand = fields.Char(string='Marca')
     model = fields.Char(string='Modelo')
+    serial_number = fields.Char(string='Número de serie')
 
     node_id = fields.Many2one(
         'wigo.ftth.nodo',

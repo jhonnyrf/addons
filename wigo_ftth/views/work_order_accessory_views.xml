@@ -27,7 +27,7 @@
                     <group col="2">
                         <group string="Accesorio">
                             <field name="work_order_id" readonly="1"/>
-                            <field name="accesorio_id" domain="[('active', '=', True), ('cantidad_disponible', '>', 0)]"/>
+                            <field name="accesorio_id" domain="[('active', '=', True)]"/>
                         </group>
                         <group string="Cantidad">
                             <field name="cantidad"/>

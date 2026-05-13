@@ -258,7 +258,7 @@
                         <page string="Accesorios" invisible="work_type == 'deactivation'">
                             <field name="work_order_accessories" readonly="state == 'active'">
                                 <list editable="bottom">
-                                    <field name="accesorio_id" domain="[('active', '=', True), ('cantidad_disponible', '&gt;', 0)]"/>
+                                    <field name="accesorio_id" domain="[('active', '=', True)]"/>
                                     <field name="cantidad"/>
                                     <field name="unidad" readonly="1"/>
                                 </list>

@@ -18,22 +18,22 @@
         ">
 
 
-            <div t-attf-style="#{hdr_bg} color:#{hdr_txt}; padding:8px 14px;">
+            <div t-attf-style="#{hdr_bg} color:#{hdr_txt}; padding:10px 14px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:geometricPrecision;">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                         <td valign="top" width="60%">
-                            <div t-attf-style="font-size:#{ft}px; font-weight:#{fnb}; letter-spacing:-0.5px;">
+                            <div t-attf-style="font-size:#{ft + 2}px; font-weight:#{fnb}; letter-spacing:-0.2px; line-height:1.05;">
                                 RECIBO DE COBRANZA
                             </div>
-                            <div t-attf-style="font-size:#{fe}px; font-weight:bold; margin-top:2px;">
+                            <div t-attf-style="font-size:#{fe + 2}px; font-weight:700; margin-top:4px; line-height:1.1;">
                                 <t t-out="cfg.empresa_nombre"/>
                             </div>
                             <t t-if="cfg.empresa_slogan">
-                                <div style="font-size:10px; opacity:0.85; font-style:italic;">
+                                <div style="font-size:11px; opacity:0.92; font-style:italic; line-height:1.2; margin-top:2px;">
                                     <t t-out="cfg.empresa_slogan"/>
                                 </div>
                             </t>
-                            <div style="font-size:9px; margin-top:2px; opacity:0.9; line-height:1.4;">
+                            <div style="font-size:11px; margin-top:4px; opacity:1; line-height:1.35; letter-spacing:0.1px;">
                                 <t t-out="cfg.empresa_direccion"/>
                                 <t t-if="cfg.empresa_ciudad">
                                     <br/>
@@ -55,7 +55,7 @@ CEL: <t t-out="cfg.empresa_celular"/>
                             <t t-elif="company.logo">
                                 <img t-att-src="image_data_uri(company.logo)" t-attf-style="max-height:#{la}px; max-width:#{int(la)*2}px; display:block; margin-left:auto;"/>
                             </t>
-                            <div t-attf-style="font-size:16px; font-weight:bold; margin-top:4px; text-align:right;">
+                            <div t-attf-style="font-size:16px; font-weight:bold; margin-top:6px; text-align:right; line-height:1.1;">
                                 N&#176; <t t-out="o.numero"/>
                             </div>
                         </td>
@@ -86,9 +86,6 @@ CEL: <t t-out="cfg.empresa_celular"/>
                             </div>
                             <div t-attf-style="font-size:13px; font-weight:bold; color:#{cp};">
                                 <t t-out="o.fecha_pago" t-options="{'widget':'date','format':'dd/MM/yyyy'}"/>
-                            </div>
-                            <div t-attf-style="font-size:10px; color:#{cts};">
-                                <t t-out="o.periodo"/>
                             </div>
                         </td>
                     </tr>

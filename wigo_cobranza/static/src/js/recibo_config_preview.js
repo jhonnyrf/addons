@@ -1,6 +1,6 @@
 
 
-import { Component, useState, useEffect, useRef } from "@odoo/owl";
+import { Component, useState, useEffect, useRef, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -21,6 +21,10 @@ export class ReciboConfigPreview extends Component {
         this.htmlContainer = useRef("configHtmlContainer");
         this.orm = useService("orm");
         this.state = useState({ loading: true });
+
+      onMounted(() => {
+        this._render();
+      });
 
      
         useEffect(
@@ -161,8 +165,7 @@ export class ReciboConfigPreview extends Component {
           </td>
           <td width="40%" valign="top" align="right">
             <div style="font-size:8px;text-transform:uppercase;color:${colorTxtS};letter-spacing:0.8px;margin-bottom:1px;">FECHA:</div>
-            <div style="font-size:11px;font-weight:bold;color:${colorP};">01/05/2026</div>
-            <div style="font-size:9px;color:${colorTxtS};">Mayo/2026</div>
+            <div style="font-size:11px;font-weight:bold;color:${colorP};">01/05/2026</div>            
           </td>
         </tr>
       </table>

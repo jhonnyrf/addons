@@ -10,8 +10,8 @@
                 <field name="partner_id"/>
                 <field name="plan_id" optional="show"/>
                 <field name="meses_adeudados"/>
-                <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
-                <field name="monto_cobrado" optional="show" widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto_total_adeudado" widget="monetary"/>
+                <field name="monto_cobrado" optional="show" widget="monetary"/>
                 <field name="fecha_declaracion"/>
                 <field name="state" widget="badge" decoration-warning="state == 'activo'" decoration-info="state == 'in_cut'" decoration-danger="state == 'baja_incobrable'" decoration-success="state == 'recuperado'"/>
             </list>
@@ -48,18 +48,16 @@
                             <field name="contract_phone" readonly="1"/>
                             <field name="contract_mobile" readonly="1"/>
                             <field name="contract_date" readonly="1"/>
-                            <field name="suspension_id" readonly="1"/>
                             <field name="plan_id" readonly="1"/>
                             <field name="plan_identifier" readonly="1"/>
-                            <field name="monto_plan" readonly="1" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_plan" readonly="1" widget="monetary"/>
                         </group>
                         <group string="Deuda">
                             <field name="meses_adeudados" readonly="1"/>
-                            <field name="monto_total_adeudado" widget="monetary" options="{'currency_field': False}"/>
-                            <field name="monto_cobrado" widget="monetary" options="{'currency_field': False}"/>
-                            <field name="diferencia_incobrable" readonly="1" widget="monetary" options="{'currency_field': False}"/>
+                            <field name="monto_total_adeudado" widget="monetary"/>
+                            <field name="monto_cobrado" widget="monetary"/>
+                            <field name="diferencia_incobrable" readonly="1" widget="monetary"/>
                             <button name="action_open_pagos_contrato" string="Ver pagos" type="object" icon="fa-external-link" class="btn-secondary" invisible="not contract_id"/>
-                            <button name="action_view_suspension" string="Ver suspensión" type="object" icon="fa-ban" class="btn-secondary" invisible="not suspension_id"/>
                         </group>
                     </group>
                     <group col="1">
@@ -110,11 +108,32 @@
         </field>
     </record>
 
+    <!-- ═══════════════════════════════════════════════════════════
+             VISTA: GRÁFICO INCOBRABLES
+             Pie chart: Distribución de incobrables por estado.
+             ═══════════════════════════════════════════════════════════ -->
+    <record id="view_uncollectible_graph" model="ir.ui.view">
+        <field name="name">wigo.incobrable.graph</field>
+        <field name="model">wigo.incobrable</field>
+        <field name="arch" type="xml">
+            <graph string="Distribución de Incobrables" type="pie">
+                <field name="state" type="row"/>
+                <field name="diferencia_incobrable" type="measure" string="Monto Incobrable (Bs)"/>
+            </graph>
+        </field>
+    </record>
+
     <record id="action_uncollectible" model="ir.actions.act_window">
         <field name="name">Incobrables</field>
         <field name="res_model">wigo.incobrable</field>
-        <field name="view_mode">list,form,pivot</field>
+        <field name="view_mode">list,form,pivot,graph</field>
         <field name="view_id" ref="view_uncollectible_list"/>
+        <field name="views" eval="[
+            (ref('wigo_cobranza.view_uncollectible_list'), 'list'),
+            (ref('wigo_cobranza.view_uncollectible_form'), 'form'),
+            (ref('wigo_cobranza.view_uncollectible_pivot'), 'pivot'),
+            (ref('wigo_cobranza.view_uncollectible_graph'), 'graph'),
+            ]"/>
         <field name="search_view_id" ref="view_uncollectible_search"/>
         <field name="domain">[]</field>
         <field name="context">{'active_test': False, 'create': False, 'show_create': False}</field>
@@ -122,6 +141,27 @@
             <p class="o_view_nocontent_smiling_face">
                 No hay registros incobrables. ¡Excelente gestión!
             </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════
+             ACCIÓN: REPORTE DE INCOBRABLES
+             Reporte con lista, pivot y gráfico de incobrables.
+             ═══════════════════════════════════════════════════════════ -->
+    <record id="action_uncollectible_report" model="ir.actions.act_window">
+        <field name="name">Reporte de Incobrables</field>
+        <field name="res_model">wigo.incobrable</field>
+        <field name="view_mode">graph,list,pivot</field>
+        <field name="view_id" ref="view_uncollectible_graph"/>
+        <field name="views" eval="[
+                (ref('wigo_cobranza.view_uncollectible_graph'), 'graph'),
+                (ref('wigo_cobranza.view_uncollectible_list'), 'list'),
+                (ref('wigo_cobranza.view_uncollectible_pivot'), 'pivot'),
+            ]"/>
+        <field name="search_view_id" ref="view_uncollectible_search"/>
+        <field name="context">{'group_by': 'state', 'active_test': False}</field>
+        <field name="help" type="html">
+            <p>Reporte analítico de incobrables con gráficos y análisis por estado.</p>
         </field>
     </record>
 

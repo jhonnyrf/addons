@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Custom paperformat for FTTH work order: A4 with 10mm margins -->
+    <record id="paperformat_work_order" model="report.paperformat">
+        <field name="name">A4 - FTTH Work Order</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10.0</field>
+        <field name="margin_bottom">10.0</field>
+        <field name="margin_left">10.0</field>
+        <field name="margin_right">10.0</field>
+        <field name="default">False</field>
+    </record>
+
+</odoo>

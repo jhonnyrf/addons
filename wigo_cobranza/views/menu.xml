@@ -7,13 +7,25 @@
 
     <menuitem id="menu_cobranza_customers" name="Clientes con Contrato" parent="menu_cobranza_management" action="wigo_cobranza.action_cobranza_contract_customers" sequence="10"/>
 
-    <menuitem id="menu_general_spreadsheet" name="Planilla General" parent="menu_cobranza_management" action="wigo_cobranza.action_general_spreadsheet" sequence="15"/>
-
     <menuitem id="menu_receipts" name="Recibos de Cobro" parent="menu_cobranza_management" action="wigo_cobranza.action_receipt" sequence="35"/>
 
     <menuitem id="menu_invoicing" name="Facturación" parent="menu_cobranza_management" action="wigo_cobranza.action_invoice" sequence="45"/>
 
     <menuitem id="menu_uncollectibles" name="Incobrables" parent="menu_cobranza_management" action="wigo_cobranza.action_uncollectible" sequence="55"/>
+
+    <menuitem id="menu_graphics_and_reports" name="Gráficos y Reportes" parent="menu_cobranza_root" sequence="20"/>
+
+    <menuitem id="menu_general_spreadsheet" name="Planilla General" parent="menu_cobranza_management" action="wigo_cobranza.action_general_spreadsheet" sequence="10"/>
+
+    <menuitem id="menu_paid_collection_analytics" name="Recaudación (Pagados)" parent="menu_graphics_and_reports" action="wigo_cobranza.action_monthly_collection_analysis" sequence="20"/>
+
+    <menuitem id="menu_pending_debt_analytics" name="Deuda Pendiente" parent="menu_graphics_and_reports" action="wigo_cobranza.action_expected_revenue_analysis" sequence="30"/>
+
+    <menuitem id="menu_overdue_debt_analytics" name="Deuda en Mora" parent="menu_graphics_and_reports" action="wigo_cobranza.action_overdue_debt_analysis" sequence="40"/>
+
+    <menuitem id="menu_adjustment_type_analytics" name="Por Tipo de Ajuste" parent="menu_graphics_and_reports" action="wigo_cobranza.action_adjustment_type_analysis" sequence="50"/>
+
+    <menuitem id="menu_uncollectible_report" name="Reporte Incobrables" parent="menu_graphics_and_reports" action="wigo_cobranza.action_uncollectible_report" sequence="60"/>
 
     <menuitem id="menu_cobranza_config_root" name="Configuración" parent="menu_cobranza_root" sequence="90"/>
     <menuitem id="menu_receipt_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_receipt_config" sequence="10"/>

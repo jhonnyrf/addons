@@ -2,15 +2,13 @@
 <templates xml:space="preserve">
 
     <t t-name="wigo_cobranza.ReciboConfigPreview">
-        <div style="min-height: 200px;">
+        <div style="min-height: 200px; position: relative;">
+            <div t-ref="configHtmlContainer"/>
             <t t-if="state.loading">
-                <div style="display:flex;align-items:center;justify-content:center;padding:40px 20px;color:#6b7280;">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:40px 20px;color:#6b7280;background:rgba(255,255,255,0.55);backdrop-filter:blur(1px);">
                     <i class="fa fa-spinner fa-spin me-2"/>
                     Generando vista previa...
                 </div>
-            </t>
-            <t t-else="">
-                <div t-ref="configHtmlContainer"/>
             </t>
         </div>
     </t>

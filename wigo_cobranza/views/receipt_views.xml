@@ -66,7 +66,7 @@ Código: <field name="codigo_cliente"/>
                 <field name="partner_id"/>
                 <field name="codigo_cliente"/>
                 <field name="periodo"/>
-                <field name="monto" widget="monetary" options="{'currency_field': False}"/>
+                <field name="monto" widget="monetary"/>
                 <field name="canal_pago" optional="show"/>
                 <field name="fecha_pago"/>
                 <field name="registrado_por" optional="hide"/>

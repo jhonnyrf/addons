@@ -10,7 +10,7 @@
         <field name="arch" type="xml">
             <list string="Costos de Instalación" decoration-muted="not active">
                 <field name="name_installation_cost"/>
-                <field name="installation_cost" widget="monetary" options="{'currency_field': false}"/>
+                <field name="installation_cost" widget="monetary"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>

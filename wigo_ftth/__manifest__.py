@@ -26,6 +26,7 @@
         'security/security.xml',
         'security/ir.model.access.csv', 
         'data/sequence.xml',
+        'data/paperformat_work_order.xml',
         'views/zone_views.xml',      
         'views/topology_views.xml',
         'views/generate_ports_wizard.xml',

@@ -198,6 +198,9 @@ class WigoIncobrable(models.Model):
         if not self.contract_id:
             raise ValidationError('No hay contrato asociado a este registro incobrable.')
 
+        # Elevate privileges to access ir.ui.view
+        self_sudo = self.sudo()
+
         action = {
             'type': 'ir.actions.act_window',
             'name': f'Pagos -- {self.contract_id.name or self.partner_id.name}',
@@ -208,8 +211,8 @@ class WigoIncobrable(models.Model):
             'target': 'current',
         }
 
-        list_view = self.env.ref('wigo_cobranza.view_payment_state_list', raise_if_not_found=False)
-        form_view = self.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
+        list_view = self_sudo.env.ref('wigo_cobranza.view_payment_state_list', raise_if_not_found=False)
+        form_view = self_sudo.env.ref('wigo_cobranza.view_payment_state_form', raise_if_not_found=False)
         views = []
         if list_view:
             views.append((list_view.id, list_view.type or 'list'))
@@ -220,7 +223,7 @@ class WigoIncobrable(models.Model):
             action['view_mode'] = ','.join([t for _, t in views])
             return action
 
-        View = self.env['ir.ui.view'].sudo()
+        View = self_sudo.env['ir.ui.view']
         found_views = View.search([
             ('model', '=', 'wigo.pago.estado'),
             ('type', 'in', ('tree', 'form')),

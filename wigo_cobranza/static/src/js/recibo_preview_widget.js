@@ -47,13 +47,13 @@ export class ReciboPreviewWidget extends Component {
 
         this.state.loading = true;
         this.state.error = null;
-
+  <div style="font-family:${fuente};font-size:${tamBase}px;color:${colorTxtP};background:#e5e7eb;padding:12px;min-height:400px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;">
         try {
           
             const result = await rec.model.orm.call(
                 "wigo.recibo.config",
                 "get_config_dict",
-                [],
+                    <div style="font-size:${tamTitulo + 3}px;font-weight:${titNegrita};letter-spacing:-0.2px;line-height:1.05;">RECIBO DE COBRANZA</div>
                 {}
             );
             const cfg = result || {};
@@ -64,7 +64,7 @@ export class ReciboPreviewWidget extends Component {
             const fecha = d.fecha_pago
                 ? new Date(d.fecha_pago).toLocaleDateString("es-BO", {
                       day: "2-digit",
-                      month: "2-digit",
+                    <div style="margin-top:2px;">${numHtml}</div>
                       year: "numeric",
                   })
                 : "—";
@@ -75,7 +75,7 @@ export class ReciboPreviewWidget extends Component {
             const codigoCli = d.codigo_cliente || "—";
             const canal = d.canal_pago || "—";
             const firmaNombre = d.firma_nombre_override || cfg.firma_nombre || "Firmante";
-            const firmaCargo = d.firma_cargo_override || cfg.firma_cargo || "";
+                    <div style="font-size:13px;font-weight:bold;color:${colorTxtP};line-height:1.2;">${partnerName}</div>
             const firmaCel = d.firma_celular_override || cfg.firma_celular || "";
 
      
@@ -177,8 +177,7 @@ export class ReciboPreviewWidget extends Component {
         </div>
         <div style="flex:1;min-width:100px;text-align:right;">
           <div style="font-size:9px;text-transform:uppercase;color:${colorTxtS};letter-spacing:0.5px;margin-bottom:2px;">FECHA</div>
-          <div style="font-size:12px;font-weight:bold;color:${colorP};">${fecha}</div>
-          <div style="font-size:10px;color:${colorTxtS};">${periodo}</div>
+          <div style="font-size:12px;font-weight:bold;color:${colorP};">${fecha}</div>          
         </div>
       </div>
 

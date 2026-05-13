@@ -2,15 +2,13 @@
 <templates xml:space="preserve">
 
     <t t-name="wigo_ftth.FtthWorkOrderPrintConfigPreview">
-        <div class="wigo-ftth-preview-shell">
+        <div class="wigo-ftth-preview-shell" style="position:relative; min-height:260px;">
+            <div t-ref="configHtmlContainer"/>
             <t t-if="state.loading">
-                <div class="wigo-ftth-preview-loading">
+                <div class="wigo-ftth-preview-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);backdrop-filter:blur(1px);">
                     <i class="fa fa-spinner fa-spin me-2"/>
                     Generando vista previa...
                 </div>
-            </t>
-            <t t-else="">
-                <div t-ref="configHtmlContainer"/>
             </t>
         </div>
     </t>

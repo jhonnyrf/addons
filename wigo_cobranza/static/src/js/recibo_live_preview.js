@@ -1,6 +1,6 @@
 
 
-import { Component, useState, useEffect, useRef } from "@odoo/owl";
+import { Component, useState, useEffect, useRef, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -27,15 +27,9 @@ export class ReciboLivePreview extends Component {
             cfg: null,
         });
 
-
-        useEffect(
-            () => {
-                this._loadConfig();
-            },
-            () => []
-        );
-
-    
+          onMounted(() => {
+            this._loadConfig();
+          });
         useEffect(
             () => {
                 if (this.state.cfgLoaded) {
@@ -224,8 +218,7 @@ export class ReciboLivePreview extends Component {
         </div>
         <div style="flex:1;text-align:right;">
           <div style="font-size:9px;text-transform:uppercase;color:${colorTxtS};letter-spacing:0.6px;margin-bottom:2px;">FECHA</div>
-          <div style="font-size:13px;font-weight:bold;color:${colorP};">${fecha}</div>
-          <div style="font-size:10px;color:${colorTxtS};">${periodo}</div>
+          <div style="font-size:13px;font-weight:bold;color:${colorP};">${fecha}</div>          
         </div>
       </div>
 

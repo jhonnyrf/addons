@@ -54,7 +54,7 @@
             'wigo_cobranza/static/src/xml/recibo_config_preview.xml',
             # Badge coloreado para tipo de ajuste en listas/form
             'wigo_cobranza/static/src/js/tipo_ajuste_badge.js',
-            'wigo_cobranza/static/src/xml/tipo_ajuste_badge.xml',
+            'wigo_cobranza/static/src/xml/tipo_ajuste_badge.xml',            
         ],
     },
     'external_dependencies': {
