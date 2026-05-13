@@ -38,8 +38,8 @@ class FtthClientService(models.Model):
     metraje = fields.Float(string='Metraje de fibra (m)', help='Metros de cable de fibra instalados')
 
     # ── Gestión comercial ─────────────────────────────────────────
-    gestor_comercial = fields.Char(string='Gestión / Comisión', help='Ej: ASISCORP, Neida')
-    responsable_comercial_id = fields.Many2one('res.users', string='Responsable comercial')
+    gestor_comercial = fields.Many2one('hr.employee', string='Gestión / Comisión', help='Ej: ASISCORP, Neida')
+    responsable_comercial_id = fields.Many2one('hr.employee', string='Responsable comercial')
 
     # ── Topología de red (Técnica + Solo lectura + Manager) ───────
     nodo_id = fields.Many2one(

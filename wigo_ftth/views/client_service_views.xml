@@ -85,8 +85,8 @@
                         <page string="Servicio">
                             <group col="4">
                                 <group string="Comercial" colspan="2">
-                                    <field name="gestor_comercial"/>
-                                    <field name="responsable_comercial_id"/>
+                                    <field name="gestor_comercial" domain="[('department_id.name', '=', 'Area Contabilidad')]"/>
+                                    <field name="responsable_comercial_id" domain="[('department_id.name', '=', 'Area Comercial')]"/>
                                     <field name="metraje"/>
                                 </group>
 
