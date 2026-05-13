@@ -77,8 +77,10 @@
                     <field name="country_id" column_invisible="True"/>
                     <field name="expected_revenue" column_invisible="True"/>
 
+                    <field name="active_contract_name" string="CF" optional="show"/>
                     <field name="name" string="Oportunidad" readonly="1"/>
                     <field name="partner_id" string="Cliente" optional="show"/>
+                    <field name="phone" string="Celular" optional="show"/>
                     <field name="zona" optional="show"/>
                     <field name="direccion" optional="show"/>
                     <field name="ubicacion" optional="show"/>
@@ -129,7 +131,7 @@
                 <field name="coordenadas" string="Coordenadas" optional="show"/>
                 <field name="plan_id" string="Plan" optional="show"/>
             </xpath>
-            
+
             <!-- Ocultar country_id -->
             <xpath expr="//field[@name='country_id']" position="attributes">
                 <attribute name="column_invisible">True</attribute>
@@ -161,11 +163,17 @@
         <field name="priority">94</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="before">
+                <field name="active_contract_name" string="CF" optional="show"/>
+                <field name="telefono_contacto" string="Teléfono" optional="show"/>
                 <field name="zona" string="Zona" optional="show"/>
                 <field name="direccion" string="Dirección" optional="show"/>
                 <field name="ubicacion" string="Ubicación" optional="show"/>
                 <field name="coordenadas" string="Coordenadas" optional="show"/>
                 <field name="plan_id" string="Plan" optional="show"/>
+            </xpath>
+            <!-- Renombra phone a Celular en la vista base -->
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="string">Celular</attribute>
             </xpath>
         </field>
     </record>
@@ -191,11 +199,17 @@
         <field name="priority">92</field>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='user_id']" position="before">
+                <field name="active_contract_name" string="CF" optional="show"/>
+                <field name="telefono_contacto" string="Teléfono" optional="show"/>
                 <field name="zona" string="Zona" optional="show"/>
                 <field name="direccion" string="Dirección" optional="show"/>
                 <field name="ubicacion" string="Ubicación" optional="show"/>
                 <field name="coordenadas" string="Coordenadas" optional="show"/>
                 <field name="plan_id" string="Plan" optional="show"/>
+            </xpath>
+            <!-- Renombra phone a Celular en la vista base -->
+            <xpath expr="//field[@name='phone']" position="attributes">
+                <attribute name="string">Celular</attribute>
             </xpath>
         </field>
     </record>

@@ -171,8 +171,8 @@ class CrmLead(models.Model):
         compute='_compute_active_contract_reference',
         readonly=True,
     )
-    active_contract_installation_date = fields.Date(
-        string="Fecha de instalación activa",
+    active_contract_end_date = fields.Date(
+        string="Fecha de finalización activa",
         compute='_compute_active_contract_reference',
         readonly=True,
     )
@@ -202,7 +202,7 @@ class CrmLead(models.Model):
         'contract_id.next_contract_id.plan_id',
         'contract_id.next_contract_id.payment_mode',
         'contract_id.next_contract_id.contract_date',
-        'contract_id.next_contract_id.installation_date',
+        'contract_id.next_contract_id.end_date',
     )
     def _compute_active_contract_reference(self):
         for lead in self:
@@ -213,7 +213,7 @@ class CrmLead(models.Model):
             lead.active_contract_plan_id = contract.plan_id if contract else False
             lead.active_contract_payment_mode = contract.payment_mode if contract else False
             lead.active_contract_date = contract.contract_date if contract else False
-            lead.active_contract_installation_date = contract.installation_date if contract else False
+            lead.active_contract_end_date = contract.end_date if contract else False
 
     def sync_contract_reference(self, contract):
         """Actualiza en el lead la referencia al contrato activo actual."""

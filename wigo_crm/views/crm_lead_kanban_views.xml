@@ -14,6 +14,8 @@
 
             <!-- Asegura que los campos necesarios esten cargados en el kanban. -->
             <xpath expr="//kanban" position="inside">
+                <field name="phone"/>
+                <field name="telefono_contacto"/>
                 <field name="zona"/>
                 <field name="codigo_cliente"/>
                 <field name="plan_id"/>
