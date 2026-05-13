@@ -70,14 +70,6 @@
                         <button name="action_view_client_service" type="object" class="oe_stat_button" icon="fa-id-card" invisible="not client_service_id">
                             <span class="o_stat_text">Ver ficha técnica</span>
                         </button>
-                        <button name="action_view_incobrables" type="object" class="oe_stat_button" icon="fa-exclamation-circle">
-                            <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_value">
-                                    <field name="incobrable_count"/>
-                                </span>
-                                <span class="o_stat_text">Incobrables</span>
-                            </div>
-                        </button>
                     </div>
                 </sheet>
                 <chatter/>
