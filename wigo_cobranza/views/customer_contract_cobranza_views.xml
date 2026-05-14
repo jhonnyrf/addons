@@ -7,14 +7,10 @@
         <field name="inherit_id" ref="customer_contract.view_customer_contract_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="Cobranza" name="cobranza" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,wigo_cobranza.group_cobranza_readonly,base.group_erp_manager">
+                <page string="Cobranza" name="cobranza">
                     <group col="4">
                         <group string="Resumen" colspan="2">
                             <field name="unpaid_month_count" readonly="1"/>
-                        </group>
-                        <group string="Acciones" colspan="2" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,base.group_erp_manager">
-                            <button name="action_view_cobranza_mensual" type="object" string="Ver cobranza mensual" class="btn-primary"/>
-                            <button name="action_crear_pago_mes_contrato" type="object" string="+ Registrar pago del mes" class="btn-secondary"/>
                         </group>
                     </group>
                     <field name="pago_estado_ids" nolabel="1" readonly="1" context="{'default_partner_id': partner_id, 'default_contract_id': id}">
