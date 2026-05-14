@@ -1,9 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_dept_access_rule_admin,department.access.rule admin,model_department_access_rule,department_access_control.group_department_access_manager,1,1,1,1
-access_dept_access_rule_user,department.access.rule user,model_department_access_rule,base.group_user,1,0,0,0
-access_dept_module_access_admin,department.module.access admin,model_department_module_access,department_access_control.group_department_access_manager,1,1,1,1
-access_dept_module_access_user,department.module.access user,model_department_module_access,base.group_user,1,0,0,0
-access_dept_employee_module_access_admin,department.employee.module.access admin,model_department_employee_module_access,department_access_control.group_department_access_manager,1,1,1,1
-access_dept_employee_module_access_user,department.employee.module.access user,model_department_employee_module_access,base.group_user,1,0,0,0
-access_wizard_assign_dept_access_admin,wizard.assign.department.access admin,model_wizard_assign_department_access,department_access_control.group_department_access_manager,1,1,1,1
-access_wizard_assign_dept_access_user,wizard.assign.department.access user,model_wizard_assign_department_access,base.group_user,1,1,1,1

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-    <!-- Datos de ejemplo / referencia -->
-    <!-- Los administradores de Odoo (base.group_system) ya tienen acceso completo -->
-    <!-- Este módulo agrega la capa de control por departamento encima -->
-</odoo>
