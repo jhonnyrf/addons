@@ -71,7 +71,7 @@
 
                     <group>
                         <group string="Configuración">
-                            <field name="area_id" required="1" help="Selecciona el área/departamento responsable"/>
+                            <field name="area_id" help="Selecciona el área/departamento responsable"/>
                             <field name="ticket_type_id" required="1" help="Tipo de ticket asociado"/>
                             <field name="sequence"/>
                         </group>

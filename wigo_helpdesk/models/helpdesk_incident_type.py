@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from odoo import models, fields, api
 import re
 
@@ -15,7 +16,7 @@ class HelpdeskIncidentType(models.Model):
     area_id = fields.Many2one(
         comodel_name='hr.department',
         string='Área',
-        required=True,
+        required=False,
         help='Selecciona el área (departamento) responsable de este tipo de incidencia',
     )
     
