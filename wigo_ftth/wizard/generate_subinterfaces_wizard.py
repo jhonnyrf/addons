@@ -44,6 +44,7 @@ class GenerateSubinterfacesWizard(models.TransientModel):
     prefix = fields.Char(
         string='Prefijo',
         required=True,
+        trim=False,
         default='gpon-olt',
         help='Prefijo para el nombre de subinterfaz. Ej: gpon-olt'
     )
@@ -70,10 +71,11 @@ class GenerateSubinterfacesWizard(models.TransientModel):
             if port.exists():
                 res['target_capacity'] = port.capacity_max
                 if 'prefix' in fields_list and not res.get('prefix'):
-                    res['prefix'] = port.prefix or 'gpon-olt'
+                    res['prefix'] = port.interface_port or port.prefix or 'gpon-olt'
 
         res.setdefault('vlan_id', 1)
-        res.setdefault('prefix', 'gpon-olt')
+        if 'prefix' in fields_list and not res.get('prefix'):
+            res['prefix'] = 'gpon-olt'
         return res
 
     @api.depends('olt_port_id')
@@ -149,7 +151,7 @@ class GenerateSubinterfacesWizard(models.TransientModel):
                     'olt_port_id': port.id,
                     'subinterface_number': num,
                     'vlan_id': self.vlan_id,
-                    'prefix': self.prefix or 'gpon-olt',
+                    'prefix': self.prefix or port.interface_port or port.prefix or 'gpon-olt',
                 })
 
         if vals_list:

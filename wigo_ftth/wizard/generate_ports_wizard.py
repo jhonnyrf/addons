@@ -16,7 +16,10 @@ class GeneratePortsWizard(models.TransientModel):
         required=True
     )
 
-    prefix = fields.Char(string="Prefijo")
+    prefix = fields.Char(string="Prefijo" , trim=False, default="gpon-olt_")
+    use_chassis = fields.Boolean(string='Usar chasis', default=True)
+    use_slot = fields.Boolean(string='Usar slot', default=True)
+
     chassis = fields.Integer(default=1)
     slot = fields.Integer(default=1)
     quantity = fields.Integer(string="Cantidad", default=16)
@@ -58,12 +61,16 @@ class GeneratePortsWizard(models.TransientModel):
             raise UserError("La cantidad debe ser mayor a 0")
 
     def _get_start_port_number(self, olt_id):
-        ports = self.env['wigo.ftth.olt.port'].search([            
+        domain = [
             ('olt_id', '=', olt_id),
             ('prefix', '=', self.prefix),
-            ('chassis', '=', self.chassis),
-            ('slot', '=', self.slot),
-        ])
+        ]
+        if self.use_chassis:
+            domain.append(('chassis', '=', self.chassis))
+        if self.use_slot:
+            domain.append(('slot', '=', self.slot))
+
+        ports = self.env['wigo.ftth.olt.port'].search(domain)
 
         numbers = {
             int(p.port_number)
@@ -77,17 +84,32 @@ class GeneratePortsWizard(models.TransientModel):
         values = []
 
         for port_number in range(start_number, start_number + self.quantity):
-            values.append({
+            vals = {
                 'olt_id': olt_id,
-                'interface_port': self._build_interface(port_number),
                 'chassis': self.chassis,
                 'slot': self.slot,
                 'port_number': port_number,
                 'prefix': self.prefix,
                 'technology_id': self.technology_id.id,
-            })
+                'use_chassis': self.use_chassis,
+                'use_slot': self.use_slot,
+                'use_port_number': True,
+            }
+
+            interface = self.env['wigo.ftth.olt.port']._build_interface_port_from_vals(vals)
+            vals['interface_port'] = interface
+            values.append(vals)
 
         return values
 
     def _build_interface(self, port_number):
-        return f"{self.prefix}_{self.chassis}/{self.slot}/{port_number}"
+        vals = {
+            'prefix': self.prefix,
+            'chassis': self.chassis,
+            'slot': self.slot,
+            'port_number': port_number,
+            'use_chassis': self.use_chassis,
+            'use_slot': self.use_slot,
+            'use_port_number': True,
+        }
+        return self.env['wigo.ftth.olt.port']._build_interface_port_from_vals(vals)

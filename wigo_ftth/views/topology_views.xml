@@ -507,19 +507,21 @@
 
                     <!-- Information -->
                     <group>
+
                         <!-- Identification -->
                         <group string="Identificación del Puerto" name="group_identificacion">
-                            <field name="prefix"/>
+                            <field name="prefix" options="{'no_trim': True}"/>
                             <label for="chassis" string="Chasis / Slot / Puerto"/>
                             <div class="o_row">
-                                <field name="chassis" class="o_field_widget me-1"/>
+                                <field name="chassis" class="o_field_widget me-1" readonly="not use_chassis"/>
                                 <span class="text-muted mx-1">/</span>
-                                <field name="slot" class="o_field_widget me-1"/>
+                                <field name="slot" class="o_field_widget me-1" readonly="not use_slot"/>
                                 <span class="text-muted mx-1">/</span>
-                                <field name="port_number" class="o_field_widget"/>
+                                <field name="port_number" class="o_field_widget" readonly="not use_port_number"/>
                             </div>
-                            <field name="active"/>
-
+                            <field name="use_chassis"/>
+                            <field name="use_slot"/>
+                            <field name="use_port_number"/>
                         </group>
 
                         <!-- OLT Link -->
@@ -528,6 +530,11 @@
                             <field name="technology_id" options="{'no_create': True}" widget="many2one"/>
 
                             <field name="capacity_max"/>
+                        </group>
+
+                        <!-- OLT Link -->
+                        <group string="Estado" name="group_olt">
+                            <field name="active"/>
                         </group>
                     </group>
                     <!-- Occupancy -->
@@ -1209,7 +1216,6 @@
             <list string="Subinterfaces OLT" decoration-muted="state == 'free'" decoration-primary="state == 'occupied'" decoration-info="state == 'allocated'" decoration-warning="state == 'reserved'" decoration-success="state == 'active'">
                 <field name="code" string="Subinterfaz"/>
                 <field name="prefix"/>
-                <field name="port_identifier" string="Id. Puerto"/>
                 <field name="olt_id" string="OLT"/>
                 <field name="olt_port_id"/>
                 <field name="vlan_text" string="VLAN"/>
@@ -1247,8 +1253,7 @@
                         <!-- ================= PUERTO OLT ================= -->
                         <group string="Puerto OLT">
                             <field name="olt_port_id" required="1"/>
-                            <field name="prefix"/>
-                            <field name="port_identifier" readonly="1"/>
+                            <field name="prefix" options="{'no_trim': True}"/>
                             <field name="subinterface_number"/>
                             <field name="vlan_text"/>
                             <field name="active"/>

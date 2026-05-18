@@ -15,9 +15,11 @@
                     ========================== -->
                     <group >
                         <field name="technology_id"/>
-                        <field name="prefix" placeholder="Ej: gpon-olt"/>
-                        <field name="chassis"/>
-                        <field name="slot"/>
+                        <field name="prefix" options="{'no_trim': True}" placeholder="Ej: gpon-olt"/>
+                        <field name="use_chassis"/>
+                        <field name="chassis" readonly="not use_chassis"/>
+                        <field name="use_slot"/>
+                        <field name="slot" readonly="not use_slot"/>
                         <field name="quantity"/>
                     </group>
 

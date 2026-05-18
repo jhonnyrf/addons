@@ -15,7 +15,7 @@
                     </group>
 
                     <group string="Parámetros">
-                        <field name="prefix" placeholder="Ej: gpon-olt"/>
+                        <field name="prefix" placeholder="Ej: gpon-olt" options="{'no_trim': True}"/>
                         <field name="vlan_text" placeholder="Ej: 4000"/>
                         <field name="target_capacity" placeholder="Ej: 128"/>
                         <div class="text-muted" colspan="2">

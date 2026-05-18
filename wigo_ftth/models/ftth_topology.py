@@ -494,7 +494,7 @@ class FtthOltPort(models.Model):
 
     interface_port = fields.Char(
         string='Puerto físico',
-        help='Ej: gpon-olt_1/1/1',
+        help='Ej: gpon-olt/1/1/1 o gpon-olt_1/1/1 si el usuario lo escribe así',
         index=True
     )
 
@@ -511,13 +511,18 @@ class FtthOltPort(models.Model):
     )
 
     capacity_max = fields.Integer(string='Capacidad máx.', default=128)
+    use_chassis = fields.Boolean(string='Usar chasis', default=True)
+    use_slot = fields.Boolean(string='Usar slot', default=True)
+    use_port_number = fields.Boolean(string='Usar puerto', default=True)
+
     chassis = fields.Integer(string="Chasis", default=1)
     slot = fields.Integer(string="Slot", default=1)
 
     active = fields.Boolean(string="Activo", default=True, required=True)
 
     prefix = fields.Char(
-        default="gpon-olt",
+        default="gpon-olt_",
+        trim=False,
         help='Prefijo tecnológico del puerto'
     )
 
@@ -557,12 +562,6 @@ class FtthOltPort(models.Model):
     # SQL Constraints
     # =========================   
     _puerto_chasis_slot_unique = models.Constraint(
-        'unique(olt_id,prefix, chassis, slot, port_number)',
-        'El puerto (Chasis, Slot, Número) debe ser único dentro de la OLT. '
-        'Ya existe otro puerto con la misma configuración física.'
-    )
-    
-    _puerto_interface_unique = models.Constraint(
         'unique(olt_id, interface_port)',
         'El nombre de interfaz debe ser único dentro de la OLT. '
         'Ya existe otro puerto con la misma interfaz física.'
@@ -574,7 +573,9 @@ class FtthOltPort(models.Model):
     @api.constrains('port_number')
     def _check_port_number_positive(self):
         for rec in self:
-            if rec.port_number and rec.port_number <= 0:
+            if not rec.use_port_number:
+                continue
+            if rec.port_number is not None and rec.port_number < 0:
                 raise ValidationError(
                     f"El número de puerto debe ser positivo. Recibido: {rec.port_number}"
                 )
@@ -582,9 +583,9 @@ class FtthOltPort(models.Model):
     @api.constrains('chassis', 'slot')
     def _check_chassis_slot_range(self):
         for rec in self:
-            if rec.chassis and not 1 <= rec.chassis <= 16:
+            if rec.use_chassis and rec.chassis is not None and not 0 <= rec.chassis <= 16:
                 raise ValidationError(f"Chasis inválido: {rec.chassis}. Debe estar entre 1 y 16.")
-            if rec.slot and not 1 <= rec.slot <= 16:
+            if rec.use_slot and rec.slot is not None and not 0 <= rec.slot <= 16:
                 raise ValidationError(f"Slot inválido: {rec.slot}. Debe estar entre 1 y 16.")
 
     @api.constrains('subinterface_ids', 'capacity_max')
@@ -611,7 +612,7 @@ class FtthOltPort(models.Model):
     # =========================
     # Onchange
     # =========================
-    @api.onchange('prefix', 'chassis', 'slot', 'port_number')
+    @api.onchange('prefix', 'use_chassis', 'use_slot', 'use_port_number', 'chassis', 'slot', 'port_number')
     def _onchange_interface_port(self):
         for rec in self:
             rec.interface_port = rec._build_interface_port()
@@ -641,6 +642,9 @@ class FtthOltPort(models.Model):
         if olt_id:
             res['port_number'] = self._get_next_available_port_number(olt_id)
 
+        res.setdefault('use_chassis', True)
+        res.setdefault('use_slot', True)
+        res.setdefault('use_port_number', True)
         res.setdefault('chassis', 1)
         res.setdefault('slot', 1)
         res.setdefault('prefix', 'gpon-olt')
@@ -669,7 +673,7 @@ class FtthOltPort(models.Model):
                 'default_olt_port_id': self.id,
                 'default_target_capacity': self.capacity_max,
                 'default_vlan_id': 1,
-                'default_prefix': self.prefix or 'gpon-olt',
+                'default_prefix': self.interface_port or self.prefix or 'gpon-olt',
             },
         }
 
@@ -686,7 +690,7 @@ class FtthOltPort(models.Model):
                         'olt_port_id': port.id,
                         'subinterface_number': next_num,
                         'vlan_id': 1,
-                        'prefix': port.prefix or 'gpon-olt',
+                        'prefix': port.interface_port or port.prefix or 'gpon-olt',
                     })
                     existing.add(next_num)
                 next_num += 1
@@ -706,20 +710,75 @@ class FtthOltPort(models.Model):
             vals['interface_port'] = self._build_interface_port_from_vals(vals)
 
     def _build_interface_port(self):
-        if not (self.prefix and self.chassis and self.slot and self.port_number):
-            return self.interface_port
-        return f"{self.prefix}_{self.chassis}/{self.slot}/{self.port_number}"
+        parts = self._get_interface_port_parts(
+            prefix=self.prefix,
+            chassis=self.chassis,
+            slot=self.slot,
+            port_number=self.port_number,
+            use_chassis=self.use_chassis,
+            use_slot=self.use_slot,
+            use_port_number=self.use_port_number,
+        )
+        return self._compose_interface_port(parts) if parts else (self.interface_port or '')
 
     def _build_interface_port_from_vals(self, vals):
         prefix = vals.get('prefix', 'gpon-olt')
+        use_chassis = vals.get('use_chassis', True)
+        use_slot = vals.get('use_slot', True)
+        use_port_number = vals.get('use_port_number', True)
         chassis = vals.get('chassis', 1)
         slot = vals.get('slot', 1)
         port = vals.get('port_number')
 
-        if not port:
+        if port is None or port == '':
             return vals.get('interface_port')
 
-        return f"{prefix}_{chassis}/{slot}/{port}"
+        parts = self._get_interface_port_parts(
+            prefix=prefix,
+            chassis=chassis,
+            slot=slot,
+            port_number=port,
+            use_chassis=use_chassis,
+            use_slot=use_slot,
+            use_port_number=use_port_number,
+        )
+        return self._compose_interface_port(parts)
+
+    def _get_interface_port_parts(self, prefix, chassis, slot, port_number, use_chassis, use_slot, use_port_number):
+        parts = []
+
+        # IMPORTANTE:
+        # No usar False porque 0 == False en Python
+
+        if prefix is not None and prefix != '':
+            parts.append(str(prefix))
+
+        if use_chassis and chassis is not None:
+            parts.append(str(chassis))
+
+        if use_slot and slot is not None:
+            parts.append(str(slot))
+
+        if use_port_number and port_number is not None:
+            parts.append(str(port_number))
+        return parts
+
+    def _compose_interface_port(self, parts):
+        if not parts:
+            return ''
+
+        prefix = parts[0]
+        suffix = parts[1:]
+        if not suffix:
+            return prefix
+
+        first_value = suffix[0]
+        remaining_values = suffix[1:]
+        tail = '/'.join([str(first_value)] + [str(value) for value in remaining_values])
+
+        if prefix:
+            return f"{prefix}{tail}"
+        return tail
 
     @api.model
     def _get_next_available_port_number(self, olt_id):
@@ -728,7 +787,7 @@ class FtthOltPort(models.Model):
             order='port_number asc'
         )
 
-        used = {p.port_number for p in ports if p.port_number}
+        used = {p.port_number for p in ports if p.port_number is not None}
 
         i = 1
         while i in used:
@@ -2174,15 +2233,8 @@ class FtthSubinterface(models.Model):
     prefix = fields.Char(
         string='Prefijo',
         required=True,
-        default='gpon-olt',
+        trim=False,        
         help='Prefijo editable del nombre de la subinterfaz. Ej: gpon-olt'
-    )
-
-    port_identifier = fields.Char(
-        string='Identificador de puerto',
-        compute='_compute_port_identifier',
-        store=True,
-        help='Identificador del puerto (ej: 1/1/1), derivado de la interfaz del puerto OLT.'
     )
 
     # IEEE 802.1Q VLAN identifier associated to this subinterface.
@@ -2237,17 +2289,10 @@ class FtthSubinterface(models.Model):
     # ─────────────────────────────────────────────────────────────
     # COMPUTE METHODS
     # ─────────────────────────────────────────────────────────────
-    @api.depends('prefix', 'port_identifier', 'olt_port_id', 'olt_port_id.interface_port', 'subinterface_number')
+    @api.depends('prefix', 'olt_port_id', 'olt_port_id.interface_port', 'subinterface_number')
     def _compute_code(self):
         for rec in self:
             rec.code = self._build_code(rec)
-
-    @api.depends('olt_port_id', 'olt_port_id.interface_port')
-    def _compute_port_identifier(self):
-        for rec in self:
-            rec.port_identifier = rec._extract_port_identifier(
-                rec.olt_port_id.interface_port if rec.olt_port_id else False
-            )
 
     @api.depends('olt_port_id')
     def _compute_olt_id(self):
@@ -2274,19 +2319,11 @@ class FtthSubinterface(models.Model):
             rec.vlan_id = int(normalized)
 
     def _build_code(self, rec):
-        if rec.subinterface_number and rec.prefix and rec.port_identifier:
-            return f"{rec.prefix}_{rec.port_identifier}:{rec.subinterface_number}"
+        if rec.subinterface_number and rec.prefix:
+            return f"{rec.prefix}:{rec.subinterface_number}"
         if rec.olt_port_id and rec.subinterface_number and rec.olt_port_id.interface_port:
             return f"{rec.olt_port_id.interface_port}:{rec.subinterface_number}"
         return ''
-
-    def _extract_port_identifier(self, interface_port):
-        if not interface_port:
-            return False
-        text = str(interface_port)
-        if '_' in text:
-            return text.split('_', 1)[1]
-        return text
 
     # ─────────────────────────────────────────────────────────────
     # CONSTRAINTS
@@ -2358,7 +2395,7 @@ class FtthSubinterface(models.Model):
             if not vals.get('prefix'):
                 if vals.get('olt_port_id'):
                     port = self.env['wigo.ftth.olt.port'].browse(vals['olt_port_id'])
-                    vals['prefix'] = port.prefix or 'gpon-olt'
+                    vals['prefix'] = port.interface_port or port.prefix or 'gpon-olt'
                 else:
                     vals['prefix'] = 'gpon-olt'
 
@@ -2442,14 +2479,12 @@ class FtthSubinterface(models.Model):
         if not self.olt_port_id:
             self.subinterface_number = False
             self.code = False
-            self.port_identifier = False
             return
 
         next_number = self._get_next_subinterface_number(self.olt_port_id.id)
         self.subinterface_number = next_number
         if not self.prefix:
-            self.prefix = self.olt_port_id.prefix or 'gpon-olt'
-        self.port_identifier = self._extract_port_identifier(self.olt_port_id.interface_port)
+            self.prefix = self.olt_port_id.interface_port or self.olt_port_id.prefix or 'gpon-olt'
         self.code = self._build_onchange_code(next_number)
 
         self._reset_box_related_fields()
@@ -2480,12 +2515,11 @@ class FtthSubinterface(models.Model):
         return (max(numbers) + 1) if numbers else 1
 
     def _build_onchange_code(self, number):
-        identifier = self._extract_port_identifier(self.olt_port_id.interface_port)
-        if self.prefix and identifier:
-            return f"{self.prefix}_{identifier}:{number}"
+        if self.prefix:
+            return f"{self.prefix}:{number}"
         if self.olt_port_id.interface_port:
             return f"{self.olt_port_id.interface_port}:{number}"
-        return f"{self.prefix or 'gpon-olt'}_{self.olt_port_id.port_number}:{number}"
+        return f"{self.olt_port_id.prefix or 'gpon-olt'}:{number}"
 
     def _reset_box_related_fields(self):
         self.box_group_id = False
@@ -2543,7 +2577,7 @@ class FtthSubinterface(models.Model):
 
                 if name not in grouped_by_name:
                     grouped_by_name[name] = {
-                        'id': name,  # 🔥 usamos el nombre como ID
+                        'id': name, 
                         'display_name': name,
                         'count': count,
                     }
@@ -2585,7 +2619,7 @@ class FtthSubinterface(models.Model):
                     'id': list(data['ids'])[0], 
                     'display_name': name,       
                     'count': data['count'],
-                    '__domain': [('box_id', 'in', list(data['ids']))],  # 🔥 clave
+                    '__domain': [('box_id', 'in', list(data['ids']))],  
                 })
 
             return {
