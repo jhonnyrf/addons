@@ -214,10 +214,10 @@
                                         </td>
                                     </tr>
                                 </table>
-
-                                <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:2px;">
+                                <div style="height:8px;"></div>
+                                <!-- <div class="ot-section" t-attf-style="background:#{cp};color:#{cht};margin-top:2px;">
                                     <t t-out="cfg.titulo_datos_tecnicos or 'DATOS TÉCNICOS DEL SERVICIO'"/>
-                                </div>
+                                </div> -->
                                 <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px;font-size:#{fb - 1}px;">
                                     <tr>
                                         <th class="ot-th" style="width:60%;text-align:left;" colspan="3">Instalación</th>
@@ -258,7 +258,7 @@
                             <th class="ot-th" style="width:10%;">
                                 <t t-out="cfg.label_razon_social or 'Razón Social'"/>
                             </th>
-                            <td class="tc" colspan="2" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
+                            <td class="tc" colspan="3" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
                                 <t t-out="razon_social"/>
                             </td>
                             <th class="ot-th" style="width:8%;">Zona</th>
@@ -270,7 +270,7 @@
                             <th class="ot-th" style="width:10%;">
                                 <t t-out="cfg.label_nombre or 'Nombre'"/>
                             </th>
-                            <td class="tc" colspan="2" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
+                            <td class="tc" colspan="3" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
                                 <t t-out="contact_name"/>
                             </td>
                             <th class="ot-th" style="width:8%;">
@@ -296,7 +296,7 @@
                             <th class="ot-th" style="width:8%;">
                                 <t t-out="cfg.label_direccion or 'Dirección'"/>
                             </th>
-                            <td class="tc" colspan="2" style="width:42%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
+                            <td class="tc" colspan="3" style="width:42%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
                                 <t t-out="address"/>
                             </td>
                         </tr>
@@ -304,13 +304,10 @@
                             <th class="ot-th" style="width:10%;">
                                 <t t-out="cfg.label_coordenadas or 'Coordenadas'"/>
                             </th>
-                            <td class="tc" colspan="2" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
+                            <td class="tc" colspan="3" style="width:30%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
                                 <t t-out="coordinates"/>
                             </td>
-                            <th class="ot-th" style="width:8%;">Zona</th>
-                            <td class="tc" colspan="3" style="width:52%;" t-attf-style="border:1px solid #{cb};padding:1px 3px;">
-                                <t t-out="zone_name"/>
-                            </td>
+
                         </tr>
                     </table>
 
@@ -414,6 +411,8 @@
                                 </tr>
                             </tbody>
                         </table>
+
+
                     </t>
 
                     <!-- ============================================ -->
@@ -426,11 +425,13 @@
                         <table t-attf-style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px;font-size:#{fb - 1}px;">
                             <thead>
                                 <tr>
-                                    <th class="ot-th" style="width:18%;">DESCRIPCION</th>
+                                    <th class="ot-th" style="width:18%;">
+                                        <t t-out="cfg.tabla_header_texto or 'DESCRIPCIÓN'"/>
+                                    </th>
                                     <th class="ot-th" style="width:8%;">CANT.</th>
                                     <th class="ot-th" style="width:10%;">Unidad</th>
                                     <th class="ot-th" style="width:20%;">
-                                        <t t-out="cfg.tabla_header_texto or 'DESCRIPCIÓN'"/>
+                                        DESCRIPCION
                                     </th>
 
                                     <th class="ot-th" style="width:8%;">CANT.</th>

@@ -9,6 +9,7 @@
                 <field name="marca"/>
                 <field name="rotulo"/>
                 <field name="serial_number" string="S/N"/>
+                <field name="work_order_id" string="OT asignada"/>
                 <field name="client_service_id" string="Servicio asignado"/>
                 <field name="state" widget="badge"/>
             </list>
@@ -31,6 +32,7 @@
 
                             <field name="rotulo"/>
                             <field name="serial_number" string="S/N"/>
+                            <field name="work_order_id"/>
                             <field name="client_service_id"/>
                         </group>
                         <group>
@@ -64,10 +66,13 @@
                 <field name="marca"/>
                 <field name="rotulo"/>
                 <field name="serial_number"/>
+                <field name="work_order_id"/>
+                <field name="client_service_id"/>
                 <separator/>
                 <filter string="Disponibles" name="available" domain="[('state','=','available')]"/>
                 <filter string="Asignados" name="assigned" domain="[('state','=','assigned')]"/>
                 <separator/>
+                <filter string="Agrupar por OT" name="by_work_order" context="{'group_by':'work_order_id'}"/>
                 <filter string="Agrupar por servicio" name="by_client_service" context="{'group_by':'client_service_id'}"/>
                 <filter string="Agrupar por estado" name="by_state" context="{'group_by':'state'}"/>
             </search>

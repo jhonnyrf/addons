@@ -48,12 +48,11 @@
                             <field name="client_service_id" readonly="1"/>
                             <field name="subinterface_id" readonly="1"/>
                             <field name="installer_id"/>
-                            <field name="batch_id"/>
                             <field name="fecha_asignacion" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Identificadores PON" name="pon" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager">
+                        <page string="Identificadores PON" name="pon">
                             <group col="2">
                                 <group>
                                     <field name="pon_sn"/>

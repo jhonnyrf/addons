@@ -32,10 +32,8 @@ Encabezado</div>
                                             <field name="titulo_documento"/>
                                             <field name="subtitulo_documento"/>
                                             <field name="mostrar_numero_grande"/>
-                                            <field name="border_radius"/>
                                         </group>
                                         <group>
-                                            <field name="layout_logo"/>
                                             <field name="usar_logo_imagen"/>
                                             <field name="logo" widget="image" options="{'size': [320, 140]}"/>
                                             <field name="logo_fname" invisible="1"/>
@@ -228,8 +226,7 @@ Secciones y etiquetas técnicas</div>
                                             <field name="mostrar_qr_cobranzas"/>
                                             <field name="mostrar_qr_soporte"/>
                                             <field name="mostrar_firma"/>
-                                            <field name="mostrar_datos_tecnicos"/>
-                                            <field name="mostrar_bloque_soporte"/>
+
                                         </group>
                                     </group>
                                 </div>

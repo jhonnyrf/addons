@@ -624,6 +624,14 @@ Permite que el usuario administre regionales de despliegue FTTH.
 | Activo | Estado de uso. |
 | Nodos | Relación de nodos asociados. |
 
+**Validaciones**
+
+- El nombre de la regional es obligatorio.
+- El prefijo debe ser único en el sistema; no se permiten prefijos duplicados.
+- No se pueden registrar regionales duplicadas (validación de unicidad sobre el nombre y/o prefijo según la configuración).
+- El sistema valida la integridad de los nodos asociados a la regional: antes de cualquier operación que afecte la regional, se comprueba que los nodos vinculados respeten consistencia técnica y de datos.
+- No se puede eliminar una regional si existen nodos asociados. Para eliminarla, el usuario debe reasignar o eliminar previamente los nodos vinculados; el sistema bloqueará la operación y mostrará el listado de nodos que impiden la eliminación.
+
 ### 7.2 Listar/Registrar/Editar/Eliminar Nodos
 
 **Descripción**  
@@ -1076,3 +1084,71 @@ Permite mantener consistencia documental al reutilizar capturas de vistas comune
 ### Alcance del manual
 
 Este manual fue elaborado a partir de los modelos Python y vistas XML del módulo Wigo FTTH, documentando únicamente funcionalidades existentes en el código analizado.
+
+## 15. Validaciones por sección (funcionales y técnicas)
+
+Esta sección centraliza las validaciones funcionales y técnicas aplicables por cada bloque funcional del manual. Son reglas que deben implementarse tanto a nivel de UI/ORM como en las restricciones de negocio y comprobaciones de integridad técnica.
+
+- Sección 2 — Órdenes de Trabajo FTTH
+  - Campos obligatorios: referencia OT (generada por secuencia), tipo, contrato (si aplica), instalador (cuando se asigna) y ruta técnica cuando se requiera.
+  - Validar unicidad de la referencia OT mediante la secuencia del sistema; bloquear creación duplicada.
+  - Validar estados y transiciones permitidas (por ejemplo: solo de Pendiente → Asignada → En campo → Instalado → Activo). Cualquier intento de transición inválida debe lanzar error con mensaje claro.
+  - Antes de cambiar a Asignada, comprobar disponibilidad de recursos técnicos (subinterfaz, puerto NAP, ONU) y bloquear si están ocupados por otra OT.
+  - No permitir eliminar OTs que estén en ejecución o vinculadas a procesos que impidan liberación de recursos; mostrar lista de vínculos bloqueantes.
+  - Al eliminar, ejecutar liberación atómica de recursos (subinterfaz → puerto → ONU) y registrar el evento en el historial.
+
+- Sección 3 — Fichas Técnicas de Cliente
+  - No permitir eliminación si existen OTs relacionadas en estado no finalizado o suspensiones activas.
+  - Al sincronizar desde OT origen, no sobrescribir campos no nulos; validar formato de campos técnicos (VLAN numérica en rango 1-4094, PPPoE con estructura esperada, etc.).
+  - Verificar integridad de la topología referenciada (existencia de OLT, puerto y subinterfaz) antes de aceptar cambios.
+
+- Sección 4 — Suspensiones FTTH
+  - Contrato obligatorio al crear suspensión; bloquear creación sin contrato.
+  - Validar coherencia de fechas: fecha reconexión debe ser posterior a fecha de corte si ambas están presentes.
+  - Al marcar En corte o Reconexión, sincronizar el estado de la ficha técnica con comprobaciones previas de consistencia.
+  - Evitar eliminación si existen dependencias (acciones programadas, integraciones externas) — mostrar lista de dependencias.
+
+- Sección 5 — Inventario ONU y Catálogos
+  - Número de serie (SN) obligatorio y único; validar unicidad antes de crear/guardar (constraint en ORM y índice en BD).
+  - No permitir eliminar ONU asignadas a fichas técnicas activas o subinterfaces vinculadas sin un proceso de retiro previo.
+  - Validar formatos y rangos en parámetros técnicos (ej.: T-CONT, GEM Port y V-Port deben ser enteros positivos dentro de límites técnicos definidos).
+  - Cambios de estado deben respetar el flujo de inventario (Disponible → Asignado → En campo → Retirado) y registrar trazabilidad.
+
+- Sección 6 — Accesorios y Equipos Complementarios
+  - En el catálogo, validar unicidad de SKU cuando aplique.
+  - Al agregar accesorios a una OT, validar que la cantidad sea mayor que cero y que exista stock si se controla inventario.
+  - No permitir eliminar accesorios del catálogo si hay líneas históricas de OT que dependan del código, a menos que se archive con motivo claro.
+
+- Sección 7 — Topología GPON/FTTH (Regionales, Nodos, OLTs, Puertos, Subinterfaces, ODN, Grupos, Cajas)
+  - Regionales: nombre obligatorio; prefijo único; bloquear eliminación si existen nodos asociados; validar integridad de nodos antes de cambios masivos.
+  - Nodos: validar unicidad de número por regional; comprobar que el tipo de nodo sea válido; no permitir eliminación si existen OLTs asociadas.
+  - OLTs: validar unicidad de (olt_number, node_id); asegurar generación correcta de `olt_code` (prefijo regional + nodo + número OLT + prefijo tecnología); no permitir crear con tecnología inexistente.
+  - Puertos PON: validar `interface_port` único por OLT; `capacity_max` debe ser entero positivo; no permitir reducir capacidad por debajo de subinterfaces usadas.
+  - Subinterfaces: validar unicidad del código y unicidad de VLAN por puerto según reglas del negocio; validar estados ocupación y bloquear asignación si el puerto está saturado.
+  - ODN: una ODN por OLT (constraint); validar `odf_port` formato y unicidad por OLT; bloquear eliminación de ODN si existen cajas o vínculos.
+  - Generadores masivos (puertos, subinterfaces, cajas): validar parámetros de entrada (cantidad > 0, rangos válidos), comprobar límites técnicos (capacidad PON, splitters) y realizar creación en transacción atómica para evitar inconsistencias.
+
+- Sección 8 — Zonas y Cobertura FTTH
+  - Recalcular cobertura solo cuando existan cambios en NAPs o subinterfaces; validar que la cobertura "real" requiera disponibilidad en NAP y subinterfaces.
+  - No permitir eliminar zona con fichas técnicas activas o contratos asociados; mostrar advertencia y lista de elementos vinculados.
+
+- Sección 9 — Instaladores
+  - Nombre/razón social obligatorio; validar formato de teléfono; bloquear eliminación si el instalador tiene OTs asignadas no finalizadas.
+
+- Sección 10 — Reportes y Analítica
+  - Control de acceso: restringir reportes con datos sensibles según grupos y permisos; evitar exposición de credenciales técnicas en reportes.
+  - Validar integridad de métricas (por ejemplo, suma de subinterfaces usadas ≤ capacidad máxima agregada); alertar en caso de discrepancias en datos agregados.
+
+- Sección 11 — Configuración de Planilla OT PDF
+  - Validar existencia de plantilla antes de generar PDF; si falta, bloquear generación y pedir configuración previa.
+  - Validar campos obligatorios en la plantilla (empresa, encabezado) antes de guardar configuración.
+
+- Sección 12 — Campos condicionales, estados y comportamiento dinámico
+  - Validar que las condiciones de visibilidad se respeten por rol y estado; no exponer campos técnicos si el usuario no pertenece al grupo FTTH.
+  - Asegurar que acciones expuestas por la UI estén de hecho autorizadas por las reglas ORM (evitar saltos de seguridad mediante llamadas RPC directas).
+
+- Sección 13 — Reglas de integridad funcional (resumen operativo)
+  - Todas las validaciones deben ser implementadas a nivel de modelo (constraints, @api.constrains, SQL constraints) y, cuando corresponda, en las interfaces (onchange, dominio, validaciones en wizards) para evitar discrepancias entre UI y API.
+  - Mensajes de error deben ser claros y orientar la acción correctiva (por ejemplo: "No puede eliminar regional: existen 3 nodos vinculados. Reasigne o elimine nodos antes.").
+
+Implementación recomendada: cada validación crítica debe tener cobertura en la base de datos (índices/constraints), en la lógica ORM (métodos `create`, `write`, `unlink`, `@api.constrains`) y en la capa de vista (dominios, `attrs`, wizards de confirmación) para mantener consistencia y ofrecer feedback inmediato al usuario.

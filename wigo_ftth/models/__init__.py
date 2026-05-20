@@ -8,6 +8,7 @@ from . import ftth_onu
 from . import ftth_installer
 from . import ftth_additional_equipment
 from . import ftth_work_order
+from . import ftth_work_order_additional_equipment
 from . import ftth_work_order_accessory
 from . import ftth_client_service
 from . import ftth_service_suspension

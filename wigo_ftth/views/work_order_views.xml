@@ -265,6 +265,19 @@
                             </field>
                         </page>
 
+                        <page string="Equipos adicionales" invisible="work_type == 'deactivation'">
+                            <field name="work_order_additional_equipment_ids" readonly="state == 'active'" context="{'default_work_order_id': id}">
+                                <list editable="bottom">
+                                    <field name="additional_equipment_id" domain="['|', ('state', '=', 'available'), ('work_order_id', '=', parent.id)]" context="{'default_work_order_id': parent.id}" options="{'no_create_edit': False, 'no_open': False}"/>
+                                    <field name="marca"/>
+                                    <field name="rotulo"/>
+                                    <field name="serial_number" string="S/N"/>
+                                    <field name="state" widget="badge" readonly="1"/>
+                                    <field name="notes" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+
                         <page string="Notas">
                             <group>
                                 <field name="notes" nolabel="1"/>

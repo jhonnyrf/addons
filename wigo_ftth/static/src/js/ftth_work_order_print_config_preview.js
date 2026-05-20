@@ -216,7 +216,7 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
         </tr>
       </table>
 
-      <div style="text-align:center;background:${cp};color:${cht};font-weight:700;padding:3px 6px;margin-top:2px;">${tituloDatosTecnicos}</div>
+      <div style="height:8px;"></div>
       <table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:4px;font-size:${Math.max(fb - 1, 8)}px;">
         <tr>
           <th style="${thStyle}text-align:left;" colspan="3">Instalación</th>
@@ -267,8 +267,6 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
   <tr>
     <th style="${thStyle}">${labelCoordenadas}</th>
     <td colspan="3" style="${tdStyle}text-align:center;">17°20'50.9"S 66°09'38.2"W</td>
-    <th style="${thStyle}">Zona</th>
-    <td colspan="3" style="${tdStyle}text-align:center;">04P</td>
   </tr>
 </table>`;
 
@@ -351,10 +349,10 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
 <table style="${tblStyle}margin-bottom:4px;font-size:${fsBody};">
   <thead>
     <tr>
-      <th style="${thStyle}width:18%;">DESCRIPCION</th>
+      <th style="${thStyle}width:18%;">${tablaHeader}</th>
       <th style="${thStyle}width:8%;">CANT.</th>
-      <th style="${thStyle}width:22%;">${tablaHeader}</th>
       <th style="${thStyle}width:10%;">Unidad</th>
+      <th style="${thStyle}width:22%;">DESCRIPCION</th>    
       <th style="${thStyle}width:8%;">CANT.</th>
               <th style="${thStyle}width:16%;" rowspan="2">
                 <div>${tituloCobranzas}</div>
@@ -365,8 +363,8 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
     <tr>
       <td style="${tdStyle}">Conectores de campo</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
+      <td style="${tdStyle}text-align:center;">&nbsp;</td>
       <td style="${tdStyle}text-align:center;">Cable DROP</td>
-      <td style="${tdStyle}text-align:center;">(metros)</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
       <td style="${tdStyle}text-align:center;" rowspan="6">
         <div style="font-size:8px;font-weight:700;">${textoParaPago}</div>
@@ -378,15 +376,15 @@ export class FtthWorkOrderPrintConfigPreview extends Component {
     <tr>
       <td style="${tdStyle}">Tensores</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
+      <td style="${tdStyle}text-align:center;">&nbsp;</td>
       <td style="${tdStyle}text-align:center;">Cable disp./devanar</td>
-      <td style="${tdStyle}text-align:center;">(metros)</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
     </tr>
     <tr>
       <td style="${tdStyle}">Grapas</td>
       <td style="${tdStyle}text-align:center;">&nbsp;</td>
-      <td style="${tdStyle}">Otros:</td>
       <td style="${tdStyle}">&nbsp;</td>
+      <td style="${tdStyle}">Otros:</td>
       <td style="${tdStyle}">&nbsp;</td>
     </tr>
     <tr>

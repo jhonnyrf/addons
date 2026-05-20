@@ -55,7 +55,7 @@
 
                     <group col="2">
                         <group string="Vínculos">
-                            <field name="contract_id" readonly="1"/>
+                            <field name="contract_id" />
                             <field name="client_service_id"/>
                             <field name="partner_id" readonly="1"/>
                         </group>

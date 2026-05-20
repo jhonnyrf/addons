@@ -275,6 +275,8 @@ class FtthClientService(models.Model):
 
         if cleaned_vals:
             self.sudo().write(cleaned_vals)
+
+        self.work_order_id.sudo()._sync_additional_equipment_to_service(self)
         return True
 
     @api.depends('suspension_ids')

@@ -17,6 +17,7 @@ access_ftth_accesorio_user,ftth.accesorio user,model_ftth_accesorio,base.group_u
 access_ftth_installer_user,wigo.ftth.installer user,model_wigo_ftth_installer,base.group_user,1,1,1,1
 access_ftth_additional_equipment_user,wigo.ftth.additional.equipment user,model_wigo_ftth_additional_equipment,base.group_user,1,1,1,1
 access_ftth_work_order_user,wigo.ftth.work.order user,model_wigo_ftth_work_order,base.group_user,1,1,1,1
+access_ftth_work_order_additional_equipment_user,wigo.ftth.work.order.additional.equipment user,model_wigo_ftth_work_order_additional_equipment,base.group_user,1,1,1,1
 access_ftth_work_order_accessory_user,ftth.work.order.accessory user,model_ftth_work_order_accessory,base.group_user,1,1,1,1
 access_ftth_client_service_user,wigo.ftth.client.service user,model_wigo_ftth_client_service,base.group_user,1,1,1,1
 access_ftth_work_order_print_config_manager,wigo.ftth.work.order.print.config manager,model_wigo_ftth_work_order_print_config,base.group_system,1,1,1,1

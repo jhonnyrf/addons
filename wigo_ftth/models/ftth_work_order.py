@@ -150,6 +150,20 @@ class FtthWorkOrder(models.Model):
         help='Accesorios utilizados en la instalación.',
     )
 
+    additional_equipment_ids = fields.One2many(
+        'wigo.ftth.additional.equipment',
+        'work_order_id',
+        string='Equipos adicionales',
+        help='Equipos adicionales registrados en esta OT y sincronizados a la ficha técnica al activar.',
+    )
+
+    work_order_additional_equipment_ids = fields.One2many(
+        'wigo.ftth.work.order.additional.equipment',
+        'work_order_id',
+        string='Líneas de equipos adicionales',
+        help='Permite seleccionar equipos adicionales existentes o crear nuevos desde la OT.',
+    )
+
     # ==========================================================================
     # Extras
     # ==========================================================================
@@ -481,6 +495,7 @@ class FtthWorkOrder(models.Model):
         self.client_service_id = service.id
         self._link_resources_to_service(service)
         self._sync_accessories_to_service(service)
+        self._sync_additional_equipment_to_service(service)
 
     def _get_effective_contract(self):
         """Return the latest contract for the work order.
@@ -575,6 +590,16 @@ class FtthWorkOrder(models.Model):
         for accessory in self.work_order_accessories:
             # Actualizar el accesorio para vincular a la ficha técnica
             accessory.sudo().write({'client_service_id': service.id})
+
+    def _sync_additional_equipment_to_service(self, service):
+        """Sincronizar equipos adicionales de la OT a la ficha técnica."""
+        self.ensure_one()
+        if not self.additional_equipment_ids:
+            return
+
+        self.additional_equipment_ids.sudo().write({
+            'client_service_id': service.id,
+        })
 
     def action_view_client_service(self):
         self.ensure_one()
