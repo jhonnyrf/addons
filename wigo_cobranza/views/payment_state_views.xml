@@ -27,8 +27,8 @@
         <field name="arch" type="xml">
             <form string="Registro mensual de pago">
                 <header>
-                    <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" invisible="estado_pago == 'pagado'"/>
-                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" invisible="not puede_marcar_mora_manual"/>
+                    <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" confirm="¿Desea confirmar el pago y registrar esta operación en el historial?" invisible="estado_pago == 'pagado'"/>
+                    <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" confirm="¿Desea marcar este registro manualmente en mora?" invisible="not puede_marcar_mora_manual"/>
                     <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
                     <button name="action_abrir_recibo" string="Ver Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
                     <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>

@@ -203,7 +203,12 @@ class WigoPagoEstadoCron(models.Model):
         return vals
 
     def _cron_generar_deudas_diarias(self, today=None):
-        today = today or date.today()
+        if today is None:
+            today_dt = fields.Datetime.context_timestamp(
+                self.with_context(tz='America/La_Paz'),
+                fields.Datetime.now()
+            )
+            today = today_dt.date()
         rules = self.env['wigo.cobranza.regla']._get_generation_rules_for_day(today.day)
         if not rules:
             return 0
@@ -256,7 +261,12 @@ class WigoPagoEstadoCron(models.Model):
         ], order='fecha_vencimiento asc, id asc')
 
     def _cron_evaluar_mora_diaria(self, today=None):
-        today = today or date.today()
+        if today is None:
+            today_dt = fields.Datetime.context_timestamp(
+                self.with_context(tz='America/La_Paz'),
+                fields.Datetime.now()
+            )
+            today = today_dt.date()
         pagos = self._get_open_payments_for_rules_mora(today)
         mora_count = 0
         for rec in pagos:
@@ -280,7 +290,12 @@ class WigoPagoEstadoCron(models.Model):
     # ═══════════════════════════════════════════════════════════
 
     def _cron_evaluar_incobrables_diario(self, today=None):
-        today = today or date.today()
+        if today is None:
+            today_dt = fields.Datetime.context_timestamp(
+                self.with_context(tz='America/La_Paz'),
+                fields.Datetime.now()
+            )
+            today = today_dt.date()
         _logger.info(f"Evaluating uncollectibles for open payments as of {today}")
 
         pagos = self._get_open_payments_for_rules_incobrables(today)
@@ -344,7 +359,11 @@ class WigoPagoEstadoCron(models.Model):
     @api.model
     def cron_procesar_cobranza(self):
         _logger.warning("=== COLLECTION CRON EXECUTED ===")
-        today = date.today()
+        today_dt = fields.Datetime.context_timestamp(
+            self.with_context(tz='America/La_Paz'),
+            fields.Datetime.now()
+        )
+        today = today_dt.date()
         self._deactivate_legacy_crons()
         generados = self._cron_generar_deudas_diarias(today=today)
         moras = self._cron_evaluar_mora_diaria(today=today)

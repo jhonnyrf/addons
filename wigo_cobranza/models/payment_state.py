@@ -1,6 +1,7 @@
 import base64
 from datetime import date, datetime
 from calendar import monthrange
+from html import escape
 from markupsafe import Markup
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError, UserError
@@ -11,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 class WigoPagoEstado(models.Model):
     _name = 'wigo.pago.estado'
-    _description = 'Payment State Record'
+    _description = 'Registro estatal de pago'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'anio desc, mes desc, partner_id'
     _rec_name = 'display_name'
@@ -798,21 +799,44 @@ class WigoPagoEstado(models.Model):
         defaults = records.filtered(lambda r: r.tipo_ajuste_id and r.tipo_ajuste_id.is_default)
         if defaults:
             for rec in defaults:
-                rec.with_context(skip_sync_payment_defaults=True).write(
+                rec.with_context(
+                    skip_sync_payment_defaults=True,
+                    skip_payment_chatter=True,
+                ).write(
                     {'monto_pagado': rec.monto_a_cobrar or 0.0}
                 )
+
+        for rec in records:
+            rec._post_spanish_chatter_message(Markup(f"""
+                <b>Registro de cobro creado</b><br/><br/>
+                Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                Período: <b>{escape(rec.periodo or '')}</b><br/>
+                Estado inicial: <b>{escape(dict(rec._fields['estado_pago'].selection).get(rec.estado_pago, rec.estado_pago or ''))}</b><br/>
+                Monto a cobrar: <b>Bs. {rec.monto_a_cobrar:.2f}</b><br/>
+                Monto pagado: <b>Bs. {rec.monto_pagado:.2f}</b><br/>
+                Origen: <b>{'Generado automáticamente' if rec.generado_automaticamente else 'Creación manual'}</b>
+            """))
 
         return records
 
     def write(self, vals):
+        if self.env.context.get('skip_payment_chatter'):
+            return super().write(vals)
+
         contable_fields = {'monto_a_cobrar', 'monto_pagado'}
         contable_changed = any(field in vals for field in contable_fields)
+        payment_fields = {
+            'estado_pago', 'canal_pago', 'fecha_pago', 'comprobante',
+            'comprobante_adjunto', 'comprobante_attachment_ids',
+        }
+        payment_changed = any(field in vals for field in payment_fields)
         audit_payload = []
 
-        if contable_changed:
+        if contable_changed or payment_changed:
             justificacion = (vals.get('justificacion_edicion') or '').strip()
             for rec in self:
-                if rec.estado_pago in ('pagado', 'al_dia') and not justificacion:
+                if contable_changed and rec.estado_pago in ('pagado', 'al_dia') and not justificacion:
                     raise ValidationError(
                         'Debe indicar una justificación para editar valores contables '
                         'cuando el pago ya fue confirmado (al día/pagado).'
@@ -820,12 +844,18 @@ class WigoPagoEstado(models.Model):
                 audit_payload.append({
                     'id': rec.id,
                     'old': {
+                        'estado_pago': rec.estado_pago,
                         'monto_a_cobrar': rec.monto_a_cobrar,
                         'monto_pagado': rec.monto_pagado,
+                        'canal_pago': rec.canal_pago,
+                        'fecha_pago': rec.fecha_pago,
+                        'comprobante': rec.comprobante,
+                        'attachment_ids': rec.comprobante_attachment_ids.ids,
+                        'attachment_names': rec.comprobante_attachment_ids.mapped('name'),
                     },
                     'justificacion': justificacion,
                     'usuario': self.env.user.display_name,
-                    'fecha': fields.Datetime.now(),
+                    'fecha': self._get_bolivia_datetime_string(),
                 })
 
         if 'tipo_ajuste_id' in vals:
@@ -835,29 +865,84 @@ class WigoPagoEstado(models.Model):
 
         res = super().write(vals)
 
-        if contable_changed:
+        if contable_changed or payment_changed:
             for rec in self:
                 payload = next((item for item in audit_payload if item['id'] == rec.id), None)
                 if not payload:
                     continue
                 nuevos = {
+                    'estado_pago': rec.estado_pago,
                     'monto_a_cobrar': rec.monto_a_cobrar,
                     'monto_pagado': rec.monto_pagado,
+                    'canal_pago': rec.canal_pago,
+                    'fecha_pago': rec.fecha_pago,
+                    'comprobante': rec.comprobante,
+                    'attachment_ids': rec.comprobante_attachment_ids.ids,
+                    'attachment_names': rec.comprobante_attachment_ids.mapped('name'),
                 }
-                if payload['old'] != nuevos:
-                    rec.message_post(
-                    body = Markup(f"""
-                            <b>Edición contable registrada</b><br/>
-                            Usuario: {payload['usuario']}<br/>
-                            Fecha: {payload['fecha']}<br/>
-                            Monto a cobrar anterior: {payload['old']['monto_a_cobrar']:.2f}<br/>
-                            → nuevo: {nuevos['monto_a_cobrar']:.2f}<br/>
-                            Monto pagado anterior: {payload['old']['monto_pagado']:.2f}<br/>
-                            → nuevo: {nuevos['monto_pagado']:.2f}<br/>
-                            Justificación: {payload['justificacion'] or 'Sin justificación'}
-                            """),
-                        subtype_xmlid='mail.mt_note',
-                    )
+                state_changed = payload['old']['estado_pago'] != nuevos['estado_pago']
+                if state_changed:
+                    state_labels = dict(rec._fields['estado_pago'].selection)
+                    rec._post_spanish_chatter_message(Markup(f"""
+                        <b>Estado de cobro actualizado</b><br/><br/>
+                        Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                        Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                        Período: <b>{escape(rec.periodo or '')}</b><br/>
+                        Estado anterior: <b>{escape(state_labels.get(payload['old']['estado_pago'], payload['old']['estado_pago'] or ''))}</b><br/>
+                        → nuevo: <b>{escape(state_labels.get(nuevos['estado_pago'], nuevos['estado_pago'] or ''))}</b><br/>
+                        Usuario: <b>{escape(payload['usuario'] or '')}</b><br/>
+                        Fecha: <b>{escape(payload['fecha'] or '')}</b>
+                    """))
+
+                if payload['old']['monto_a_cobrar'] != nuevos['monto_a_cobrar'] or payload['old']['monto_pagado'] != nuevos['monto_pagado']:
+                    rec._post_spanish_chatter_message(Markup(f"""
+                        <b>Actualización de valores contables registrada</b><br/><br/>
+                        Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                        Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                        Período: <b>{escape(rec.periodo or '')}</b><br/>
+                        Usuario: <b>{escape(payload['usuario'] or '')}</b><br/>
+                        Fecha: <b>{escape(payload['fecha'] or '')}</b><br/><br/>
+                        Monto a cobrar anterior: <b>Bs. {payload['old']['monto_a_cobrar']:.2f}</b><br/>
+                        → nuevo: <b>Bs. {nuevos['monto_a_cobrar']:.2f}</b><br/>
+                        Monto pagado anterior: <b>Bs. {payload['old']['monto_pagado']:.2f}</b><br/>
+                        → nuevo: <b>Bs. {nuevos['monto_pagado']:.2f}</b><br/>
+                        Justificación: <b>{escape(payload['justificacion'] or 'Sin justificación')}</b>
+                    """))
+
+                if (
+                    payload['old']['canal_pago'] != nuevos['canal_pago']
+                    or payload['old']['fecha_pago'] != nuevos['fecha_pago']
+                    or payload['old']['comprobante'] != nuevos['comprobante']
+                ):
+                    rec._post_spanish_chatter_message(Markup(f"""
+                        <b>Datos de pago actualizados</b><br/><br/>
+                        Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                        Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                        Período: <b>{escape(rec.periodo or '')}</b><br/>
+                        Canal de pago: <b>{escape(dict(rec._fields['canal_pago'].selection).get(payload['old']['canal_pago'], payload['old']['canal_pago'] or ''))}</b>
+                        → <b>{escape(dict(rec._fields['canal_pago'].selection).get(nuevos['canal_pago'], nuevos['canal_pago'] or ''))}</b><br/>
+                        Fecha de pago: <b>{escape(str(payload['old']['fecha_pago'] or ''))}</b>
+                        → <b>{escape(str(nuevos['fecha_pago'] or ''))}</b><br/>
+                        Comprobante: <b>{escape(payload['old']['comprobante'] or 'Sin referencia')}</b>
+                        → <b>{escape(nuevos['comprobante'] or 'Sin referencia')}</b>
+                    """))
+
+                if payload['old']['attachment_ids'] != nuevos['attachment_ids']:
+                    old_count = len(payload['old']['attachment_ids'])
+                    new_count = len(nuevos['attachment_ids'])
+                    added = [name for name in nuevos['attachment_names'] if name not in payload['old']['attachment_names']]
+                    removed = [name for name in payload['old']['attachment_names'] if name not in nuevos['attachment_names']]
+                    rec._post_spanish_chatter_message(Markup(f"""
+                        <b>Archivo de comprobante actualizado</b><br/><br/>
+                        Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                        Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                        Período: <b>{escape(rec.periodo or '')}</b><br/>
+                        Archivos anteriores: <b>{old_count}</b><br/>
+                        Archivos actuales: <b>{new_count}</b><br/>
+                        Agregados: <b>{escape(', '.join(added) or 'Ninguno')}</b><br/>
+                        Eliminados: <b>{escape(', '.join(removed) or 'Ninguno')}</b><br/>
+                        La actualización del archivo quedó registrada correctamente en el historial.
+                    """))
 
         if not self.env.context.get('skip_sync_payment_defaults') and any(
             k in vals for k in ('tipo_ajuste_id', 'es_primer_mes', 'monto_prorrateo', 'monto_plan', 'motivo')
@@ -895,6 +980,21 @@ class WigoPagoEstado(models.Model):
         else:
             vals['monto_prorrateo'] = 0.0
             vals['motivo'] = False
+
+    def _get_bolivia_datetime_string(self):
+        now_dt = fields.Datetime.context_timestamp(
+            self.with_context(tz='America/La_Paz'),
+            fields.Datetime.now()
+        )
+        return now_dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    def _post_spanish_chatter_message(self, body, subtype_xmlid='mail.mt_note', partner_ids=None):
+        self.ensure_one()
+        self.with_context(lang='es_BO').message_post(
+            body=body if isinstance(body, Markup) else Markup(body),
+            subtype_xmlid=subtype_xmlid,
+            partner_ids=partner_ids or False,
+        )
 
     # ═══════════════════════════════════════════════════════════
     # Adjustment Helpers
@@ -1059,7 +1159,7 @@ class WigoPagoEstado(models.Model):
             if not rec.canal_pago:
                 raise ValidationError('Debe seleccionar el canal de pago utilizado.')
             nuevo_estado = 'pagado' if rec.monto_pagado >= rec.monto_a_cobrar else 'pendiente'
-            rec.write({
+            rec.with_context(skip_payment_chatter=True).write({
                 'estado_pago': nuevo_estado,
                 'registrado_por': self.env.user.id,
             })
@@ -1071,28 +1171,30 @@ class WigoPagoEstado(models.Model):
             if svc:
                 if nuevo_estado == 'pagado' and svc.estado_servicio == 'suspended':
                     svc.write({'estado_servicio': 'active'})
-                    svc.message_post(
-                        
-                        body=Markup(
-                            f"""
-                            <b>Pago registrado por cobranza</b><br/><br/>
-                            Cliente: {svc.codigo_cliente}<br/>
-                            Monto pagado: Bs. {rec.monto_pagado:.2f}<br/>
-                            Período: {rec.periodo}<br/><br/>
-
-                            Proceder con la reactivación del servicio en la OLT.
-                            """
-                        ),
+                    svc.with_context(lang='es_BO').message_post(
+                        body=Markup(f"""
+                            <b>Servicio reactivado por confirmación de pago</b><br/><br/>
+                            Cliente: <b>{escape(svc.codigo_cliente or '')}</b><br/>
+                            Nombre: <b>{escape(svc.partner_id.name or '')}</b><br/>
+                            Monto pagado: <b>Bs. {rec.monto_pagado:.2f}</b><br/>
+                            Período: <b>{escape(rec.periodo or '')}</b><br/><br/>
+                            Se solicita verificar la reactivación técnica en la OLT.
+                        """),
                         subtype_xmlid='mail.mt_comment',
                         partner_ids=self._get_tech_partner_ids(),
                     )
 
-        rec.message_post(
-            body=(
-                f"Pago de Bs. {rec.monto_pagado:.2f} registrado vía "
-                f"{dict(rec._fields['canal_pago'].selection).get(rec.canal_pago, '')}."
-            )
-        )
+        rec._post_spanish_chatter_message(Markup(f"""
+            <b>Pago confirmado</b><br/><br/>
+            Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+            Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+            Período: <b>{escape(rec.periodo or '')}</b><br/>
+            Canal de pago: <b>{escape(dict(rec._fields['canal_pago'].selection).get(rec.canal_pago, rec.canal_pago or ''))}</b><br/>
+            Fecha de pago: <b>{escape(str(rec.fecha_pago or ''))}</b><br/>
+            Monto a cobrar: <b>Bs. {rec.monto_a_cobrar:.2f}</b><br/>
+            Monto pagado: <b>Bs. {rec.monto_pagado:.2f}</b><br/>
+            Estado resultante: <b>{escape(dict(rec._fields['estado_pago'].selection).get(rec.estado_pago, rec.estado_pago or ''))}</b>
+        """))
         return True
 
     def _update_incobrable_monto_cobrado(self, rec):
@@ -1175,39 +1277,60 @@ class WigoPagoEstado(models.Model):
                 'correspondiente a un período anterior.'
             )
 
-        self.write({'estado_pago': 'mora'})
+        self.with_context(skip_payment_chatter=True).write({'estado_pago': 'mora'})
 
-        message = Markup(
-            f"""
-            <b>Estado actualizado manualmente a mora</b><br/><br/>
-            Período: <b>{self.periodo}</b><br/>
-            Cliente: <b>{self.partner_id.name}</b><br/>
-            Fecha de vencimiento: <b>{self.fecha_vencimiento or ''}</b><br/>
-            """
-        )
-        self.message_post(body=message, subtype_xmlid='mail.mt_note')
+        self._post_spanish_chatter_message(Markup(f"""
+            <b>Registro marcado manualmente en mora</b><br/><br/>
+            Cliente: <b>{escape(self.partner_id.display_name or self.partner_id.name or '')}</b><br/>
+            Contrato: <b>{escape(self.contract_id.display_name or self.contract_id.name or '')}</b><br/>
+            Período: <b>{escape(self.periodo or '')}</b><br/>
+            Fecha de vencimiento: <b>{escape(str(self.fecha_vencimiento or ''))}</b><br/>
+            Observación: el estado fue actualizado manualmente por un usuario autorizado.
+        """))
 
         return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_instruir_baja(self):
         for rec in self:
-            rec.estado_pago = 'baja_definitiva'
+            rec.with_context(skip_payment_chatter=True).write({'estado_pago': 'baja_definitiva'})
             svc = rec.client_service_id
             if svc:
-                svc.estado_pago = 'baja_definitiva'
-                svc.estado_servicio = 'baja'
-                svc.fecha_baja = date.today()
-                svc.message_post(
-                    body=Markup(
-                        f"""
-                        <b>BAJA DEFINITIVA instruida por Contabilidad</b><br/>
-                        Cliente: {svc.codigo_cliente} -- {svc.partner_id.name}<br/>
-                        Área Técnica: retirar equipo ONU y actualizar estado en sistema.
-                        """
-                    ),
+                svc.write({
+                    'estado_pago': 'baja_definitiva',
+                    'estado_servicio': 'baja',
+                    'fecha_baja': fields.Date.context_today(self.with_context(tz='America/La_Paz')),
+                })
+                svc.with_context(lang='es_BO').message_post(
+                    body=Markup(f"""
+                        <b>Baja definitiva instruida por cobranza</b><br/><br/>
+                        Cliente: <b>{escape(svc.codigo_cliente or '')}</b><br/>
+                        Nombre: <b>{escape(svc.partner_id.name or '')}</b><br/>
+                        Período: <b>{escape(rec.periodo or '')}</b><br/><br/>
+                        Área técnica: retirar equipo ONU y actualizar el estado del servicio en el sistema.
+                    """),
                     subtype_xmlid='mail.mt_comment',
                     partner_ids=self._get_tech_partner_ids(),
                 )
+            rec._post_spanish_chatter_message(Markup(f"""
+                <b>Registro marcado para baja definitiva</b><br/><br/>
+                Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                Período: <b>{escape(rec.periodo or '')}</b><br/>
+                Estado final: <b>{escape(dict(rec._fields['estado_pago'].selection).get(rec.estado_pago, rec.estado_pago or ''))}</b><br/>
+                Se dejó constancia de la instrucción para baja definitiva.
+            """))
+
+    def unlink(self):
+        for rec in self:
+            rec._post_spanish_chatter_message(Markup(f"""
+                <b>Registro de cobro eliminado</b><br/><br/>
+                Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
+                Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
+                Período: <b>{escape(rec.periodo or '')}</b><br/>
+                Estado previo: <b>{escape(dict(rec._fields['estado_pago'].selection).get(rec.estado_pago, rec.estado_pago or ''))}</b><br/>
+                Esta eliminación quedó registrada como trazabilidad antes de retirar el registro del sistema.
+            """))
+        return super().unlink()
 
     # ═══════════════════════════════════════════════════════════
     # Helpers
