@@ -1,6 +1,16 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_internet_plan_user,internet.plan user,model_internet_plan,base.group_user,1,1,1,1
-access_internet_plan_settings_user,internet.plan.settings user,model_internet_plan_settings,base.group_user,1,1,1,1
-access_wigo_promo,wigo.promo user,model_wigo_promo,base.group_user,1,1,1,1
-access_wigo_promo_referral,wigo.promo.referral user,model_wigo_promo_referral,base.group_user,1,1,1,1
-access_wigo_promo_reward,wigo.promo.reward user,model_wigo_promo_reward,base.group_user,1,1,1,1
+access_internet_plan_user,internet.plan user,model_internet_plan,wigo_planes.group_wigo_planes_user,1,1,1,1
+access_internet_plan_settings_user,internet.plan.settings user,model_internet_plan_settings,wigo_planes.group_wigo_planes_manager,1,1,1,1
+access_wigo_promo,wigo.promo user,model_wigo_promo,wigo_planes.group_wigo_planes_user,1,1,1,1
+access_wigo_promo_referral,wigo.promo.referral user,model_wigo_promo_referral,wigo_planes.group_wigo_planes_user,1,1,1,1
+access_wigo_promo_reward,wigo.promo.reward user,model_wigo_promo_reward,wigo_planes.group_wigo_planes_manager,1,1,1,1
+access_internet_plan_admin,internet.plan admin,model_internet_plan,wigo_planes.group_wigo_planes_admin,1,1,1,1
+access_internet_plan_settings_admin,internet.plan.settings admin,model_internet_plan_settings,wigo_planes.group_wigo_planes_admin,1,1,1,1
+access_wigo_promo_admin,wigo.promo admin,model_wigo_promo,wigo_planes.group_wigo_planes_admin,1,1,1,1
+access_wigo_promo_referral_admin,wigo.promo.referral admin,model_wigo_promo_referral,wigo_planes.group_wigo_planes_admin,1,1,1,1
+access_wigo_promo_reward_admin,wigo.promo.reward admin,model_wigo_promo_reward,wigo_planes.group_wigo_planes_admin,1,1,1,1
+access_internet_plan_readonly,internet.plan readonly,model_internet_plan,wigo_planes.group_wigo_planes_readonly,1,0,0,0
+access_internet_plan_settings_readonly,internet.plan.settings readonly,model_internet_plan_settings,wigo_planes.group_wigo_planes_readonly,1,0,0,0
+access_wigo_promo_readonly,wigo.promo readonly,model_wigo_promo,wigo_planes.group_wigo_planes_readonly,1,0,0,0
+access_wigo_promo_referral_readonly,wigo.promo.referral readonly,model_wigo_promo_referral,wigo_planes.group_wigo_planes_readonly,1,0,0,0
+access_wigo_promo_reward_readonly,wigo.promo.reward readonly,model_wigo_promo_reward,wigo_planes.group_wigo_planes_readonly,1,0,0,0

@@ -119,9 +119,9 @@
     </record>
 
     <!-- Entrada para zonas en Configuración de CRM (solo lectura). -->
-    <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90"/>
+    <menuitem id="menu_wigo_crm_zones" name="Zonas" parent="crm.crm_menu_config" action="action_wigo_zone" sequence="90" groups="wigo_crm.group_wigo_crm_comercial,wigo_crm.group_wigo_crm_supervisor"/>
 
     <!-- Entrada en Configuracion de CRM para acceder a Planes sin salir del backend. -->
-    <menuitem id="menu_wigo_crm_planes" name="Planes" parent="crm.crm_menu_config" action="action_open_wigo_planes_root" sequence="100"/>
+    <menuitem id="menu_wigo_crm_planes" name="Planes" parent="crm.crm_menu_config" action="action_open_wigo_planes_root" sequence="100" groups="wigo_crm.group_wigo_crm_supervisor,wigo_crm.group_wigo_crm_config"/>
 
 </odoo>

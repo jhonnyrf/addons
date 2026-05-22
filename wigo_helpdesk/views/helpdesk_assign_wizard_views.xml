@@ -9,7 +9,7 @@
                 <group>
                     <field name="ticket_id" readonly="1"/>
                     <field name="area_id"/>
-                    <field name="employee_id"/>
+                    <field name="user_id"/>
                     <field name="escalation_reason" placeholder="Motivo del escalamiento..."/>
                     <field name="note" placeholder="Nota interna opcional..."/>
                 </group>

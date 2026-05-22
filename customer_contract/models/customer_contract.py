@@ -442,9 +442,11 @@ class CustomerContract(models.Model):
             for record in self:
                 if record.billing_responsible_type == 'client' and record.partner_id:
                     billing_phone = record.partner_id.celular if hasattr(record.partner_id, 'celular') and record.partner_id.celular else ''
+                    partner_mobile = getattr(record.partner_id, 'mobile', '') if record.partner_id else ''
+                    partner_phone = getattr(record.partner_id, 'phone', '') if record.partner_id else ''
                     record.with_context(skip_billing_sync=True).write({
                         'billing_name': record.contact_name or record.partner_id.name or '',
-                        'billing_phone': record.mobile or record.phone or billing_phone or (record.partner_id.mobile if record.partner_id else '') or (record.partner_id.phone if record.partner_id else '') or '',
+                        'billing_phone': record.mobile or record.phone or billing_phone or partner_mobile or partner_phone or '',
                         'billing_ci': record.ci or record.partner_id.ci or '',
                     })
 
@@ -493,8 +495,9 @@ class CustomerContract(models.Model):
             return
         partner = self.env['res.partner'].browse(partner_id)
         vals.setdefault('contact_name', partner.name   or '')
-        vals.setdefault('mobile',       partner.phone  or '')
-        vals.setdefault('phone',     partner.celular if hasattr(partner, 'celular') and partner.celular else (partner.mobile or ''))
+        vals.setdefault('mobile',       getattr(partner, 'phone', '') or '')
+        # Preferir campo 'celular' > 'mobile' > 'phone' si existe
+        vals.setdefault('phone', _get_partner_mobile(partner) or '')
         vals.setdefault('email',        partner.email  or '')
         vals.setdefault('address',      partner.direccion or '')
         vals.setdefault('ci',           partner.ci     or '')
@@ -520,7 +523,7 @@ class CustomerContract(models.Model):
                 partner = self.env['res.partner'].browse(partner_id)
                 partner_phone = partner.celular if hasattr(partner, 'celular') and partner.celular else ''
                 vals.setdefault('billing_name', vals.get('contact_name') or partner.name or '')
-                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or partner_phone or partner.phone or partner.mobile or '')
+                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or partner_phone or getattr(partner, 'phone', '') or getattr(partner, 'mobile', '') or '')
                 vals.setdefault('billing_ci', vals.get('ci') or partner.ci or '')
             return
 
@@ -528,7 +531,7 @@ class CustomerContract(models.Model):
         if self.partner_id:
             self.billing_name = self.partner_id.name or ''
             billing_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
-            self.billing_phone = billing_phone or self.partner_id.mobile or self.partner_id.phone or ''
+            self.billing_phone = billing_phone or getattr(self.partner_id, 'mobile', '') or getattr(self.partner_id, 'phone', '') or ''
             self.billing_ci = self.partner_id.ci or ''
         else:
             self._clear_billing_fields()
@@ -538,7 +541,7 @@ class CustomerContract(models.Model):
         if self.partner_id:
             partner_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
         self.billing_name = self.contact_name or (self.partner_id.name if self.partner_id else '') or ''
-        self.billing_phone = self.mobile or self.phone or partner_phone or (self.partner_id.phone if self.partner_id else '') or (self.partner_id.mobile if self.partner_id else '') or ''
+        self.billing_phone = self.mobile or self.phone or partner_phone or getattr(self.partner_id, 'phone', '') or getattr(self.partner_id, 'mobile', '') or ''
         self.billing_ci = self.ci or (self.partner_id.ci if self.partner_id else '') or ''
 
     def _clear_billing_fields(self):

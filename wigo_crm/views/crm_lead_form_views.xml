@@ -62,7 +62,14 @@
 
             <!-- Renombra el campo partner_id a Usuario en la UI. -->
             <xpath expr="//field[@name='partner_id']" position="attributes">
-                <attribute name="string">Usuario</attribute>
+                <attribute name="string">Contacto</attribute>
+                <attribute name="domain">[('user_ids', '=', False)]</attribute>
+                <attribute name="options">{'no_open': True, 'no_create': True, 'no_create_edit': True}</attribute>
+            </xpath>
+
+            <!-- Evita abrir/editar el formulario de res.users desde el vendedor del lead. -->
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
             </xpath>
 
             <!-- En CRM, el campo base phone se muestra como Celular. -->

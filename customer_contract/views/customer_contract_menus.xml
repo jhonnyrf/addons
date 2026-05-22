@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Menú raíz -->
-    <menuitem id="menu_customer_contract_root" name="Contratos" sequence="50" web_icon="customer_contract,static/description/icon.png"/>
+    <menuitem id="menu_customer_contract_root" name="Contratos" sequence="50" web_icon="customer_contract,static/description/icon.png" groups="customer_contract.group_customer_contract_user,customer_contract.group_customer_contract_manager,customer_contract.group_customer_contract_admin,customer_contract.group_customer_contract_readonly"/>
 
     <!-- Acción principal: contratos activos por defecto -->
     <record id="action_customer_contract" model="ir.actions.act_window">
@@ -32,8 +32,8 @@
     </record>
 
     <!-- Sub-menú: Contratos activos -->
-    <menuitem id="menu_customer_contract_list" name="Contratos de Clientes" parent="menu_customer_contract_root" action="action_customer_contract" sequence="10"/>
+    <menuitem id="menu_customer_contract_list" name="Contratos de Clientes" parent="menu_customer_contract_root" action="action_customer_contract" sequence="10" groups="customer_contract.group_customer_contract_user,customer_contract.group_customer_contract_manager,customer_contract.group_customer_contract_admin,customer_contract.group_customer_contract_readonly"/>
 
     <!-- Sub-menú: Historial de cambios de plan -->
-    <menuitem id="menu_contract_plan_history" name="Historial de cambios de plan" parent="menu_customer_contract_root" action="action_contract_plan_history" sequence="20"/>
+    <menuitem id="menu_contract_plan_history" name="Historial de cambios de plan" parent="menu_customer_contract_root" action="action_contract_plan_history" sequence="20" groups="customer_contract.group_customer_contract_manager,customer_contract.group_customer_contract_admin"/>
 </odoo>

@@ -1,17 +1,51 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_helpdesk_stage_all,helpdesk.stage all,model_helpdesk_stage,,1,1,1,1
-access_helpdesk_ticket_type_all,helpdesk.ticket.type all,model_helpdesk_ticket_type,,1,1,1,1
-access_helpdesk_category_all,helpdesk.category all,model_helpdesk_category,,1,1,1,1
-access_helpdesk_tag_all,helpdesk.tag all,model_helpdesk_tag,,1,1,1,1
-access_helpdesk_team_all,helpdesk.team all,model_helpdesk_team,,1,1,1,1
-access_helpdesk_ticket_all,helpdesk.ticket all,model_helpdesk_ticket,,1,1,1,1
-access_helpdesk_knowledge_all,helpdesk.knowledge all,model_helpdesk_knowledge,,1,1,1,1
-access_helpdesk_assign_wizard_all,helpdesk.assign.wizard all,model_helpdesk_assign_wizard,,1,1,1,1
-access_helpdesk_close_wizard_all,helpdesk.close.wizard all,model_helpdesk_close_wizard,,1,1,1,1
-access_helpdesk_incident_type_user,helpdesk.incident.type user,model_helpdesk_incident_type,base.group_user,1,1,1,1
-access_helpdesk_sla_config_all,helpdesk.sla.config all,model_helpdesk_sla_config,,1,1,1,1
-access_helpdesk_visit_diagnosis_type_user,helpdesk.visit.diagnosis.type user,model_helpdesk_visit_diagnosis_type,base.group_user,1,1,1,1
-access_helpdesk_visit_solution_type_user,helpdesk.visit.solution.type user,model_helpdesk_visit_solution_type,base.group_user,1,1,1,1
-access_helpdesk_priority_sla_all,helpdesk.priority.sla all,model_helpdesk_priority_sla,,1,1,1,1
-access_helpdesk_postventa_call_all,helpdesk.postventa.call all,model_helpdesk_postventa_call,,1,1,1,1
-access_helpdesk_visit_all,helpdesk.visit all,model_helpdesk_visit,,1,1,1,1
+access_helpdesk_stage_all,helpdesk.stage all,model_helpdesk_stage,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_ticket_type_all,helpdesk.ticket.type all,model_helpdesk_ticket_type,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_category_all,helpdesk.category all,model_helpdesk_category,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_tag_all,helpdesk.tag all,model_helpdesk_tag,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_team_all,helpdesk.team all,model_helpdesk_team,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_stage_user_ro,helpdesk.stage user ro,model_helpdesk_stage,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_ticket_type_user_ro,helpdesk.ticket.type user ro,model_helpdesk_ticket_type,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_category_user_ro,helpdesk.category user ro,model_helpdesk_category,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_tag_user_ro,helpdesk.tag user ro,model_helpdesk_tag,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_team_user_ro,helpdesk.team user ro,model_helpdesk_team,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_ticket_all,helpdesk.ticket all,model_helpdesk_ticket,wigo_helpdesk.group_helpdesk_user,1,1,1,0
+access_helpdesk_ticket_manager,helpdesk.ticket manager,model_helpdesk_ticket,wigo_helpdesk.group_helpdesk_manager,1,1,1,0
+access_helpdesk_knowledge_all,helpdesk.knowledge all,model_helpdesk_knowledge,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_assign_wizard_all,helpdesk.assign.wizard all,model_helpdesk_assign_wizard,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_close_wizard_all,helpdesk.close.wizard all,model_helpdesk_close_wizard,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_incident_type_user_ro,helpdesk.incident.type user ro,model_helpdesk_incident_type,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_incident_type_user,helpdesk.incident.type user,model_helpdesk_incident_type,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_sla_config_user_ro,helpdesk.sla.config user ro,model_helpdesk_sla_config,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_sla_config_all,helpdesk.sla.config all,model_helpdesk_sla_config,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_visit_diagnosis_type_user_ro,helpdesk.visit.diagnosis.type user ro,model_helpdesk_visit_diagnosis_type,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_visit_diagnosis_type_user,helpdesk.visit.diagnosis.type user,model_helpdesk_visit_diagnosis_type,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_visit_solution_type_user_ro,helpdesk.visit.solution.type user ro,model_helpdesk_visit_solution_type,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_visit_solution_type_user,helpdesk.visit.solution.type user,model_helpdesk_visit_solution_type,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_priority_sla_user_ro,helpdesk.priority.sla user ro,model_helpdesk_priority_sla,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_priority_sla_all,helpdesk.priority.sla all,model_helpdesk_priority_sla,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_postventa_call_all,helpdesk.postventa.call all,model_helpdesk_postventa_call,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_helpdesk_visit_all,helpdesk.visit all,model_helpdesk_visit,wigo_helpdesk.group_helpdesk_manager,1,1,1,1
+access_hr_employee_helpdesk_ro,hr.employee helpdesk ro,hr.model_hr_employee,wigo_helpdesk.group_helpdesk_manager,1,0,0,0
+access_hr_employee_helpdesk_admin,hr.employee helpdesk admin,hr.model_hr_employee,wigo_helpdesk.group_helpdesk_admin,1,0,0,0
+access_hr_version_helpdesk_manager,hr.version helpdesk manager,hr.model_hr_version,wigo_helpdesk.group_helpdesk_manager,1,0,0,0
+access_hr_version_helpdesk_admin,hr.version helpdesk admin,hr.model_hr_version,wigo_helpdesk.group_helpdesk_admin,1,0,0,0
+access_helpdesk_stage_admin,helpdesk.stage admin,model_helpdesk_stage,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_ticket_type_admin,helpdesk.ticket.type admin,model_helpdesk_ticket_type,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_category_admin,helpdesk.category admin,model_helpdesk_category,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_tag_admin,helpdesk.tag admin,model_helpdesk_tag,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_team_admin,helpdesk.team admin,model_helpdesk_team,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_ticket_admin,helpdesk.ticket admin,model_helpdesk_ticket,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_knowledge_admin,helpdesk.knowledge admin,model_helpdesk_knowledge,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_assign_wizard_admin,helpdesk.assign.wizard admin,model_helpdesk_assign_wizard,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_close_wizard_admin,helpdesk.close.wizard admin,model_helpdesk_close_wizard,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_incident_type_admin,helpdesk.incident.type admin,model_helpdesk_incident_type,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_sla_config_admin,helpdesk.sla.config admin,model_helpdesk_sla_config,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_visit_diagnosis_type_admin,helpdesk.visit.diagnosis.type admin,model_helpdesk_visit_diagnosis_type,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_visit_solution_type_admin,helpdesk.visit.solution.type admin,model_helpdesk_visit_solution_type,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_priority_sla_admin,helpdesk.priority.sla admin,model_helpdesk_priority_sla,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_postventa_call_admin,helpdesk.postventa.call admin,model_helpdesk_postventa_call,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_visit_admin,helpdesk.visit admin,model_helpdesk_visit,wigo_helpdesk.group_helpdesk_admin,1,1,1,1
+access_helpdesk_assign_wizard_user,helpdesk.assign.wizard user,model_helpdesk_assign_wizard,wigo_helpdesk.group_helpdesk_user,1,1,1,0
+access_helpdesk_visit_user,helpdesk.visit user,model_helpdesk_visit,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_helpdesk_postventa_call_user,helpdesk.postventa.call user,model_helpdesk_postventa_call,wigo_helpdesk.group_helpdesk_user,1,0,1,0

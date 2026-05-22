@@ -2,9 +2,9 @@
 <odoo>
 
     <!-- Menú raíz "Bajas de Servicio" dentro de CRM -->
-    <menuitem id="crm_service_cancellation_menu" name="Bajas de Servicio" parent="crm.crm_menu_root" action="action_service_cancellation" sequence="30"/>
+    <menuitem id="crm_service_cancellation_menu" name="Bajas de Servicio" parent="crm.crm_menu_root" action="action_service_cancellation" sequence="30" groups="crm_service_cancellation.group_service_cancellation_user,crm_service_cancellation.group_service_cancellation_manager"/>
 
     <!-- Configuración integrada dentro del menú del CRM -->
-    <menuitem id="crm_cancellation_config_menu" name="Motivos de Baja" parent="crm.crm_menu_config" action="action_cancellation_reason" sequence="95"/>
+    <menuitem id="crm_cancellation_config_menu" name="Motivos de Baja" parent="crm.crm_menu_config" action="action_cancellation_reason" sequence="95" groups="crm_service_cancellation.group_service_cancellation_manager"/>
 
 </odoo>

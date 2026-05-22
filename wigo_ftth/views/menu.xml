@@ -1,49 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <menuitem id="menu_wigo_ftth_root" name="FTTH" sequence="60" groups="base.group_user" web_icon="wigo_ftth,static/description/icon.png"/>
+    <menuitem id="menu_wigo_ftth_root" name="FTTH" sequence="60" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin" web_icon="wigo_ftth,static/description/icon.png"/>
 
     <!-- 1. ORDENES DE TRABAJO -->
-    <menuitem id="menu_ftth_wo_root" name="Ordenes de Trabajo" parent="menu_wigo_ftth_root" sequence="10"/>
-    <menuitem id="menu_ftth_wo_all" name="Todas las OTs" parent="menu_ftth_wo_root" action="action_ftth_work_order" sequence="20"/>
+    <menuitem id="menu_ftth_wo_root" name="Ordenes de Trabajo" parent="menu_wigo_ftth_root" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_wo_all" name="Todas las OTs" parent="menu_ftth_wo_root" action="action_ftth_work_order" sequence="20" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- 2. FICHAS TECNICAS DE CLIENTE -->
-    <menuitem id="menu_ftth_client_service_root" name="Clientes" parent="menu_wigo_ftth_root" sequence="25"/>
+    <menuitem id="menu_ftth_client_service_root" name="Clientes" parent="menu_wigo_ftth_root" sequence="25" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
-    <menuitem id="menu_ftth_client_service" name="Fichas Técnicas" parent="menu_ftth_client_service_root" action="action_ftth_client_service" sequence="10"/>
-    <menuitem id="menu_ftth_suspension_root" name="Suspensiones" parent="menu_wigo_ftth_root" sequence="27"/>
-    <menuitem id="menu_ftth_service_suspension" name="Registros de suspensión" parent="menu_ftth_suspension_root" action="action_ftth_service_suspension" sequence="10"/>
+    <menuitem id="menu_ftth_client_service" name="Fichas Técnicas" parent="menu_ftth_client_service_root" action="action_ftth_client_service" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_suspension_root" name="Suspensiones" parent="menu_wigo_ftth_root" sequence="27" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_service_suspension" name="Registros de suspensión" parent="menu_ftth_suspension_root" action="action_ftth_service_suspension" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
     <!-- 3. INVENTARIO ONUs y ACCESORIOS -->
-    <menuitem id="menu_ftth_onu_root" name="Inventario ONUs y Accesorios" parent="menu_wigo_ftth_root" sequence="30" groups="base.group_user,base.group_system"/>
+    <menuitem id="menu_ftth_onu_root" name="Inventario ONUs y Accesorios" parent="menu_wigo_ftth_root" sequence="30" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- Submenús para ordenar inventario -->
-    <menuitem id="menu_ftth_onu_equipment" name="Equipos ONU" parent="menu_ftth_onu_root" sequence="10"/>
-    <menuitem id="menu_ftth_accessories" name="Accesorios" parent="menu_ftth_onu_root" sequence="20"/>
+    <menuitem id="menu_ftth_onu_equipment" name="Equipos ONU" parent="menu_ftth_onu_root" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_accessories" name="Accesorios" parent="menu_ftth_onu_root" sequence="20" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- Equipos ONU -->
-    <menuitem id="menu_ftth_onu" name="Equipos ONU" parent="menu_ftth_onu_equipment" action="action_ftth_onu" sequence="10" groups="base.group_user,base.group_system"/>
-    <menuitem id="menu_ftth_config_brand" name="Marcas" parent="menu_ftth_onu_equipment" action="action_ftth_brand" sequence="30"/>
-    <menuitem id="menu_ftth_config_model" name="Modelos" parent="menu_ftth_onu_equipment" action="action_ftth_model" sequence="40"/>
+    <menuitem id="menu_ftth_onu" name="Equipos ONU" parent="menu_ftth_onu_equipment" action="action_ftth_onu" sequence="10" groups="wigo_ftth.group_ftth_tech,base.group_system"/>
+    <menuitem id="menu_ftth_config_brand" name="Marcas" parent="menu_ftth_onu_equipment" action="action_ftth_brand" sequence="30" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_config_model" name="Modelos" parent="menu_ftth_onu_equipment" action="action_ftth_model" sequence="40" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- Accesorios -->
-    <menuitem id="menu_ftth_accesorio" name="Catálogo" parent="menu_ftth_accessories" action="action_ftth_accesorio" sequence="10" groups="base.group_user"/>
+    <menuitem id="menu_ftth_accesorio" name="Catálogo" parent="menu_ftth_accessories" action="action_ftth_accesorio" sequence="10" groups="wigo_ftth.group_ftth_tech"/>
 
     <!-- 4. REPORTES Y GRAFICAS -->
-    <menuitem id="menu_ftth_reports_root" name="Reportes" parent="menu_wigo_ftth_root" sequence="40"/>
-    <menuitem id="menu_ftth_report_estados" name="Clientes por estado" parent="menu_ftth_reports_root" action="action_ftth_report_estados" sequence="10"/>
-    <menuitem id="menu_ftth_report_planes" name="Clientes por plan" parent="menu_ftth_reports_root" action="action_ftth_report_planes" sequence="20"/>
-    <menuitem id="menu_ftth_report_instalaciones" name="Instalaciones por mes" parent="menu_ftth_reports_root" action="action_ftth_report_instalaciones" sequence="30"/>
-    <menuitem id="menu_ftth_report_instalador" name="Por instalador" parent="menu_ftth_reports_root" action="action_ftth_report_instalador" sequence="40"/>
+    <menuitem id="menu_ftth_reports_root" name="Reportes" parent="menu_wigo_ftth_root" sequence="40" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_report_estados" name="Clientes por estado" parent="menu_ftth_reports_root" action="action_ftth_report_estados" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_report_planes" name="Clientes por plan" parent="menu_ftth_reports_root" action="action_ftth_report_planes" sequence="20" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_report_instalaciones" name="Instalaciones por mes" parent="menu_ftth_reports_root" action="action_ftth_report_instalaciones" sequence="30" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_report_instalador" name="Por instalador" parent="menu_ftth_reports_root" action="action_ftth_report_instalador" sequence="40" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
     <menuitem id="menu_ftth_report_nodo" name="Por nodo / OLT" parent="menu_ftth_reports_root" action="action_ftth_report_nodo" sequence="50" groups="wigo_ftth.group_ftth_tech,base.group_erp_manager"/>
-    <menuitem id="menu_ftth_capacity" name="Ocupacion de Puertos" parent="menu_ftth_reports_root" action="action_ftth_capacity" sequence="60"/>
+    <menuitem id="menu_ftth_capacity" name="Ocupacion de Puertos" parent="menu_ftth_reports_root" action="action_ftth_capacity" sequence="60" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- 5. CONFIGURACION -->
-    <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="base.group_user"/>
+    <menuitem id="menu_ftth_config_root" name="Configuracion" parent="menu_wigo_ftth_root" sequence="90" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- Submenús para ordenar la configuración -->
-    <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10" groups="base.group_user"/>
-    <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20" groups="base.group_user"/>
-    <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30" groups="base.group_user"/>
+    <menuitem id="menu_ftth_config_location" name="Ubicación y segmentación" parent="menu_ftth_config_root" sequence="10" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_config_network" name="Red GPON" parent="menu_ftth_config_root" sequence="20" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
+    <menuitem id="menu_ftth_config_operations" name="Operación" parent="menu_ftth_config_root" sequence="30" groups="wigo_ftth.group_ftth_tech,wigo_ftth.group_ftth_admin"/>
 
     <!-- Ubicación y segmentación -->
     <menuitem id="menu_ftth_config_regional" name="Regionales" parent="menu_ftth_config_location" action="action_ftth_regional" sequence="10"/>

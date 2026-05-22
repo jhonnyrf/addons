@@ -17,6 +17,7 @@
     'license': 'LGPL-3',
     'depends': ['base', 'contacts', 'crm', 'wigo_planes', 'wigo_crm', 'wigo_helpdesk', 'customer_contract'],
     'data': [
+        'security/security.xml',
         'security/ir.model.access.csv',
         'views/res_partner_views.xml',
     ],

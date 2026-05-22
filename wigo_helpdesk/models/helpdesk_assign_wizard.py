@@ -16,10 +16,10 @@ class HelpdeskAssignWizard(models.TransientModel):
         comodel_name='hr.department',
         string='Área',
     )
-    employee_id = fields.Many2one(
-        comodel_name='hr.employee',
+    user_id = fields.Many2one(
+        comodel_name='res.users',
         string='Asignado a',
-        domain="[('department_id', 'child_of', area_id)]",
+        domain="[('share', '=', False)]",
     )
     escalation_reason = fields.Text(
         string='Motivo del escalamiento',
@@ -33,16 +33,17 @@ class HelpdeskAssignWizard(models.TransientModel):
         vals = {}
         if self.area_id:
             vals['area_id'] = self.area_id.id
-        if self.employee_id:
-            vals['employee_id'] = self.employee_id.id
-            if self.employee_id.department_id and 'area_id' not in vals:
-                vals['area_id'] = self.employee_id.department_id.id
-            if self.employee_id.user_id:
-                vals['user_id'] = self.employee_id.user_id.id
+        employee = self.user_id.employee_id if self.user_id else False
+        if employee:
+            vals['employee_id'] = employee.id
+            if employee.department_id and 'area_id' not in vals:
+                vals['area_id'] = employee.department_id.id
+        if self.user_id:
+            vals['user_id'] = self.user_id.id
         if self.env.context.get('escalate_mode'):
             vals['is_escalated'] = True
-            if self.employee_id and self.employee_id.user_id:
-                vals['escalated_to_id'] = self.employee_id.user_id.id
+            if self.user_id:
+                vals['escalated_to_id'] = self.user_id.id
             if self.escalation_reason:
                 vals['escalation_reason'] = self.escalation_reason
         self.ticket_id.write(vals)
@@ -59,8 +60,8 @@ class HelpdeskAssignWizard(models.TransientModel):
 
         if self.area_id:
             msg_parts.append(f'<b>Nueva Área:</b> {self.area_id.name}<br/>')
-        if self.employee_id:
-            msg_parts.append(f'<b>Nuevo Asignado:</b> {self.employee_id.name}<br/>')
+        if self.user_id:
+            msg_parts.append(f'<b>Nuevo Asignado:</b> {self.user_id.name}<br/>')
             
         if self.note:
             msg_parts.append(f'<br/><b>Nota interna:</b><br/>{self.note}')

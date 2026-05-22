@@ -1,3 +1,11 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_crm_lead_wigo,crm.lead.wigo,crm.model_crm_lead,base.group_user,1,1,1,1
-access_wigo_zone_user,wigo.zone.user,wigo_ftth.model_wigo_zone,base.group_user,1,0,0,0
+access_crm_lead_wigo,crm.lead.wigo,crm.model_crm_lead,wigo_crm.group_wigo_crm_comercial,1,1,1,1
+access_wigo_zone_user,wigo.zone.user,wigo_ftth.model_wigo_zone,wigo_crm.group_wigo_crm_comercial,1,0,0,0
+access_crm_lead_wigo_supervisor,crm.lead.wigo supervisor,crm.model_crm_lead,wigo_crm.group_wigo_crm_supervisor,1,1,1,1
+access_wigo_zone_supervisor,wigo.zone.supervisor,wigo_ftth.model_wigo_zone,wigo_crm.group_wigo_crm_supervisor,1,1,1,1
+access_crm_lead_wigo_accounting,crm.lead.wigo accounting,crm.model_crm_lead,wigo_crm.group_wigo_crm_config,1,0,0,0
+access_crm_lead_wigo_admin,crm.lead.wigo admin,crm.model_crm_lead,wigo_crm.group_wigo_crm_admin,1,1,1,1
+access_wigo_zone_admin,wigo.zone.admin,wigo_ftth.model_wigo_zone,wigo_crm.group_wigo_crm_admin,1,1,1,1
+
+access_res_users_wigo_crm_admin,res.users.wigo_crm_admin,base.model_res_users,wigo_crm.group_wigo_crm_admin,1,1,0,0
+

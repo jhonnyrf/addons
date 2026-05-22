@@ -19,6 +19,7 @@
     'installable': True,
     'auto_install': False,
     'data': [
+        'security/security.xml',
         # Seguridad
         'security/ir.model.access.csv',
 

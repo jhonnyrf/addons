@@ -1,2 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_partner_plan_user,partner.plan user,model_partner_plan,base.group_user,1,1,1,1
+access_partner_plan_comercial,partner.plan comercial,model_partner_plan,contactos_ext.group_contactos_comercial,1,1,1,1
+access_partner_plan_tecnica,partner.plan tecnica,model_partner_plan,contactos_ext.group_contactos_tecnica,1,1,1,1
+access_partner_plan_readonly,partner.plan readonly,model_partner_plan,contactos_ext.group_contactos_readonly,1,0,0,0
+access_partner_plan_admin,partner.plan admin,model_partner_plan,contactos_ext.group_contactos_admin,1,1,1,1

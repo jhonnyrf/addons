@@ -12,6 +12,7 @@ Módulo para personalizar el CRM de Odoo según los requerimientos de Wigo.
     # ← Cambiado de 'wigo_plan' a 'wigo_planes' (módulo unificado)
     'depends': ['base', 'crm', 'wigo_planes', 'customer_contract', 'wigo_ftth'],
     'data': [
+        'security/security.xml',
         'security/ir.model.access.csv',
         'views/crm_lead_form_views.xml',
         'views/crm_lead_adjustments_views.xml',

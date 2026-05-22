@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record model="res.groups.privilege" id="res_groups_privilege_wigo_planes">
+            <field name="name">Planes</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="base.module_category_sales"/>
+        </record>
+
+        <record id="group_wigo_planes_user" model="res.groups">
+            <field name="name">Planes / Comercial</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="privilege_id" ref="res_groups_privilege_wigo_planes"/>
+        </record>
+
+        <record id="group_wigo_planes_manager" model="res.groups">
+            <field name="name">Planes / Técnica</field>
+            <field name="implied_ids" eval="[(4, ref('group_wigo_planes_user'))]"/>
+            <field name="privilege_id" ref="res_groups_privilege_wigo_planes"/>
+        </record>
+
+        <record id="group_wigo_planes_readonly" model="res.groups">
+            <field name="name">Planes / Contabilidad</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="privilege_id" ref="res_groups_privilege_wigo_planes"/>
+        </record>
+
+        <record id="group_wigo_planes_admin" model="res.groups">
+            <field name="name">Planes / Administrador Modulo</field>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="privilege_id" ref="res_groups_privilege_wigo_planes"/>
+        </record>
+    </data>
+</odoo>

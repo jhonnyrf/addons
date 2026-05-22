@@ -18,6 +18,7 @@
     'license': 'LGPL-3',
     'depends': ['crm', 'wigo_crm', 'customer_contract', 'wigo_ftth', 'wigo_cobranza'],
     'data': [
+        'security/security.xml',
         'security/ir.model.access.csv',
         'views/cancellation_reason_views.xml',
         'views/service_cancellation_views.xml',

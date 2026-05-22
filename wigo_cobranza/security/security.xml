@@ -1,25 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="res_groups_privilege_cobranza" model="res.groups.privilege">
+        <field name="name">Cobranza</field>
+        <field name="sequence">55</field>
+        <field name="category_id" ref="base.module_category_sales"/>
+    </record>
+
     <!-- Group: Collections — full write access -->
     <record id="group_cobranza" model="res.groups">
-        <field name="name">Cobranza</field>
+        <field name="name">Cobranza / Comercial</field>
         <field name="comment">Collections area (Dania). Can record and modify payments, payment states, and collection actions.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_cobranza"/>
     </record>
 
     <!-- Group: Accounting — full write access -->
     <record id="group_contabilidad" model="res.groups">
-        <field name="name">Contabilidad</field>
+        <field name="name">Cobranza / Contabilidad</field>
         <field name="comment">Accounting responsible. Full access to collections, delinquencies, deactivations, and reports.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_cobranza"/>
     </record>
 
     <!-- Group: Collections Read-Only (Commercial / Technical) -->
     <record id="group_cobranza_readonly" model="res.groups">
-        <field name="name">Cobranza Solo lectura</field>
+        <field name="name">Cobranza / Técnica</field>
         <field name="comment">Read-only access to customer payment status. For Commercial and Technical teams.</field>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_cobranza"/>
+    </record>
+
+    <record id="group_cobranza_admin" model="res.groups">
+        <field name="name">Cobranza / Administrador</field>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="privilege_id" ref="res_groups_privilege_cobranza"/>
     </record>
 
 </odoo>

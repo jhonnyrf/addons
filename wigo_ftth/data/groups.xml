@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- FTTH Technical Group -->
+        <record id="group_ftth_tech" model="res.groups">
+            <field name="name">FTTH / Técnico</field>
+        </record>
+
+        <!-- FTTH Read-Only Group -->
+        <record id="group_ftth_readonly" model="res.groups">
+            <field name="name">FTTH / Solo lectura</field>
+        </record>
+    </data>
+</odoo>

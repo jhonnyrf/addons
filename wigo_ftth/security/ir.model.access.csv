@@ -1,30 +1,62 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_wigo_zone_user,wigo.zone user,model_wigo_zone,base.group_user,1,1,1,1
-access_ftth_regional_user,wigo.ftth.regional user,model_wigo_ftth_regional,base.group_user,1,1,1,1
-access_ftth_nodo_user,wigo.ftth.nodo user,model_wigo_ftth_nodo,base.group_user,1,1,1,1
-access_ftth_technology_user,wigo.ftth.technology user,model_wigo_ftth_technology,base.group_user,1,1,1,1
+access_wigo_zone_user,wigo.zone user,model_wigo_zone,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_regional_user,wigo.ftth.regional user,model_wigo_ftth_regional,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_nodo_user,wigo.ftth.nodo user,model_wigo_ftth_nodo,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_technology_user,wigo.ftth.technology user,model_wigo_ftth_technology,wigo_ftth.group_ftth_tech,1,1,1,1
 
-access_ftth_olt_user,wigo.ftth.olt user,model_wigo_ftth_olt,base.group_user,1,1,1,1
-access_ftth_olt_port_user,wigo.ftth.olt.port user,model_wigo_ftth_olt_port,base.group_user,1,1,1,1
-access_ftth_odn_user,wigo.ftth.odn user,model_wigo_ftth_odn,base.group_user,1,1,1,1
-access_ftth_box_group_user,wigo.ftth.box.group user,model_wigo_ftth_box_group,base.group_user,1,1,1,1
-access_ftth_box_user,wigo.ftth.box user,model_wigo_ftth_box,base.group_user,1,1,1,1
-access_ftth_box_port_user,wigo.ftth.box.port user,model_wigo_ftth_box_port,base.group_user,1,1,1,1
-access_ftth_subinterface_user,wigo.ftth.subinterface user,model_wigo_ftth_subinterface,base.group_user,1,1,1,1
-access_ftth_onu_user,wigo.ftth.onu user,model_wigo_ftth_onu,base.group_user,1,1,1,1
-access_ftth_onu_batch_user,wigo.ftth.onu.batch user,model_wigo_ftth_onu_batch,base.group_user,1,1,1,1
-access_ftth_accesorio_user,ftth.accesorio user,model_ftth_accesorio,base.group_user,1,1,1,1
-access_ftth_installer_user,wigo.ftth.installer user,model_wigo_ftth_installer,base.group_user,1,1,1,1
-access_ftth_additional_equipment_user,wigo.ftth.additional.equipment user,model_wigo_ftth_additional_equipment,base.group_user,1,1,1,1
-access_ftth_work_order_user,wigo.ftth.work.order user,model_wigo_ftth_work_order,base.group_user,1,1,1,1
-access_ftth_work_order_accessory_user,ftth.work.order.accessory user,model_ftth_work_order_accessory,base.group_user,1,1,1,1
-access_ftth_client_service_user,wigo.ftth.client.service user,model_wigo_ftth_client_service,base.group_user,1,1,1,1
-access_ftth_work_order_print_config_manager,wigo.ftth.work.order.print.config manager,model_wigo_ftth_work_order_print_config,base.group_system,1,1,1,1
-access_ftth_service_suspension_user,wigo.ftth.service.suspension user,model_wigo_ftth_service_suspension,base.group_user,1,1,1,1
-access_generate_ports_wizard,access_generate_ports_wizard,model_wigo_ftth_generate_ports_wizard,base.group_user,1,1,1,1
-access_generate_boxes_wizard,access_generate_boxes_wizard,model_generate_boxes_wizard,base.group_user,1,1,1,1
-access_generate_subinterfaces_wizard,access_generate_subinterfaces_wizard,model_wigo_ftth_generate_subinterfaces_wizard,base.group_user,1,1,1,1
-access_generic_confirm_wizard,access_generic_confirm_wizard,model_wigo_generic_confirm_wizard,base.group_user,1,1,1,1
-access_ftth_brand_user,wigo.ftth.brand user,model_wigo_ftth_brand,base.group_user,1,1,1,1
-access_ftth_model_user,wigo.ftth.model user,model_wigo_ftth_model,base.group_user,1,1,1,1
-access_cancel_work_order_wizard,access_cancel_work_order_wizard,model_wigo_ftth_cancel_work_order_wizard,base.group_user,1,1,1,1
+access_ftth_olt_user,wigo.ftth.olt user,model_wigo_ftth_olt,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_olt_port_user,wigo.ftth.olt.port user,model_wigo_ftth_olt_port,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_odn_user,wigo.ftth.odn user,model_wigo_ftth_odn,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_box_group_user,wigo.ftth.box.group user,model_wigo_ftth_box_group,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_box_user,wigo.ftth.box user,model_wigo_ftth_box,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_box_port_user,wigo.ftth.box.port user,model_wigo_ftth_box_port,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_subinterface_user,wigo.ftth.subinterface user,model_wigo_ftth_subinterface,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_onu_user,wigo.ftth.onu user,model_wigo_ftth_onu,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_onu_batch_user,wigo.ftth.onu.batch user,model_wigo_ftth_onu_batch,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_accesorio_user,ftth.accesorio user,model_ftth_accesorio,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_installer_user,wigo.ftth.installer user,model_wigo_ftth_installer,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_additional_equipment_user,wigo.ftth.additional.equipment user,model_wigo_ftth_additional_equipment,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_work_order_user,wigo.ftth.work.order user,model_wigo_ftth_work_order,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_work_order_accessory_user,ftth.work.order.accessory user,model_ftth_work_order_accessory,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_work_order_print_config_manager,wigo.ftth.work.order.print.config manager,model_wigo_ftth_work_order_print_config,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_service_suspension_user,wigo.ftth.service.suspension user,model_wigo_ftth_service_suspension,wigo_ftth.group_ftth_tech,1,1,1,1
+access_generate_ports_wizard,access_generate_ports_wizard,model_wigo_ftth_generate_ports_wizard,wigo_ftth.group_ftth_tech,1,1,1,1
+access_generate_boxes_wizard,access_generate_boxes_wizard,model_generate_boxes_wizard,wigo_ftth.group_ftth_tech,1,1,1,1
+access_generate_subinterfaces_wizard,access_generate_subinterfaces_wizard,model_wigo_ftth_generate_subinterfaces_wizard,wigo_ftth.group_ftth_tech,1,1,1,1
+access_generic_confirm_wizard,access_generic_confirm_wizard,model_wigo_generic_confirm_wizard,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_brand_user,wigo.ftth.brand user,model_wigo_ftth_brand,wigo_ftth.group_ftth_tech,1,1,1,1
+access_ftth_model_user,wigo.ftth.model user,model_wigo_ftth_model,wigo_ftth.group_ftth_tech,1,1,1,1
+access_cancel_work_order_wizard,access_cancel_work_order_wizard,model_wigo_ftth_cancel_work_order_wizard,wigo_ftth.group_ftth_tech,1,1,1,1
+access_wigo_zone_admin,wigo.zone admin,model_wigo_zone,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_regional_admin,wigo.ftth.regional admin,model_wigo_ftth_regional,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_nodo_admin,wigo.ftth.nodo admin,model_wigo_ftth_nodo,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_technology_admin,wigo.ftth.technology admin,model_wigo_ftth_technology,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_olt_admin,wigo.ftth.olt admin,model_wigo_ftth_olt,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_olt_port_admin,wigo.ftth.olt.port admin,model_wigo_ftth_olt_port,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_odn_admin,wigo.ftth.odn admin,model_wigo_ftth_odn,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_box_group_admin,wigo.ftth.box.group admin,model_wigo_ftth_box_group,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_box_admin,wigo.ftth.box admin,model_wigo_ftth_box,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_box_port_admin,wigo.ftth.box.port admin,model_wigo_ftth_box_port,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_subinterface_admin,wigo.ftth.subinterface admin,model_wigo_ftth_subinterface,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_onu_admin,wigo.ftth.onu admin,model_wigo_ftth_onu,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_onu_batch_admin,wigo.ftth.onu.batch admin,model_wigo_ftth_onu_batch,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_accesorio_admin,ftth.accesorio admin,model_ftth_accesorio,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_installer_admin,wigo.ftth.installer admin,model_wigo_ftth_installer,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_additional_equipment_admin,wigo.ftth.additional.equipment admin,model_wigo_ftth_additional_equipment,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_work_order_admin,wigo.ftth.work.order admin,model_wigo_ftth_work_order,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_work_order_accessory_admin,ftth.work.order.accessory admin,model_ftth_work_order_accessory,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_client_service_admin,wigo.ftth.client.service admin,model_wigo_ftth_client_service,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_client_service_tech_ro,wigo.ftth.client.service tech ro,model_wigo_ftth_client_service,wigo_ftth.group_ftth_tech,1,0,0,0
+access_ftth_client_service_helpdesk_ro,wigo.ftth.client.service helpdesk ro,model_wigo_ftth_client_service,wigo_helpdesk.group_helpdesk_user,1,0,0,0
+access_ftth_client_service_cobranza_ro,wigo.ftth.client.service cobranza ro,model_wigo_ftth_client_service,wigo_cobranza.group_cobranza,1,0,0,0
+access_ftth_client_service_contabilidad_ro,wigo.ftth.client.service contabilidad ro,model_wigo_ftth_client_service,wigo_cobranza.group_contabilidad,1,0,0,0
+access_ftth_client_service_cobranza_admin_ro,wigo.ftth.client.service cobranza admin ro,model_wigo_ftth_client_service,wigo_cobranza.group_cobranza_admin,1,0,0,0
+access_ftth_work_order_print_config_admin,wigo.ftth.work.order.print.config admin,model_wigo_ftth_work_order_print_config,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_service_suspension_admin,wigo.ftth.service.suspension admin,model_wigo_ftth_service_suspension,wigo_ftth.group_ftth_admin,1,1,1,1
+access_generate_ports_wizard_admin,access_generate_ports_wizard admin,model_wigo_ftth_generate_ports_wizard,wigo_ftth.group_ftth_admin,1,1,1,1
+access_generate_boxes_wizard_admin,access_generate_boxes_wizard admin,model_generate_boxes_wizard,wigo_ftth.group_ftth_admin,1,1,1,1
+access_generate_subinterfaces_wizard_admin,access_generate_subinterfaces_wizard admin,model_wigo_ftth_generate_subinterfaces_wizard,wigo_ftth.group_ftth_admin,1,1,1,1
+access_generic_confirm_wizard_admin,access_generic_confirm_wizard admin,model_wigo_generic_confirm_wizard,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_brand_admin,wigo.ftth.brand admin,model_wigo_ftth_brand,wigo_ftth.group_ftth_admin,1,1,1,1
+access_ftth_model_admin,wigo.ftth.model admin,model_wigo_ftth_model,wigo_ftth.group_ftth_admin,1,1,1,1
+access_cancel_work_order_wizard_admin,access_cancel_work_order_wizard admin,model_wigo_ftth_cancel_work_order_wizard,wigo_ftth.group_ftth_admin,1,1,1,1

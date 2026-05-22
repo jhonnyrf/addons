@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.png" groups="base.group_user"/>
+    <menuitem id="menu_cobranza_root" name="Cobranza" sequence="55" web_icon="wigo_cobranza,static/description/icon.png" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,wigo_cobranza.group_cobranza_readonly"/>
 
-    <menuitem id="menu_cobranza_management" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10"/>
+    <menuitem id="menu_cobranza_management" name="Gestión de Cobros" parent="menu_cobranza_root" sequence="10" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,wigo_cobranza.group_cobranza_readonly"/>
 
     <menuitem id="menu_cobranza_customers" name="Clientes con Contrato" parent="menu_cobranza_management" action="wigo_cobranza.action_cobranza_contract_customers" sequence="10"/>
 
@@ -13,7 +13,7 @@
 
     <menuitem id="menu_uncollectibles" name="Incobrables" parent="menu_cobranza_management" action="wigo_cobranza.action_uncollectible" sequence="55"/>
 
-    <menuitem id="menu_graphics_and_reports" name="Gráficos y Reportes" parent="menu_cobranza_root" sequence="20"/>
+    <menuitem id="menu_graphics_and_reports" name="Gráficos y Reportes" parent="menu_cobranza_root" sequence="20" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad,wigo_cobranza.group_cobranza_readonly"/>
 
     <menuitem id="menu_general_spreadsheet" name="Planilla General" parent="menu_cobranza_management" action="wigo_cobranza.action_general_spreadsheet" sequence="10"/>
 
@@ -27,7 +27,7 @@
 
     <menuitem id="menu_uncollectible_report" name="Reporte Incobrables" parent="menu_graphics_and_reports" action="wigo_cobranza.action_uncollectible_report" sequence="60"/>
 
-    <menuitem id="menu_cobranza_config_root" name="Configuración" parent="menu_cobranza_root" sequence="90"/>
+    <menuitem id="menu_cobranza_config_root" name="Configuración" parent="menu_cobranza_root" sequence="90" groups="wigo_cobranza.group_cobranza,wigo_cobranza.group_contabilidad"/>
     <menuitem id="menu_receipt_config" name="Configurar Recibo" parent="menu_cobranza_config_root" action="wigo_cobranza.action_receipt_config" sequence="10"/>
     <menuitem id="menu_adjustment_type" name="Tipos de ajustes" parent="menu_cobranza_config_root" action="wigo_cobranza.action_adjustment_type" sequence="20"/>
     <menuitem id="menu_collection_rules" name="Reglas de Cobranza" parent="menu_cobranza_config_root" action="wigo_cobranza.action_collection_rule" sequence="30"/>
