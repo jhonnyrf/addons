@@ -22,27 +22,44 @@
         <field name="arch" type="xml">
             <form string="Artículo de Conocimiento">
                 <sheet>
-                    <div class="oe_title">
-                        <h1 class="w-100">
-                            <field name="name" placeholder="Título del artículo..." class="text-uppercase"/>
+                    <div class="oe_title mb-4">
+                        <h1 class="w-100" style="border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+                            <i class="fa fa-book me-2" style="color: #007bff;"/>
+                            <field name="name" placeholder="Título del artículo..." class="text-primary" style="font-weight: 600; font-size: 1.5rem;"/>
                         </h1>
                     </div>
-                    <group>
-                        <group>
-                            <field name="ticket_type_id"/>
-                            <field name="area_id"/>
-                            <field name="author_id" widget="many2one_avatar_user"/>
-                        </group>
-                        <group>
-                            <field name="incident_type_ids" widget="many2many_tags" options="{'no_create_edit': True}"/>
-                            <field name="active"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page string="Contenido">
-                            <field name="content" nolabel="1"/>
-                        </page>
-                    </notebook>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded" style="background-color: #f8f9fa;">
+                                <h6 class="text-primary mb-3" style="font-weight: 600;">
+                                    <i class="fa fa-info-circle me-2"/>
+Información Básica</h6>
+                                <group>
+                                    <field name="ticket_type_id" string="Tipo de Ticket"/>
+                                    <field name="area_id" string="Departamento"/>
+                                    <field name="author_id" widget="many2one_avatar_user" string="Autor"/>
+                                    <field name="active" string="Activo"/>
+                                </group>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded" style="background-color: #f0f8ff;">
+                                <h6 class="text-info mb-3" style="font-weight: 600;">
+                                    <i class="fa fa-shield me-2"/>
+Metadatos</h6>
+                                <group>
+                                    <field name="create_date" string="Creado" readonly="1"/>
+                                    <field name="write_date" string="Actualizado" readonly="1"/>
+                                </group>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 border rounded" style="background-color: #fffaf0; border-left: 4px solid #ff9800;">
+                        <h6 class="text-warning mb-3" style="font-weight: 600;">
+                            <i class="fa fa-file-text me-2"/>
+Contenido del Artículo</h6>
+                        <field name="content" nolabel="1" style="min-height: 400px; border: 1px solid #ddd; padding: 15px; background-color: white; border-radius: 4px;"/>
+                    </div>
                 </sheet>
                 <chatter/>
             </form>

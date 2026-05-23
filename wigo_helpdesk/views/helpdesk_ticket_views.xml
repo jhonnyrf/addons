@@ -254,7 +254,7 @@
 
                         <page string="Resolución" name="resolution">
                             <div class="row mt-3 px-2">
-                                <div class="col-md-6 pe-md-3">
+                                <div class="col-md-6 pe-md-1">
                                     <div class="p-3 border rounded shadow-sm h-100">
                                         <h5 class="text-primary mb-3" style="font-weight: 600;">
                                             <i class="fa fa-search me-2"/>
@@ -265,7 +265,7 @@
                                         </group>
                                     </div>
                                 </div>
-                                <div class="col-md-6 ps-md-3 mt-3 mt-md-0">
+                                <div class="col-md-6 ps-md-1 mt-3 mt-md-0">
                                     <div class="p-3 border rounded shadow-sm h-100">
                                         <h5 class="text-success mb-3" style="font-weight: 600;">
                                             <i class="fa fa-wrench me-2"/>
@@ -755,7 +755,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_diagnosis" model="ir.actions.act_window">
         <field name="name">Tickets por Diagnóstico</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_diagnosis"/>
     </record>
@@ -763,7 +763,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_symptom" model="ir.actions.act_window">
         <field name="name">Tickets por Síntoma</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_symptom"/>
     </record>
@@ -771,7 +771,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_solution" model="ir.actions.act_window">
         <field name="name">Tickets por Solución</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_solution"/>
     </record>
@@ -779,7 +779,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_month" model="ir.actions.act_window">
         <field name="name">Tickets por Mes</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_month"/>
     </record>
@@ -787,7 +787,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_resolution_time" model="ir.actions.act_window">
         <field name="name">Tiempo de Solución</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_resolution_time"/>
     </record>
@@ -795,7 +795,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_priority" model="ir.actions.act_window">
         <field name="name">Por Prioridad</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_priority"/>
     </record>
@@ -803,7 +803,7 @@ h restantes
     <record id="action_helpdesk_ticket_graph_customers" model="ir.actions.act_window">
         <field name="name">Top Clientes con más Tickets</field>
         <field name="res_model">helpdesk.ticket</field>
-        <field name="view_mode">graph,list</field>
+        <field name="view_mode">graph</field>
         <field name="context">{'search_default_filter_this_month': 1}</field>
         <field name="view_id" ref="view_helpdesk_ticket_graph_by_customer"/>
     </record>
