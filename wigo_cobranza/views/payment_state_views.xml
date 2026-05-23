@@ -29,19 +29,23 @@
                 <header>
                     <button name="action_registrar_pago" string="Confirmar Pago" type="object" class="btn-primary" confirm="¿Desea confirmar el pago y registrar esta operación en el historial?" invisible="estado_pago == 'pagado'"/>
                     <button name="action_marcar_mora" string="Marcar en Mora" type="object" class="btn-warning" confirm="¿Desea marcar este registro manualmente en mora?" invisible="not puede_marcar_mora_manual"/>
-                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
+                    <button name="action_editar_valores_contables" string="Editar valores contables" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or contabilidad_editable"/>
                     <button name="action_abrir_recibo" string="Ver Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
                     <button name="action_generar_recibo" string="Generar Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or recibo_generado"/>
                     <button name="action_imprimir_recibo" string="Imprimir Recibo" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not recibo_generado"/>
-                    <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado'"/>
+                    <button name="action_registrar_factura" string="Registrar Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or factura_generada"/>
+                    <button name="action_abrir_factura" string="Ver Factura" type="object" class="btn-secondary" invisible="estado_pago != 'pagado' or not factura_generada"/>
                     <field name="estado_pago" widget="statusbar" statusbar_visible="pendiente,pagado,mora"/>
                     <field name="recibo_generado" invisible="1"/>
                     <field name="recibo_id" invisible="1"/>
+                    <field name="factura_generada" invisible="1"/>
+                    <field name="factura_id" invisible="1"/>
                     <field name="puede_marcar_mora_manual" invisible="1"/>
+                    <field name="contabilidad_editable" invisible="1"/>
                 </header>
                 <sheet>
                     <widget name="web_ribbon" title="En mora" bg_color="text-bg-danger" invisible="estado_pago != 'mora'"/>
-                    <widget name="web_ribbon" title="Pagado" bg_color="text-bg-success" invisible="estado_pago != 'pagado'"/>
+                    <widget name="web_ribbon" title="Pagado" bg_color="text-bg-success" invisible="estado_pago != 'pagado' or contabilidad_editable"/>
                     <widget name="web_ribbon" title="Edición contable" bg_color="text-bg-warning" invisible="not contabilidad_editable"/>
                     <group string="Contrato y periodo" col="2">
                         <group>
@@ -62,7 +66,7 @@
                             <field name="payment_mode" readonly="1"/>
                             <field name="tipo_ajuste_id" options="{'no_create': True, 'no_open': True}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                             <field name="monto_prorrateo" invisible="not tipo_ajuste_enable_proration" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
-                            <field name="motivo" invisible="not tipo_ajuste_requires_reason" required="tipo_ajuste_requires_reason" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
+                            <field name="motivo" string = "Motivo de ajuste" invisible="not tipo_ajuste_requires_reason" required="tipo_ajuste_requires_reason" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                         </group>
                     </group>
                     <notebook>
@@ -78,7 +82,6 @@
                                     <field name="fecha_pago" widget="date" options="{'numeric': true}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                                     <field name="canal_pago" string="Canal de pago" options="{'no_open': True}" readonly="estado_pago in ['pagado', 'al_dia'] and not contabilidad_editable"/>
                                     <field name="registrado_por" readonly="1"/>
-                                    <field name="justificacion_edicion" placeholder="Justificación obligatoria cuando se editen montos contables fuera de pendiente." invisible="not contabilidad_editable" required="contabilidad_editable"/>
                                 </group>
                             </group>
                         </page>
@@ -117,8 +120,13 @@
                                 </div>
                             </group>
                         </page>
+                        <page string="Observaciones" name="observaciones">
+                            <group>
+                                <field name="notas" placeholder="Observaciones de cobranza para este mes..." nolabel="1"/>
+                            </group>
+                        </page>
                     </notebook>
-                    <field name="notas" placeholder="Observaciones de cobranza para este mes..."/>
+
                 </sheet>
                 <chatter/>
             </form>

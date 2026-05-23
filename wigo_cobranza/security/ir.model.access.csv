@@ -16,6 +16,7 @@ access_factura_cobranza_user,wigo.factura.cobranza user,model_wigo_factura_cobra
 access_recibo_config_user,wigo.recibo.config user,model_wigo_recibo_config,base.group_user,1,1,1,1
 access_recibo_config_admin,wigo.recibo.config admin,model_wigo_recibo_config,base.group_system,1,1,1,1
 access_pago_estado_attachment_viewer_wizard_user,wigo.pago.estado.attachment.viewer.wizard user,model_wigo_pago_estado_attachment_viewer_wizard,base.group_user,1,1,1,1
+access_pago_estado_contable_justification_wizard_user,wigo.pago.estado.contable.justification.wizard user,model_wigo_pago_estado_contable_justification_wizard,base.group_user,1,1,1,1
 access_cobranza_regla_cobranza,wigo.cobranza.regla cobranza,model_wigo_cobranza_regla,wigo_cobranza.group_cobranza,1,1,1,1
 access_cobranza_regla_admin,wigo.cobranza.regla admin,model_wigo_cobranza_regla,base.group_system,1,1,1,1
 access_cobranza_regla_user,wigo.cobranza.regla user,model_wigo_cobranza_regla,base.group_user,1,1,1,1

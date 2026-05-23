@@ -84,7 +84,7 @@ Código: <field name="codigo_cliente"/>
                 <header>
                     <button name="action_emitir" string="Emitir Recibo" type="object" class="btn-success" invisible="state != 'borrador'"/>
                     <button name="action_imprimir" string="Imprimir" type="object" class="btn-primary" invisible="state != 'emitido'"/>
-                    <button name="action_volver_borrador" string="Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/>
+                    <!-- <button name="action_volver_borrador" string="Editar" type="object" class="btn-warning" invisible="state != 'emitido'" confirm="¿Regresar a borrador para editar? Deberá volver a emitir antes de imprimir."/> -->
                     <button name="action_anular" string="Anular" type="object" class="btn-danger" invisible="state == 'anulado'" confirm="¿Confirma anular este recibo?"/>
                     <field name="state" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
                 </header>

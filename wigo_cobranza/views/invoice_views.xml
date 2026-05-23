@@ -1,6 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="view_invoice_kanban" model="ir.ui.view">
+        <field name="name">wigo.factura.cobranza.kanban</field>
+        <field name="model">wigo.factura.cobranza</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column" create="false">
+                <field name="numero_factura"/>
+                <field name="partner_id"/>
+                <field name="codigo_cliente"/>
+                <field name="periodo_facturado"/>
+                <field name="monto_neto"/>
+                <field name="fecha_emision"/>
+                <field name="state"/>
+                <progressbar field="state" colors='{"pendiente": "warning", "emitido": "success", "anulada": "danger"}'/>
+                <templates>
+                    <t t-name="card">
+                        <main>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong style="font-size:15px;">
+                                        <field name="numero_factura"/>
+                                    </strong>
+                                    <div class="text-muted" style="font-size:11px;">
+                                        <field name="periodo_facturado"/>
+                                    </div>
+                                </div>
+                                <field name="state" widget="badge" decoration-success="state == 'emitido'" decoration-warning="state == 'pendiente'" decoration-danger="state == 'anulada'"/>
+                            </div>
+                            <div class="fw-bold mb-1">
+                                <i class="fa fa-user me-1 text-muted"/>
+                                <field name="partner_id"/>
+                            </div>
+                            <div class="text-muted" style="font-size:11px;">
+                                <i class="fa fa-id-card me-1"/>
+                                Código: <field name="codigo_cliente"/>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="fw-bold text-success" style="font-size:14px;">
+                                    Bs. <field name="monto_neto" widget="float" options='{"precision": 2}'/>
+                                </span>
+                                <span class="text-muted" style="font-size:11px;">
+                                    <i class="fa fa-calendar me-1"/>
+                                    <field name="fecha_emision"/>
+                                </span>
+                            </div>
+                        </main>
+                        <footer class="d-flex justify-content-end gap-2">
+                            <button name="action_marcar_pagada" string="Emitir" type="object" class="btn btn-sm btn-success" invisible="state != 'pendiente'"/>
+                            <button name="action_anular" string="Anular" type="object" class="btn btn-sm btn-danger" invisible="state == 'anulada'"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="view_invoice_list" model="ir.ui.view">
         <field name="name">wigo.factura.cobranza.list</field>
         <field name="model">wigo.factura.cobranza</field>
@@ -41,6 +96,7 @@
                         <h1>
                             <field name="numero_factura"/>
                         </h1>
+                        <label for="numero_autorizacion" string="Nº Autorización SIAT"/>
                         <h3>
                             <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
                         </h3>
@@ -49,7 +105,7 @@
                         <group string="Cliente / Pago origen">
                             <field name="pago_id" options="{'no_create': True}"/>
                             <field name="partner_id"/>
-                            <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
+                            <field name="contract_id" options="{'no_create': True}" readonly="1"/>
                             <field name="codigo_cliente"/>
                         </group>
                         <group string="Datos de factura">
@@ -62,11 +118,16 @@
                     <group col="2">
                         <group string="Montos">
                             <field name="monto_total" widget="monetary"/>
-                            <field name="descuento" widget="monetary"/>
-                            <field name="monto_neto" readonly="1" widget="monetary"/>
                         </group>
                     </group>
-                    <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
+                    <notebook>
+
+                        <page string="Observaciones" name="observaciones">
+                            <group>
+                                <field name="notas" placeholder="Observaciones de la factura..." nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
@@ -91,6 +152,7 @@
                         <h2>
                             <field name="numero_factura" placeholder="Número de factura"/>
                         </h2>
+                        <label for="numero_autorizacion" string="Nº Autorización SIAT"/>
                         <h3>
                             <field name="numero_autorizacion" placeholder="Nº Autorización SIAT (opcional)"/>
                         </h3>
@@ -99,7 +161,7 @@
                         <group string="Cliente / Pago origen">
                             <field name="pago_id" options="{'no_create': True}"/>
                             <field name="partner_id"/>
-                            <field name="contract_id" domain="[('partner_id','=',partner_id)]"/>
+                            <field name="contract_id" options="{'no_create': True}" readonly="1"/>
                             <field name="codigo_cliente"/>
                         </group>
                         <group string="Datos de factura">
@@ -112,11 +174,16 @@
                     <group col="2">
                         <group string="Montos">
                             <field name="monto_total" widget="monetary"/>
-                            <field name="descuento" widget="monetary"/>
-                            <field name="monto_neto" readonly="1" widget="monetary"/>
                         </group>
                     </group>
-                    <field name="notas" string="Notas" placeholder="Observaciones de la factura..."/>
+                    <notebook>
+
+                        <page string="Observaciones" name="observaciones">
+                            <group>
+                                <field name="notas" placeholder="Observaciones de la factura..." nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>
@@ -137,7 +204,7 @@
                 <filter name="issued" string="Emitidas" domain="[('state','=','emitido')]"/>
                 <filter name="cancelled" string="Anuladas" domain="[('state','=','anulada')]"/>
                 <separator/>
-                <filter name="current_month" string="Mes actual" domain="[('fecha_emision','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+                <filter name="current_month" string="Mes actual" domain="[('fecha_emision', '&gt;=', context_today().strftime('%%Y-%%m-01'))]"/>
                 <separator/>
                 <filter name="group_state" string="Agrupar por Estado" context="{'group_by': 'state'}"/>
                 <filter name="group_period" string="Agrupar por Período" context="{'group_by': 'periodo_facturado'}"/>
@@ -160,7 +227,7 @@
     <record id="action_invoice" model="ir.actions.act_window">
         <field name="name">Facturación</field>
         <field name="res_model">wigo.factura.cobranza</field>
-        <field name="view_mode">list,form,pivot</field>
+        <field name="view_mode">kanban,list,form,pivot</field>
         <field name="domain">[]</field>
         <field name="context">{'active_test': False}</field>
         <field name="search_view_id" ref="view_invoice_search"/>

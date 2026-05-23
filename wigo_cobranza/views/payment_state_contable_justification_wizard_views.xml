@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_payment_state_contable_justification_wizard_form" model="ir.ui.view">
+        <field name="name">wigo.pago.estado.contable.justification.wizard.form</field>
+        <field name="model">wigo.pago.estado.contable.justification.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Justificación de edición contable">
+                <sheet>
+                    <group>
+                        <field name="pago_id" invisible="1"/>
+                        <field name="justification" placeholder="Ingrese la justificación de esta edición contable..." nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" type="object" string="Confirmar" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

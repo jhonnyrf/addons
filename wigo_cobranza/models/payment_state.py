@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 class WigoPagoEstado(models.Model):
     _name = 'wigo.pago.estado'
-    _description = 'Registro estatal de pago'
+    _description = 'Registro de pago'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'anio desc, mes desc, partner_id'
     _rec_name = 'display_name'
@@ -192,6 +192,16 @@ class WigoPagoEstado(models.Model):
         'res.users', string='Registrado por',
         default=lambda self: self.env.user, tracking=True,
     )
+    edicion_contable_guardada = fields.Boolean(
+        string='Edición contable guardada',
+        default=False, copy=False,
+    )
+    contabilidad_last_justification = fields.Text(
+        string='Justificación contable (temporal)', copy=False,
+    )
+    contabilidad_justification_pending = fields.Boolean(
+        string='Justificación contable pendiente', copy=False, default=False,
+    )
     contabilidad_editable = fields.Boolean(
         string='Modo edición contable',
         compute='_compute_contabilidad_editable', store=False,
@@ -218,8 +228,7 @@ class WigoPagoEstado(models.Model):
         compute='_compute_puede_marcar_mora_manual', store=False,
     )
 
-    notas = fields.Text(string='Notas de cobranza')
-    justificacion_edicion = fields.Text(string='Justificación de edición contable')
+    notas = fields.Html(string='Notas de cobranza')
 
     display_name = fields.Char(compute='_compute_display_name', store=True)
 
@@ -233,6 +242,16 @@ class WigoPagoEstado(models.Model):
         compute='_compute_recibo_generado', copy=False,
     )
 
+    # ── Invoice ───────────────────────────────────────────────
+    factura_id = fields.Many2one(
+        'wigo.factura.cobranza', string='Factura de cobranza',
+        compute='_compute_factura_id', compute_sudo=True, copy=False,
+    )
+    factura_generada = fields.Boolean(
+        string='Factura generada',
+        compute='_compute_factura_generada', copy=False,
+    )
+
     # ═══════════════════════════════════════════════════════════
     # Computed Fields
     # ═══════════════════════════════════════════════════════════
@@ -244,9 +263,8 @@ class WigoPagoEstado(models.Model):
 
     @api.depends_context('contabilidad_editable')
     def _compute_contabilidad_editable(self):
-        editable = bool(self.env.context.get('contabilidad_editable'))
         for rec in self:
-            rec.contabilidad_editable = editable
+            rec.contabilidad_editable = bool(self.env.context.get('contabilidad_editable')) and not rec.edicion_contable_guardada
 
     @api.depends('anio', 'mes')
     def _compute_periodo(self):
@@ -467,6 +485,22 @@ class WigoPagoEstado(models.Model):
     def _compute_recibo_generado(self):
         for rec in self:
             rec.recibo_generado = bool(rec.recibo_id)
+
+    # ── Invoice Computes ──────────────────────────────────────
+    @api.depends()
+    def _compute_factura_id(self):
+        Factura = self.env['wigo.factura.cobranza']
+        for rec in self:
+            factura = Factura.sudo().search(
+                [('pago_id', '=', rec.id), ('state', '!=', 'anulada')],
+                limit=1, order='id DESC',
+            )
+            rec.factura_id = factura.id if factura else False
+
+    @api.depends('factura_id')
+    def _compute_factura_generada(self):
+        for rec in self:
+            rec.factura_generada = bool(rec.factura_id)
 
     # ═══════════════════════════════════════════════════════════
     # Constraints
@@ -821,6 +855,8 @@ class WigoPagoEstado(models.Model):
         return records
 
     def write(self, vals):
+        in_contabilidad_editable_mode = self.env.context.get('contabilidad_editable')
+
         if self.env.context.get('skip_payment_chatter'):
             return super().write(vals)
 
@@ -834,13 +870,7 @@ class WigoPagoEstado(models.Model):
         audit_payload = []
 
         if contable_changed or payment_changed:
-            justificacion = (vals.get('justificacion_edicion') or '').strip()
             for rec in self:
-                if contable_changed and rec.estado_pago in ('pagado', 'al_dia') and not justificacion:
-                    raise ValidationError(
-                        'Debe indicar una justificación para editar valores contables '
-                        'cuando el pago ya fue confirmado (al día/pagado).'
-                    )
                 audit_payload.append({
                     'id': rec.id,
                     'old': {
@@ -853,7 +883,6 @@ class WigoPagoEstado(models.Model):
                         'attachment_ids': rec.comprobante_attachment_ids.ids,
                         'attachment_names': rec.comprobante_attachment_ids.mapped('name'),
                     },
-                    'justificacion': justificacion,
                     'usuario': self.env.user.display_name,
                     'fecha': self._get_bolivia_datetime_string(),
                 })
@@ -862,6 +891,9 @@ class WigoPagoEstado(models.Model):
             self._apply_tipo_ajuste_on_write(vals)
         elif 'es_primer_mes' in vals:
             self._apply_es_primer_mes_on_write(vals)
+
+        if in_contabilidad_editable_mode:
+            vals['edicion_contable_guardada'] = True
 
         res = super().write(vals)
 
@@ -895,7 +927,7 @@ class WigoPagoEstado(models.Model):
                     """))
 
                 if payload['old']['monto_a_cobrar'] != nuevos['monto_a_cobrar'] or payload['old']['monto_pagado'] != nuevos['monto_pagado']:
-                    rec._post_spanish_chatter_message(Markup(f"""
+                    body = f"""
                         <b>Actualización de valores contables registrada</b><br/><br/>
                         Cliente: <b>{escape(rec.partner_id.display_name or rec.partner_id.name or '')}</b><br/>
                         Contrato: <b>{escape(rec.contract_id.display_name or rec.contract_id.name or '')}</b><br/>
@@ -906,8 +938,22 @@ class WigoPagoEstado(models.Model):
                         → nuevo: <b>Bs. {nuevos['monto_a_cobrar']:.2f}</b><br/>
                         Monto pagado anterior: <b>Bs. {payload['old']['monto_pagado']:.2f}</b><br/>
                         → nuevo: <b>Bs. {nuevos['monto_pagado']:.2f}</b><br/>
-                        Justificación: <b>{escape(payload['justificacion'] or 'Sin justificación')}</b>
-                    """))
+                    """
+
+                    # If a justification was recorded via the wizard, include it
+                    # in the same chatter message and clear the pending flag.
+                    if getattr(rec, 'contabilidad_justification_pending', False) and rec.contabilidad_last_justification:
+                        justification_html = escape(rec.contabilidad_last_justification)
+                        body += f"""<br/><br/><b>Justificación:</b><br/><pre>{justification_html}</pre><br/>                        
+                        """
+
+                    rec._post_spanish_chatter_message(Markup(body))
+
+                    if getattr(rec, 'contabilidad_justification_pending', False):
+                        rec.with_context(skip_payment_chatter=True).write({
+                            'contabilidad_last_justification': False,
+                            'contabilidad_justification_pending': False,
+                        })
 
                 if (
                     payload['old']['canal_pago'] != nuevos['canal_pago']
@@ -1210,6 +1256,7 @@ class WigoPagoEstado(models.Model):
 
     def action_editar_valores_contables(self):
         self.ensure_one()
+        self.with_context(skip_payment_chatter=True).write({'edicion_contable_guardada': False})
         return {
             'type': 'ir.actions.act_window',
             'name': 'Editar valores contables',
@@ -1223,6 +1270,34 @@ class WigoPagoEstado(models.Model):
                 form_view_initial_mode='edit',
             ),
         }
+
+    def action_open_contable_justification_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Justificación de edición contable',
+            'res_model': 'wigo.pago.estado.contable.justification.wizard',
+            'views': [(False, 'form')],
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_pago_id': self.id,
+            },
+        }
+
+    def _register_contable_justification(self, justification):
+        self.ensure_one()
+        justification = (justification or '').strip()
+        if not justification:
+            raise ValidationError('Debe ingresar una justificación para continuar.')
+        # Store the justification temporarily on the record and mark it pending.
+        # The actual combined chatter message will be posted by `write()` so
+        # we avoid duplicate entries (one from the wizard and one from write()).
+        self.with_context(lang='es_BO').write({
+            'contabilidad_last_justification': justification,
+            'contabilidad_justification_pending': True,
+        })
+        return True
 
     def action_open_contract_crm(self):
         self.ensure_one()
@@ -1491,6 +1566,18 @@ class WigoPagoEstado(models.Model):
             'res_id': factura.id if factura else False,
             'target': 'new',
             'context': ctx,
+        }
+
+    def action_abrir_factura(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Factura -- {self.display_name}',
+            'res_model': 'wigo.factura.cobranza',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'res_id': self.factura_id.id if self.factura_id else False,
+            'target': 'new',
         }
 
     # ═══════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Cobranza',
-    'version': '19.0.1.0.7',
+    'version': '19.0.1.0.8',
     'summary': 'Gestión de cobranza, estado de pago y flujo de mora/suspensión — Área Contabilidad',
     'description': """
         Módulo de cobranza para Wigo Fast.
@@ -31,6 +31,7 @@
         'reports/report_recibo_cobro.xml',
         'views/collection_rule_views.xml',
         'views/payment_state_views.xml',
+        'views/payment_state_contable_justification_wizard_views.xml',
         'views/customer_contract_cobranza_views.xml',
         'views/partner_views.xml',
         'views/receipt_views.xml',
@@ -49,12 +50,13 @@
             # Widget de previsualización en tiempo real del recibo
             'wigo_cobranza/static/src/js/recibo_live_preview.js',
             'wigo_cobranza/static/src/xml/recibo_live_preview.xml',
+            'wigo_cobranza/static/src/js/recibo_cobro_form.js',
             # Widget de previsualización reactiva en la configuración del recibo
             'wigo_cobranza/static/src/js/recibo_config_preview.js',
             'wigo_cobranza/static/src/xml/recibo_config_preview.xml',
             # Badge coloreado para tipo de ajuste en listas/form
             'wigo_cobranza/static/src/js/tipo_ajuste_badge.js',
-            'wigo_cobranza/static/src/xml/tipo_ajuste_badge.xml',            
+            'wigo_cobranza/static/src/xml/tipo_ajuste_badge.xml',                                   
         ],
     },
     'external_dependencies': {
