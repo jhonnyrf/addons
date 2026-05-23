@@ -305,12 +305,11 @@ class WigoPagoEstado(models.Model):
             if partner:
                 rec.partner_ci = getattr(partner, 'ci', False) or False
                 rec.partner_celular = (
-                    getattr(partner, 'celular', False)
+                    getattr(partner, 'phone', False)
                     or getattr(partner, 'mobile', False)
-                    or getattr(partner, 'phone', False)
                     or False
                 )
-                rec.partner_telefono = getattr(partner, 'phone', False) or False
+                rec.partner_telefono = getattr(partner, 'celular', False) or False
                 rec.partner_email = partner.email or False
                 rec.partner_direccion = (
                     getattr(partner, 'direccion', False) or partner.street or False

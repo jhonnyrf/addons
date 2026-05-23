@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 
 
 def _get_partner_mobile(partner):
-    for field in ('mobile', 'x_mobile', 'celular'):
+    for field in ('phone', 'mobile', 'x_mobile', 'celular'):
         val = getattr(partner, field, None)
         if val is not None:
             return val or ''
@@ -352,8 +352,8 @@ class CustomerContract(models.Model):
     def _onchange_partner(self):
         if self.partner_id:
             self.contact_name = self.partner_id.name  or ''
-            self.mobile       = self.partner_id.phone or ''
-            self.phone        = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
+            self.mobile       = _get_partner_mobile(self.partner_id)
+            self.phone        = getattr(self.partner_id, 'celular', '') or ''
             self.email        = self.partner_id.email  or ''
             self.address      = self.partner_id.direccion or ''
             self.ci           = self.partner_id.ci     or ''
@@ -441,10 +441,10 @@ class CustomerContract(models.Model):
         if billing_sync_needed and not self.env.context.get('skip_billing_sync'):
             for record in self:
                 if record.billing_responsible_type == 'client' and record.partner_id:
-                    billing_phone = record.partner_id.celular if hasattr(record.partner_id, 'celular') and record.partner_id.celular else ''
+                    billing_phone = _get_partner_mobile(record.partner_id)
                     record.with_context(skip_billing_sync=True).write({
                         'billing_name': record.contact_name or record.partner_id.name or '',
-                        'billing_phone': record.mobile or record.phone or billing_phone or (record.partner_id.mobile if record.partner_id else '') or (record.partner_id.phone if record.partner_id else '') or '',
+                        'billing_phone': record.mobile or record.phone or billing_phone or '',
                         'billing_ci': record.ci or record.partner_id.ci or '',
                     })
 
@@ -466,11 +466,15 @@ class CustomerContract(models.Model):
             if 'name' in partner_fields:
                 vals['name'] = record.contact_name or partner.name or ''
             if 'phone' in partner_fields:
-                vals['phone'] = record.phone or False
+                # In `contactos_ext` we treat `phone` as the mobile (celular).
+                # Sync contract.mobile -> partner.phone
+                vals['phone'] = record.mobile or False
             if 'mobile' in partner_fields:
                 vals['mobile'] = record.mobile or False
             if 'celular' in partner_fields:
-                vals['celular'] = record.mobile or False
+                # `celular` in contactos_ext stores the telephone field.
+                # Sync contract.phone -> partner.celular
+                vals['celular'] = record.phone or False
             if 'email' in partner_fields:
                 vals['email'] = record.email or False
             if 'direccion' in partner_fields:
@@ -493,8 +497,8 @@ class CustomerContract(models.Model):
             return
         partner = self.env['res.partner'].browse(partner_id)
         vals.setdefault('contact_name', partner.name   or '')
-        vals.setdefault('mobile',       partner.phone  or '')
-        vals.setdefault('phone',     partner.celular if hasattr(partner, 'celular') and partner.celular else (partner.mobile or ''))
+        vals.setdefault('mobile',       _get_partner_mobile(partner))
+        vals.setdefault('phone',        getattr(partner, 'celular', '') or '')
         vals.setdefault('email',        partner.email  or '')
         vals.setdefault('address',      partner.direccion or '')
         vals.setdefault('ci',           partner.ci     or '')
@@ -518,27 +522,25 @@ class CustomerContract(models.Model):
             partner_id = vals.get('partner_id')
             if partner_id:
                 partner = self.env['res.partner'].browse(partner_id)
-                partner_phone = partner.celular if hasattr(partner, 'celular') and partner.celular else ''
+                partner_phone = _get_partner_mobile(partner)
                 vals.setdefault('billing_name', vals.get('contact_name') or partner.name or '')
-                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or partner_phone or partner.phone or partner.mobile or '')
+                vals.setdefault('billing_phone', vals.get('mobile') or vals.get('phone') or partner_phone or '')
                 vals.setdefault('billing_ci', vals.get('ci') or partner.ci or '')
             return
 
     def _fill_billing_from_partner(self):
         if self.partner_id:
             self.billing_name = self.partner_id.name or ''
-            billing_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
-            self.billing_phone = billing_phone or self.partner_id.mobile or self.partner_id.phone or ''
+            billing_phone = _get_partner_mobile(self.partner_id)
+            self.billing_phone = billing_phone or ''
             self.billing_ci = self.partner_id.ci or ''
         else:
             self._clear_billing_fields()
 
     def _fill_billing_from_contract_snapshot(self):
-        partner_phone = ''
-        if self.partner_id:
-            partner_phone = self.partner_id.celular if hasattr(self.partner_id, 'celular') and self.partner_id.celular else ''
+        partner_phone = _get_partner_mobile(self.partner_id) if self.partner_id else ''
         self.billing_name = self.contact_name or (self.partner_id.name if self.partner_id else '') or ''
-        self.billing_phone = self.mobile or self.phone or partner_phone or (self.partner_id.phone if self.partner_id else '') or (self.partner_id.mobile if self.partner_id else '') or ''
+        self.billing_phone = self.mobile or self.phone or partner_phone or ''
         self.billing_ci = self.ci or (self.partner_id.ci if self.partner_id else '') or ''
 
     def _clear_billing_fields(self):

@@ -9,8 +9,8 @@
                 <field name="name" string="Cliente"/>
                 <field name="cobranza_ci" optional="show"/>
                 <field name="cobranza_celular" optional="show"/>
+                <field name="cobranza_telefono" optional="show"/>
                 <field name="cobranza_zona" optional="show"/>
-                <field name="phone" optional="show"/>
                 <field name="email" optional="show"/>
                 <field name="active_contract_count" string="Contratos activos"/>
                 <field name="contract_any_count" string="Total contratos" optional="show"/>
@@ -26,11 +26,11 @@
                 <field name="name"/>
                 <field name="cobranza_ci"/>
                 <field name="cobranza_celular"/>
+                <field name="cobranza_telefono"/>
                 <field name="cobranza_zona"/>
                 <field name="active_contract_count"/>
                 <field name="contract_any_count"/>
                 <field name="email"/>
-                <field name="phone"/>
                 <templates>
                     <t t-name="card">
                         <aside>
@@ -60,6 +60,12 @@ CI: <field name="cobranza_ci"/>
                                     <div>
                                         <i class="fa fa-phone me-1"/>
 Cel: <field name="cobranza_celular"/>
+                                    </div>
+                                </t>
+                                <t t-if="record.cobranza_telefono.value">
+                                    <div>
+                                        <i class="fa fa-phone me-1"/>
+Tel: <field name="cobranza_telefono"/>
                                     </div>
                                 </t>
                                 <t t-if="record.cobranza_zona.value">
@@ -101,7 +107,7 @@ Zona: <field name="cobranza_zona"/>
                         <group>
                             <field name="cobranza_ci" readonly="1" string="Carnet / CI"/>
                             <field name="cobranza_celular" readonly="1" string="Celular"/>
-                            <field name="phone" readonly="1"/>
+                            <field name="cobranza_telefono" readonly="1" string="Telefono"/>
                         </group>
                         <group>
                             <field name="cobranza_zona" readonly="1" string="Zona"/>
@@ -137,6 +143,7 @@ Zona: <field name="cobranza_zona"/>
                 <field name="cobranza_ci" string="CI"/>
                 <field name="vat" string="NIT"/>
                 <field name="cobranza_celular" string="Celular"/>
+                <field name="cobranza_telefono" string="Telefono"/>
                 <filter name="has_active_contract" string="Con contrato activo" domain="[('contract_ids.state', '=', 'active'), ('contract_ids.is_superseded', '=', False)]"/>
                 <filter name="has_payments" string="Con pagos registrados" domain="[('cobranza_pago_ids', '!=', False)]"/>
             </search>

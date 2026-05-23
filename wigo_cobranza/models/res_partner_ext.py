@@ -18,6 +18,9 @@ class ResPartnerCobranza(models.Model):
     cobranza_celular = fields.Char(
         string='Celular', compute='_compute_contact_snapshot',
     )
+    cobranza_telefono = fields.Char(
+        string='Telefono', compute='_compute_contact_snapshot',
+    )
     cobranza_zona = fields.Char(
         string='Zona', compute='_compute_contact_snapshot',
     )
@@ -48,11 +51,12 @@ class ResPartnerCobranza(models.Model):
             partner.contract_any_count = len(contracts)
             partner.active_contract_count = len(contracts.filtered(lambda c: c.state == 'active'))
 
-    @api.depends('name', 'phone', 'email')
+    @api.depends('name', 'phone', 'email', 'celular')
     def _compute_contact_snapshot(self):
         for partner in self:
             partner.cobranza_ci = getattr(partner, 'ci', False) or False
-            partner.cobranza_celular = getattr(partner, 'celular', False) or getattr(partner, 'mobile', False) or False
+            partner.cobranza_celular = getattr(partner, 'phone', False) or getattr(partner, 'mobile', False) or False
+            partner.cobranza_telefono = getattr(partner, 'celular', False) or False
             partner.cobranza_zona = getattr(partner, 'zona', False) or False
             partner.cobranza_direccion = getattr(partner, 'direccion', False) or getattr(partner, 'street', False) or False
             partner.cobranza_contact_url = f"#id={partner.id}&model=res.partner&view_type=form"

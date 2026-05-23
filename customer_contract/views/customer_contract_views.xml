@@ -72,8 +72,8 @@
                                     <field name="vat" placeholder="Número de NIT" invisible="customer_type == 'person'" readonly="state not in ['draft','pending','signed']"/>
                                 </group>
                                 <group>
-                                    <field name="mobile" placeholder="Celular" readonly="state not in ['draft','pending','signed']"/>
-                                    <field name="phone" placeholder="Teléfono fijo" readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="mobile" placeholder="Teléfono fijo" readonly="state not in ['draft','pending','signed']"/>
+                                    <field name="phone" placeholder="Celular" readonly="state not in ['draft','pending','signed']"/>
                                     <field name="email" placeholder="Correo electrónico" readonly="state not in ['draft','pending','signed']"/>
                                     <field name="address" placeholder="Dirección del cliente" readonly="state not in ['draft','pending','signed']"/>
                                 </group>
