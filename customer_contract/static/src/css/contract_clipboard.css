@@ -1,0 +1,4 @@
+.o_contract_attachment_field .o_attach,
+.o_contract_attachment_field .o_file_input_trigger {
+    display: none !important;
+}

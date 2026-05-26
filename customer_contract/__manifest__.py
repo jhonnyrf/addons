@@ -16,11 +16,19 @@
     'data': [
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
+        'data/cron.xml',
         'views/customer_contract_plan_wizard.xml',
         'views/customer_contract_views.xml',
         'views/res_partner_contract_views.xml',
         'views/customer_contract_menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'customer_contract/static/src/js/contract_clipboard.js',
+            'customer_contract/static/src/css/contract_clipboard.css',
+            'customer_contract/static/src/scss/contract_clipboard.scss',
+        ],
+    },
     'installable': True,
     'application': True,
     'auto_install': False,

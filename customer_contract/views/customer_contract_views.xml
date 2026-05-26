@@ -85,7 +85,7 @@
                                     <field name="installation_date" widget="date" readonly="state not in ['draft','pending','signed']"/>
                                 </group>
                                 <group>
-                                    <field name="end_date"/>
+                                    <field name="end_date" readonly="state not in ['draft','pending','signed']"/>
                                     <field name="termination_date" invisible="not termination_date"/>
                                 </group>
                             </group>
@@ -159,58 +159,141 @@
                              ║  PESTAÑA 5 — Documentos          ║
                              ╚══════════════════════════════════╝ -->
                         <page string="Documentos" name="documents">
+
                             <field name="contrato_mimetype" invisible="1"/>
                             <field name="contrato_is_image" invisible="1"/>
                             <field name="contrato_is_pdf" invisible="1"/>
                             <field name="has_contract_documents" invisible="1"/>
 
                             <group string="Contrato Físico Firmado">
-                                <group>
-                                    <field name="contrato" invisible="1"/>
-                                    <field name="contrato_filename" invisible="1"/>
-                                    <field name="contract_attachment_ids" widget="many2many_binary" string="Archivo(s) del contrato" readonly="state not in ['draft','pending','signed']" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
-                                </group>
+                                <div class="o_contract_documents_clipboard_root" data-contract-clipboard-root="1">
 
+                                    <!-- Zona moderna de pegado -->
+                                    <group invisible="state not in ['draft','pending','signed']">
+                                        <div class="o_contract_clipboard_zone alert alert-info rounded p-3 mb-3 w-100" role="button" tabindex="0" aria-label="Upload contract attachments">
+
+                                            <div class="d-flex align-items-center gap-3">
+
+                                                <i class="fa fa-clipboard fa-2x text-primary"/>
+
+                                                <div>
+                                                    <strong>
+                                                    Puedes adjuntar archivos de varias formas:
+                                                    </strong>
+
+                                                    <ul class="mt-2 mb-0">
+                                                        <li>Ctrl + V para pegar imágenes o PDFs desde portapapeles</li>
+                                                        <li>Arrastrar archivos directamente aquí</li>
+                                                        <li>Hacer clic aquí para seleccionar archivos desde tu computadora</li>
+                                                    </ul>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    </group>
+
+                                    <!-- Campo real -->
+                                    <group>
+                                        <field name="contrato" invisible="1"/>
+                                        <field name="contrato_filename" invisible="1"/>
+
+                                        <field name="contract_attachment_ids" widget="many2many_binary" string="Archivo(s) del contrato" readonly="state not in ['draft','pending','signed']" class="o_contract_attachment_field" options="{
+                    'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'
+                }" />
+                                    </group>
+
+                                </div>
+
+                                <!-- Botones -->
                                 <group invisible="not has_contract_documents">
                                     <div class="d-flex gap-2 flex-wrap" style="margin-bottom: 12px;">
-                                        <button name="action_ver_contrato" type="object" string="Ver en grande" class="btn btn-outline-primary"/>
-                                        <button name="action_descargar_contrato" type="object" string="Descargar" class="btn btn-primary"/>
+
+                                        <button name="action_ver_contrato" type="object" string="Ver en grande" class="btn btn-outline-primary" />
+
+                                        <button name="action_descargar_contrato" type="object" string="Descargar" class="btn btn-primary" />
+
                                     </div>
                                 </group>
-                                <div role="alert" class="alert alert-info mb-3" invisible="has_contract_documents" style="margin: 8px 0; width: 100%; display: flex; align-items: center; gap: 12px;">
+
+                                <!-- Info -->
+                                <div role="alert" class="alert alert-info mb-3" invisible="has_contract_documents" style="
+                margin: 8px 0;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+             ">
+
                                     <i class="fa fa-info-circle me-1"/>
-                                    Formatos aceptados: <strong>JPG, PNG, PDF</strong>.
-                                    El archivo quedará registrado en el historial del contrato.
-                                </div>
-                            </group>
 
-                            <group string="Vista previa de la imagen" invisible="not contrato_is_image">
-                                <field name="contrato" widget="image" nolabel="1" readonly="1" options="{'size': [900, 600]}" class="o_field_image_full"/>
-                            </group>
-
-                            <group string="Documento PDF adjunto" invisible="not contrato_is_pdf">
-                                <group>
-                                    <div role="alert" class="alert alert-success" style="width: 100%; margin: 8px 0; display: flex; align-items: center; gap: 12px;">
-                                        <i class="fa fa-file-pdf-o fa-2x text-danger"/>
-                                        <div>
-                                            <strong>Archivo PDF cargado correctamente.</strong>
-                                            <br/>
-                                            Usa los botones para ver en grande o descargar.
-                                        </div>
+                                    <div>
+                Formatos aceptados:
+                                        <strong>JPG, PNG, PDF</strong>.
+                                        <br/>
+                El archivo quedará registrado en el historial del contrato.
                                     </div>
-                                </group>
-                            </group>
 
-
-
-                            <group invisible="not contrato or contrato_is_image or contrato_is_pdf">
-                                <div role="alert" class="alert alert-warning" style="margin: 8px 0;">
-                                    <i class="fa fa-exclamation-triangle me-1" title="Advertencia"/>
-                                    <strong>Formato no reconocido.</strong>
-                                    Solo se permiten archivos JPG, PNG o PDF.
-                                    Por favor, reemplaza el archivo.
                                 </div>
+
                             </group>
+
+                            <!-- Vista previa imagen -->
+                            <group string="Vista previa de la imagen" invisible="not contrato_is_image">
+
+                                <field name="contrato" widget="image" nolabel="1" readonly="1" options="{'size': [900, 600]}" class="o_field_image_full" />
+
+                            </group>
+
+                            <!-- PDF -->
+                            <group string="Documento PDF adjunto" invisible="not contrato_is_pdf">
+
+                                <group>
+
+                                    <div role="alert" class="alert alert-success" style="
+                    width: 100%;
+                    margin: 8px 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                 ">
+
+                                        <i class="fa fa-file-pdf-o fa-2x text-danger"/>
+
+                                        <div>
+                                            <strong>
+                        Archivo PDF cargado correctamente.
+                                            </strong>
+
+                                            <br/>
+
+                    Usa los botones para ver en grande o descargar.
+                                        </div>
+
+                                    </div>
+
+                                </group>
+
+                            </group>
+
+                            <!-- Error -->
+                            <group invisible="not contrato or contrato_is_image or contrato_is_pdf">
+
+                                <div role="alert" class="alert alert-warning" style="margin: 8px 0;">
+
+                                    <i class="fa fa-exclamation-triangle me-1" title="Advertencia"/>
+
+                                    <strong>
+                Formato no reconocido.
+                                    </strong>
+
+            Solo se permiten archivos JPG, PNG o PDF.
+            Por favor, reemplaza el archivo.
+
+                                </div>
+
+                            </group>
+
                         </page>
 
                         <!-- ╔══════════════════════════════════════════════╗
@@ -231,6 +314,50 @@
                                     <field name="is_superseded" string="Reemplazado" widget="boolean" optional="show"/>
                                 </list>
                             </field>
+                        </page>
+
+                        <!-- ╔══════════════════════════════════╗
+                             ║  PESTAÑA 7 — Renovación          ║
+                             ╚══════════════════════════════════╝ -->
+                        <page string="Renovación" name="renewal" invisible="state != 'active'">
+
+                            <group string="Configuración de Renovación Automática">
+                                <group>
+                                    <field name="auto_renewal_enabled" widget="boolean"/>
+                                    <field name="next_renewal_date" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="last_renewal_date" readonly="1"/>
+                                    <field name="renewal_attempt_count" readonly="1" invisible="renewal_attempt_count == 0"/>
+                                </group>
+                            </group>
+
+                            <group string="Último Error (si aplica)" invisible="not last_renewal_error">
+                                <field name="last_renewal_error" readonly="1" nolabel="1"/>
+                            </group>
+
+                            <group string="Acción Manual" invisible="state != 'active'">
+                                <button name="action_renew_contract_manual" string="Renovar Contrato Ahora" type="object" class="btn-primary" invisible="state != 'active'"/>
+                                <div role="alert" class="alert alert-info" style="margin-top: 12px;">
+                                    <i class="fa fa-info-circle"/>
+                                    Haz clic en el botón para renovar manualmente este contrato.
+                                    La fecha de finalización se extenderá según la configuración de renovación.
+                                </div>
+                            </group>
+
+                            <field name="renewal_history_ids" readonly="1" nolabel="1" invisible="not renewal_history_ids">
+                                <list string="Historial de renovaciones" create="false" edit="false" delete="false">
+                                    <field name="create_date" string="Fecha"/>
+                                    <field name="old_end_date" string="Vencimiento anterior"/>
+                                    <field name="new_end_date" string="Nuevo vencimiento"/>
+                                    <field name="renewal_type" string="Tipo"/>
+                                    <field name="created_by_user" string="Usuario"/>
+                                    <field name="renewal_period_days" string="Días"/>
+                                    <field name="notes" string="Notas"/>
+                                </list>
+                            </field>
+
+
                         </page>
 
                     </notebook>

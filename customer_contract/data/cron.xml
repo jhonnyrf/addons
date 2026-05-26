@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Cron diario: renovación automática de contratos que vencen -->
+        <record id="cron_renew_expiring_contracts" model="ir.cron">
+            <field name="name">Wigo Contratos: Renovación automática diaria</field>
+            <field name="model_id" ref="model_customer_contract"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_renew_expiring_contracts()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+</odoo>

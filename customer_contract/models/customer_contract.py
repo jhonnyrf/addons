@@ -32,8 +32,8 @@ ALLOWED_MIME_TYPES = {
 
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.pdf'}
 
-REQUIRED_FROM_PENDING = ('mobile', 'address', 'plan_id', 'contract_date', 'installation_date')
-REQUIRED_FROM_ACTIVE  = ('location_link', 'coordinates')
+REQUIRED_FROM_PENDING = ('plan_id', 'contract_date', 'installation_date')
+REQUIRED_FROM_ACTIVE  = ('location_link',)
 
 
 class CustomerContract(models.Model):
@@ -787,8 +787,6 @@ class CustomerContract(models.Model):
     # =========================================================
     def _validate_pending_fields(self):
         field_labels = {
-            'mobile':            'Celular',
-            'address':           'Dirección',
             'plan_id':           'Plan de Internet',
             'plan_identifier':   'Identificador del plan',
             'contract_date':     'Fecha de contrato',
@@ -820,15 +818,9 @@ class CustomerContract(models.Model):
         self._validate_attachment_files()
 
     def _validate_active_fields(self):
-        missing = []
         if not self.location_link:
-            missing.append('Link de Ubicación')
-        if not self.coordinates:
-            missing.append('Coordenadas')
-        if missing:
             raise ValidationError(
-                "Los siguientes campos son obligatorios para activar el contrato:\n"
-                + "\n".join(f"• {m}" for m in missing)
+                "El Link de Ubicación es obligatorio para activar el contrato."
             )
 
     def _validate_billing_fields(self):

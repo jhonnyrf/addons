@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_customer_contract_renewal_wizard_form" model="ir.ui.view">
+        <field name="name">customer.contract.renewal.wizard.form</field>
+        <field name="model">customer.contract.renewal.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Renovar contrato">
+                <sheet>
+                    <group>
+                        <field name="contract_id" readonly="1"/>
+                        <field name="old_end_date" readonly="1"/>
+                        <field name="new_end_date"/>
+                    </group>
+                    <group>
+                        <field name="note" nolabel="1" placeholder="Describe el motivo de la renovación..."/>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        La fecha de finalización del contrato se actualizará al confirmar.
+                    </div>
+                </sheet>
+                <footer>
+                    <button string="Confirmar renovación" type="object" name="action_confirm" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-default" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="view_customer_contract_plan_wizard_form" model="ir.ui.view">
         <field name="name">customer.contract.plan.wizard.form</field>
         <field name="model">customer.contract.plan.wizard</field>
@@ -15,14 +41,43 @@
                         <field name="new_plan_id"/>
                         <field name="new_price" readonly="1"/>
                     </group>
-                    <group string="Motivo del cambio">
-                        <field name="note" nolabel="1" placeholder="Describe el motivo: aumento/reducción de velocidad, solicitud del cliente, etc."/>
+                    <group string="Motivo del cambio" col="1">
+                        <group>
+                            <field name="note" nolabel="1" placeholder="Describe el motivo: aumento/reducción de velocidad, solicitud del cliente, etc."/>
+                        </group>
+
                     </group>
 
-                    <group string="Documentos del nuevo contrato">
-                        <field name="contrato" invisible="1"/>
-                        <field name="contrato_filename" invisible="1"/>
-                        <field name="contract_attachment_ids" widget="many2many_binary" string="Archivo(s) del contrato" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
+                    <group string="Documentos del nuevo contrato" col="1">
+
+                        <group>
+                            <div class="o_contract_documents_clipboard_root w-100" data-contract-clipboard-root="1">
+
+                                <div class="o_contract_clipboard_zone alert alert-info rounded p-3 mb-3 w-100" role="button" tabindex="0" aria-label="Upload contract attachments">
+
+                                    <div class="d-flex align-items-center gap-3 w-100">
+                                        <i class="fa fa-clipboard fa-2x text-primary"/>
+                                        <div class="flex-grow-1">
+                                            <strong>
+                        Puedes adjuntar archivos de varias formas:
+                                            </strong>
+
+                                            <ul class="mt-2 mb-0">
+                                                <li>Ctrl + V para pegar imágenes o PDFs desde portapapeles</li>
+                                                <li>Arrastrar archivos directamente aquí</li>
+                                                <li>Hacer clic aquí para seleccionar archivos desde tu computadora</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <field name="contrato" invisible="1"/>
+                                <field name="contrato_filename" invisible="1"/>
+
+                                <field name="contract_attachment_ids" widget="many2many_binary" string="Archivo(s) del contrato" class="o_contract_attachment_field w-100" options="{'accepted_file_extensions': '.pdf,.jpg,.jpeg,.png'}"/>
+
+                            </div>
+                        </group>
                     </group>
 
                     <div class="alert alert-warning" role="alert">
