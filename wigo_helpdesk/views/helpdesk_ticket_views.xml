@@ -261,8 +261,10 @@
  Diagnóstico Técnico</h5>
                                         <group>
                                             <field name="resolution_diagnosis_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_diagnosis_type_form'}"/>
-                                            <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Describe aquí los hallazgos y el diagnóstico extenso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
                                         </group>
+                                        <div class="mt-2 w-100">
+                                            <field name="resolution_diagnosis_detail" nolabel="1" placeholder="Describe aquí los hallazgos y el diagnóstico extenso..." class="wigo_resolution_text border-0 bg-light p-2 rounded w-100" style="min-height: 200px; width: 100%; display: block;"/>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6 ps-md-1 mt-3 mt-md-0">
@@ -272,8 +274,10 @@
  Solución Aplicada</h5>
                                         <group>
                                             <field name="resolution_solution_id" string="Clasificación" context="{'form_view_ref': 'wigo_helpdesk.view_helpdesk_visit_solution_type_form'}"/>
-                                            <field name="resolution_solution_detail" nolabel="1" placeholder="Describe aquí la solución que aplicaste paso a paso..." class="wigo_resolution_text mt-2 border-0 bg-light p-2 rounded w-100"/>
                                         </group>
+                                        <div class="mt-2 w-100">
+                                            <field name="resolution_solution_detail" nolabel="1" placeholder="Describe aquí la solución que aplicaste paso a paso..." class="wigo_resolution_text border-0 bg-light p-2 rounded w-100" style="min-height: 200px; width: 100%; display: block;"/>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

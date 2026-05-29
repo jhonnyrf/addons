@@ -37,34 +37,36 @@ def post_init_hook(env_or_cr, registry=None):
         _logger.error(f"✗ Error en limpieza de etapas: {str(e)}")
 
     try:
-        # ── Limpieza de duplicados de prioridades ──────────────────────────────
+        # ── Limpieza AGRESIVA de duplicados de prioridades ────────────────────
         _logger.info("Limpiando duplicados de prioridades SLA...")
         
-        # Contar prioridades por config y nombre
         PrioritySla = env['helpdesk.priority.sla'].sudo()
-        all_priorities = PrioritySla.search([])
+        all_priorities = PrioritySla.search([], order='id asc')
         
-        # Agrupar por config_id y name para encontrar duplicados
+        # Agrupar por (config_id, name, sequence) y mantener SOLO el primero
         priority_map = {}
         duplicates_to_delete = []
         
         for priority in all_priorities:
             key = (priority.config_id.id, priority.name, priority.sequence)
             if key in priority_map:
-                # Este es un duplicado
+                # Este es un DUPLICADO - eliminarlo
                 duplicates_to_delete.append(priority.id)
-                _logger.warning(f"Duplicado encontrado: {priority.name} (ID: {priority.id})")
+                _logger.warning(f"⚠ Duplicado: {priority.name} (ID: {priority.id})")
             else:
+                # Este es el PRIMERO de su tipo - mantenerlo
                 priority_map[key] = priority.id
+                _logger.info(f"  OK: {priority.name} (ID: {priority.id})")
         
         if duplicates_to_delete:
+            count = len(duplicates_to_delete)
             PrioritySla.browse(duplicates_to_delete).unlink()
-            _logger.info(f"✓ Eliminados {len(duplicates_to_delete)} duplicados de prioridades")
+            _logger.info(f"✓ Eliminados {count} duplicados de prioridades SLA")
         else:
-            _logger.info("✓ No hay duplicados de prioridades")
+            _logger.info("✓ No hay duplicados de prioridades SLA")
     
     except Exception as e:
-        _logger.error(f"✗ Error en limpieza de duplicados: {str(e)}")
+        _logger.error(f"✗ CRÍTICO: Error en limpieza de duplicados: {str(e)}")
 
     try:
         # ── Seed de prioridades SLA ───────────────────────────────────────────────

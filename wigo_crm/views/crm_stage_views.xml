@@ -15,6 +15,11 @@
                         <field name="show_button_lost"/>
                         <field name="show_button_new_contract"/>
                     </group>
+                    <separator string="Botón Prospectar" colspan="2"/>
+                    <group>
+                        <field name="show_button_prospect"/>
+                        <field name="next_stage_id" invisible="not show_button_prospect"/>
+                    </group>
                 </xpath>
             </field>
         </record>

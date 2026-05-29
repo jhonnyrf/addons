@@ -112,6 +112,21 @@ class CrmLead(models.Model):
         store=True,
     )
 
+    stage_show_button_prospect = fields.Boolean(
+        related='stage_id.show_button_prospect',
+        string="Mostrar botón prospectar",
+        readonly=True,
+        store=True,
+    )
+
+    stage_next_stage_id = fields.Many2one(
+        'crm.stage',
+        related='stage_id.next_stage_id',
+        string="Siguiente etapa configurada",
+        readonly=True,
+        store=True,
+    )
+
     contract_date = fields.Date(
         related='contract_id.contract_date',
         string="Fecha de contrato",
@@ -499,6 +514,42 @@ class CrmLead(models.Model):
     def action_mark_won_wigo(self):
         """Método personalizado Wigo para marcar lead como ganado (Botón controlado por stage)"""
         return self.action_set_won_rainbowman()
+
+    def action_prospect(self):
+        """
+        Mueve el lead a la siguiente etapa sin marcarlo como ganado.
+        Respeta la configuración de 'siguiente etapa' por cada stage.
+        """
+        self.ensure_one()
+        
+        current_stage = self.stage_id
+        next_stage = None
+        
+        # 1. Si la etapa actual tiene una "siguiente etapa" configurada, usar esa
+        if current_stage.next_stage_id:
+            next_stage = current_stage.next_stage_id
+        else:
+            # 2. Si no, buscar la siguiente etapa en la secuencia
+            next_stages = self.env['crm.stage'].search([
+                ('sequence', '>', current_stage.sequence),
+                ('team_id', '=', current_stage.team_id.id if current_stage.team_id else False)
+            ], order='sequence asc', limit=1)
+            
+            if next_stages:
+                next_stage = next_stages[0]
+        
+        # 3. Si no hay siguiente etapa, mostrar advertencia
+        if not next_stage:
+            raise ValidationError(
+                f"No hay siguiente etapa configurada después de '{current_stage.name}'. "
+                "Por favor, configure la 'Siguiente Etapa' en la configuración del pipeline."
+            )
+        
+        # 4. Mover el lead a la siguiente etapa
+        self.write({'stage_id': next_stage.id})
+        
+        # 5. Retornar acción vacía para que Odoo recargue automáticamente
+        return True
 
 
     def _redirect_to_contract(self, fallback):

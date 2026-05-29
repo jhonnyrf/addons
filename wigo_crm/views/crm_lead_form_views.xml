@@ -11,11 +11,18 @@
                 <field name="stage_show_button_won" invisible="1"/>
                 <field name="stage_show_button_lost" invisible="1"/>
                 <field name="stage_show_button_new_contract" invisible="1"/>
+                <field name="stage_show_button_prospect" invisible="1"/>
+                <field name="stage_next_stage_id" invisible="1"/>
             </xpath>
 
             <!-- Ocultar el botón original "Ganado" (action_set_won_rainbowman) para reemplazarlo -->
             <xpath expr="//button[@name='action_set_won_rainbowman']" position="replace">
                 <!-- Botón reemplazado por versión controlada -->
+            </xpath>
+
+            <!-- Botón PROSPECTAR - Mueve a la siguiente etapa sin marcar como ganado -->
+            <xpath expr="//button[@name='%(crm.crm_lead_lost_action)d']" position="before">
+                <button name="action_prospect" type="object" string="Prospectar" class="btn-info" invisible="not stage_show_button_prospect"/>
             </xpath>
 
             <!-- Crear nuevo botón GANADO controlado por stage_show_button_won -->

@@ -29,11 +29,11 @@
                         </h1>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-8 pe-md-1">
                             <div class="p-3 border rounded" style="background-color: #f8f9fa;">
                                 <h6 class="text-primary mb-3" style="font-weight: 600;">
                                     <i class="fa fa-info-circle me-2"/>
-Información Básica</h6>
+                                Información Básica</h6>
                                 <group>
                                     <field name="ticket_type_id" string="Tipo de Ticket"/>
                                     <field name="area_id" string="Departamento"/>
@@ -42,11 +42,11 @@ Información Básica</h6>
                                 </group>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4 ps-md-1">
                             <div class="p-3 border rounded" style="background-color: #f0f8ff;">
                                 <h6 class="text-info mb-3" style="font-weight: 600;">
                                     <i class="fa fa-shield me-2"/>
-Metadatos</h6>
+                                </h6>
                                 <group>
                                     <field name="create_date" string="Creado" readonly="1"/>
                                     <field name="write_date" string="Actualizado" readonly="1"/>

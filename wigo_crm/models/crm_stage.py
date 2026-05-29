@@ -24,3 +24,17 @@ class CrmStage(models.Model):
         default=False,
         help='Mostrar botón Nuevo Contrato en esta etapa del kanban'
     )
+
+    # Configuración para el nuevo flujo comercial - Botón "Prospectar"
+    show_button_prospect = fields.Boolean(
+        string='Mostrar botón "Prospectar"',
+        default=False,
+        help='Mostrar botón Prospectar para mover a la siguiente etapa sin marcar como ganado'
+    )
+    
+    next_stage_id = fields.Many2one(
+        'crm.stage',
+        string='Siguiente Etapa',
+        help='Etapa a la que se moverá el lead al presionar "Prospectar". Si está vacío, usa la siguiente etapa en la secuencia.',
+        domain="[('id', '!=', id)]"
+    )
